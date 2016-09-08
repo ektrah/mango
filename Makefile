@@ -5,7 +5,7 @@ endif
 ifneq "$(findstring clang,$(CC))" ""
 	CFLAGS += -Werror -Weverything
 else
-	CFLASG += -Werror -Wall -Wextra
+	CFLAGS += -Werror -Wall -Wextra
 endif
 
 OS ?= $(shell uname -s)
