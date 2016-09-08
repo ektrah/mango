@@ -167,10 +167,10 @@ typedef struct Module {
     uint64_t _context;
   };
 
+  uint8_t index;
   uint8_t flags;
   uint8_t init_next;
   uint8_t init_prev;
-  uint8_t _reserved1;
 
   ModuleNameRef name;
 
@@ -427,6 +427,7 @@ static uint8_t GetOrCreateModule(MangoVM *vm, const ModuleName *name) {
   }
 
   uint8_t index = vm->modules_created++;
+  modules[index].index = index;
   modules[index].name = ModuleName_as_ref(vm, name);
   return index;
 }
@@ -503,6 +504,7 @@ static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
   Module *module = &modules[0];
   module->image = image;
   module->context = context;
+  module->index = 0;
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
@@ -619,28 +621,28 @@ typedef union packed {
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
 
-#define LOAD_IP                                                                \
+#define UNPACK_STATE(sf)                                                       \
   do {                                                                         \
-    ip = Module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;              \
+    StackFrame sf_ = (sf);                                                     \
+    mp = &Module_as_ptr(vm, vm->modules)[sf_.module];                          \
+    ip = mp->image + sf_.ip;                                                   \
+    pop = sf_.pop;                                                             \
+    in_full_trust = sf_.in_full_trust;                                         \
   } while (0)
 
-#define SAVE_IP                                                                \
-  do {                                                                         \
-    sf.ip = (uint16_t)(ip - Module_as_ptr(vm, vm->modules)[sf.module].image);  \
-  } while (0)
+#define PACK_STATE()                                                           \
+  (StackFrame) { in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image) }
 
 #define LOAD_STATE                                                             \
   do {                                                                         \
     rp = stackval_as_ptr(vm, vm->rp);                                          \
     sp = stackval_as_ptr(vm, vm->sp);                                          \
-    sf = vm->sf;                                                               \
-    LOAD_IP;                                                                   \
+    UNPACK_STATE(vm->sf);                                                      \
   } while (0)
 
 #define SAVE_STATE                                                             \
   do {                                                                         \
-    SAVE_IP;                                                                   \
-    vm->sf = sf;                                                               \
+    vm->sf = PACK_STATE();                                                     \
     vm->sp = stackval_as_ref(vm, sp);                                          \
     vm->rp = stackval_as_ref(vm, rp);                                          \
   } while (0)
@@ -795,10 +797,12 @@ static MangoResult Execute(MangoVM *vm) {
   };
 #endif
 
-  register StackFrame sf;
-  register const uint8_t *ip;
-  register stackval *rp;
-  register stackval *sp;
+  bool in_full_trust;
+  uint8_t pop;
+  Module *mp;
+  const uint8_t *ip;
+  stackval *rp;
+  stackval *sp;
 
   stackval2 *sp2;
   int32_t tmp_i32;
@@ -897,43 +901,40 @@ TUCK:
 #pragma region calls
 
 RET2:
-  sp[sf.pop + 1].i32 = sp[1].i32;
+  sp[pop + 1].i32 = sp[1].i32;
 
 RET1:
-  sp[sf.pop + 0].i32 = sp[0].i32;
+  sp[pop + 0].i32 = sp[0].i32;
 
 RET:
-  sp += sf.pop;
+  sp += pop;
   --rp;
 
 #ifdef _DEBUG
-  if (sf.in_full_trust && !rp->sf.in_full_trust) {
+  if (in_full_trust && !rp->sf.in_full_trust) {
     printf("------------------------------ LEAVE FULL TRUST "
            "------------------------------\n");
   }
 #endif
 
-  sf = rp->sf;
-  LOAD_IP;
-
+  UNPACK_STATE(rp->sf);
   NEXT;
 
 CALL:
   do {
-    Module *modules = Module_as_ptr(vm, vm->modules);
     uint8_t index = FETCH(1, u8);
+    Module *module;
 
     if (index == INVALID_MODULE) {
-      index = sf.module;
+      module = mp;
     } else {
-      const uint8_t *imports = uint8_t_as_ptr(vm, modules[sf.module].imports);
-      index = imports[index];
+      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+      module = &Module_as_ptr(vm, vm->modules)[imports[index]];
     }
 
-    Module *module = &modules[index];
     const FuncDef *f = (const FuncDef *)(module->image + FETCH(2, u16));
 
-    bool in_full_trust = sf.in_full_trust;
+    bool in_full_trust_new = in_full_trust;
     if (!in_full_trust &&
         (f->flags &
          (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
@@ -944,7 +945,7 @@ CALL:
       }
       printf("------------------------------ ENTER FULL TRUST "
              "------------------------------\n");
-      in_full_trust = true;
+      in_full_trust_new = true;
     }
 
     if (sp - rp < 1 + f->loc_count + f->max_stack) {
@@ -954,13 +955,12 @@ CALL:
 
     ip += 4;
     if ((f->flags & MANGO_FF_MACRO) == 0 || *ip != RET) {
-      SAVE_IP;
-      rp->sf = sf;
+      rp->sf = PACK_STATE();
       rp++;
     }
-    sf.in_full_trust = in_full_trust;
-    sf.pop = (f->flags & MANGO_FF_MACRO) ? 0 : f->arg_count + f->loc_count;
-    sf.module = index;
+    in_full_trust = in_full_trust_new;
+    pop = (f->flags & MANGO_FF_MACRO) != 0 ? 0 : f->arg_count + f->loc_count;
+    mp = module;
     ip = f->code;
     sp -= f->loc_count;
 
@@ -969,13 +969,11 @@ CALL:
 
 SYSCALL:
   do {
-    Module *modules = Module_as_ptr(vm, vm->modules);
-    Module *module = &modules[sf.module];
-    const SysCallDef *f = (const SysCallDef *)(module->image + FETCH(1, u16));
+    const SysCallDef *f = (const SysCallDef *)(mp->image + FETCH(1, u16));
 
-    if (!sf.in_full_trust) {
+    if (!in_full_trust) {
       if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
-          (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+          (mp->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
         printf("<< SECURITY VIOLATION >>\n");
         RETURN(MANGO_E_SECURITY);
       }
@@ -1776,9 +1774,7 @@ STFLD_I32:
 
 LDSFLD_I32:
   do {
-    Module *modules = Module_as_ptr(vm, vm->modules);
-    Module *module = &modules[sf.module];
-    void *static_data = void_as_ptr(vm, module->static_data);
+    void *static_data = void_as_ptr(vm, mp->static_data);
     sp--;
     sp[0].i32 = MangoReadI32(static_data, FETCH(1, u16));
     ip += 3;
@@ -1787,9 +1783,7 @@ LDSFLD_I32:
 
 STSFLD_I32:
   do {
-    Module *modules = Module_as_ptr(vm, vm->modules);
-    Module *module = &modules[sf.module];
-    void *static_data = void_as_ptr(vm, module->static_data);
+    void *static_data = void_as_ptr(vm, mp->static_data);
     MangoWriteI32(static_data, FETCH(1, u16), sp[0].i32);
     sp++;
     ip += 3;
@@ -1809,19 +1803,19 @@ UNUSED:
 
 #define VISITED 1
 
-static MangoResult SetEntryPoint(MangoVM *vm, uint8_t index, uint32_t offset) {
-  Module *modules = Module_as_ptr(vm, vm->modules);
-  Module *module = &modules[index];
-  const FuncDef *f = (const FuncDef *)(module->image + offset);
-
-  register StackFrame sf;
-  register const uint8_t *ip;
-  register stackval *rp;
-  register stackval *sp;
+static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
+  bool in_full_trust;
+  uint8_t pop;
+  Module *mp;
+  const uint8_t *ip;
+  stackval *rp;
+  stackval *sp;
 
   LOAD_STATE;
 
-  bool in_full_trust = sf.in_full_trust;
+  const FuncDef *f = (const FuncDef *)(module->image + offset);
+
+  bool in_full_trust_new = in_full_trust;
   if (!in_full_trust &&
       (f->flags &
        (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
@@ -1832,7 +1826,7 @@ static MangoResult SetEntryPoint(MangoVM *vm, uint8_t index, uint32_t offset) {
     }
     printf("------------------------------ ENTER FULL TRUST "
            "------------------------------\n");
-    in_full_trust = true;
+    in_full_trust_new = true;
   }
 
   if (sp - rp < 1 + f->loc_count + f->max_stack) {
@@ -1840,13 +1834,11 @@ static MangoResult SetEntryPoint(MangoVM *vm, uint8_t index, uint32_t offset) {
     RETURN(MANGO_E_STACK_OVERFLOW);
   }
 
-  ip += 0;
-  SAVE_IP;
-  rp->sf = sf;
+  rp->sf = PACK_STATE();
   rp++;
-  sf.in_full_trust = in_full_trust;
-  sf.pop = (f->flags & MANGO_FF_MACRO) ? 0 : f->arg_count + f->loc_count;
-  sf.module = index;
+  in_full_trust = in_full_trust_new;
+  pop = (f->flags & MANGO_FF_MACRO) != 0 ? 0 : f->arg_count + f->loc_count;
+  mp = module;
   ip = f->code;
   sp -= f->loc_count;
 
@@ -1873,8 +1865,7 @@ MangoResult MangoExecute(MangoVM *vm) {
   uint8_t head = vm->module_init_head;
 
   while (head != INVALID_MODULE) {
-    uint8_t index = head;
-    Module *module = &modules[index];
+    Module *module = &modules[head];
     const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
 
     if ((module->flags & VISITED) == 0) {
@@ -1912,9 +1903,9 @@ MangoResult MangoExecute(MangoVM *vm) {
         modules[head].init_prev = INVALID_MODULE;
       }
 
-      printf("initialize module %u\n", index);
+      printf("initialize module %u\n", module->index);
       if (m->static_init != 0) {
-        result = SetEntryPoint(vm, index, m->static_init);
+        result = SetEntryPoint(vm, module, m->static_init);
         if (result != MANGO_E_SUCCESS) {
           return result;
         }
