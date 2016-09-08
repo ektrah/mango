@@ -535,6 +535,17 @@ static MangoResult ImportMissingModule(MangoVM *vm, const uint8_t *name,
   return InitializeModule(vm, module);
 }
 
+static MangoResult VerifyModule(const uint8_t *image, uint32_t size) {
+  (void)image;
+  (void)size;
+
+#ifndef MANGO_NO_VERIFICATION
+  return MANGO_E_NOT_IMPLEMENTED;
+#else
+  return MANGO_E_NOT_SUPPORTED;
+#endif
+}
+
 MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
                               const uint8_t *image, uint32_t size,
                               void *context, uint32_t flags) {
@@ -552,11 +563,15 @@ MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
   if (size < 2 || size > UINT16_MAX || size - 1 > base_end - (uintptr_t)image) {
     return MANGO_E_ARGUMENT;
   }
-  if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
-    return MANGO_E_NOT_IMPLEMENTED;
-  }
   if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
     return MANGO_E_BAD_IMAGE_FORMAT;
+  }
+
+  if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
+    MangoResult result = VerifyModule(image, size);
+    if (result != MANGO_E_SUCCESS) {
+      return result;
+    }
   }
 
   if (vm->modules_imported == 0) {
