@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.travis.yml = .travis.yml
 		LICENSE = LICENSE
 		Makefile = Makefile
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mango", "Mango.vcxproj", "{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}"
