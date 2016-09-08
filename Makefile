@@ -19,11 +19,11 @@ CFLAGS += -std=c11 -O3 -fvisibility=hidden
 
 all: $(LIBMANGO)
 
-bin/libmango.so: src/mango.c src/mango.h
+bin/libmango.so: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
 	mkdir -p bin
 	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -fPIC -o $@ $<
 
-bin/libmango.dylib: src/mango.c src/mango.h
+bin/libmango.dylib: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
 	mkdir -p bin
 	$(CC) $(CFLAGS) -DMANGO_EXPORTS -dynamiclib -o $@ $<
 
