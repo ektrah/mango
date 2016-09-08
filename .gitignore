@@ -1,0 +1,8 @@
+*.opendb
+*.suo
+*.user
+*.VC.db
+*~
+.vs
+bin
+obj
