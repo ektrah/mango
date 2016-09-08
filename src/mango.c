@@ -33,7 +33,7 @@
 #ifdef _DEBUG
 #include <stdio.h>
 #else
-#define printf(...) (0)
+#define printf(...) (void)0
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -585,10 +585,10 @@ const uint8_t *MangoModuleMissing(const MangoVM *vm) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-label-as-value"
 #pragma clang diagnostic ignored "-Wunused-macros"
-#pragma clang diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic ignored "-Wfloat-equal"
 
 #if defined(__clang__) || defined(__GNUC__)
