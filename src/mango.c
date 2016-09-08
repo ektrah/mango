@@ -1,5 +1,1943 @@
-#include "mango.h"
+/*
+ * Mango Virtual Machine 0.32-dev
+ *
+ * Copyright (c) 2016 Klaus Hartke
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
-void mango(void) {
-  // Hello World!
+#include "mango.h"
+#include "mango_metadata.h"
+
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+#ifdef _DEBUG
+#include <stdio.h>
+#else
+#define printf(...) (0)
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+#if UINTPTR_MAX == UINT32_MAX
+
+#define MANGO_DECLARE_REF_TYPE(Type)                                           \
+                                                                               \
+  typedef struct Type##Ref { uint32_t address; } Type##Ref;
+
+#define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
+                                                                               \
+  static inline Const Type *Type##_as_ptr(const MangoVM *vm, Type##Ref ref) {  \
+    (void)vm;                                                                  \
+    return (Const Type *)ref.address;                                          \
+  }                                                                            \
+                                                                               \
+  static inline Type##Ref Type##_as_ref(const MangoVM *vm, Const Type *ptr) {  \
+    (void)vm;                                                                  \
+    return (Type##Ref){(uint32_t)ptr};                                         \
+  }
+
+#elif UINTPTR_MAX == UINT64_MAX
+
+#define MANGO_DECLARE_REF_TYPE(Type)                                           \
+                                                                               \
+  typedef struct Type##Ref { uint32_t address; } Type##Ref;
+
+#define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
+                                                                               \
+  static inline Const Type *Type##_as_ptr(const MangoVM *vm, Type##Ref ref) {  \
+    return (Const Type *)(vm->base + ref.address);                             \
+  }                                                                            \
+                                                                               \
+  static inline Type##Ref Type##_as_ref(const MangoVM *vm, Const Type *ptr) {  \
+    return (Type##Ref){(uint32_t)((uintptr_t)ptr - vm->base)};                 \
+  }
+
+#else
+#error Unsupported bitness
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+MANGO_DECLARE_REF_TYPE(void)
+MANGO_DECLARE_REF_TYPE(uint8_t)
+MANGO_DECLARE_REF_TYPE(stackval)
+MANGO_DECLARE_REF_TYPE(Module)
+MANGO_DECLARE_REF_TYPE(ModuleName)
+
+typedef enum OpCode {
+#define OPCODE(c, s, i) c,
+#include "mango_opcodes.inc"
+#undef OPCODE
+} OpCode;
+
+typedef struct StackFrame {
+  uint8_t in_full_trust : 1;
+  uint8_t pop : 7;
+  uint8_t module;
+  uint16_t ip;
+} StackFrame;
+
+typedef union Value {
+  StackFrame sf;
+  int32_t i32;
+  uint32_t u32;
+#ifndef MANGO_NO_F32
+  float f32;
+#endif
+  voidRef ref;
+} stackval;
+
+#pragma pack(push, 4)
+typedef union Value2 {
+  struct {
+    uint8_tRef ref;
+    int32_t length;
+  } slice;
+  struct {
+    int32_t start;
+    int32_t end;
+  } range;
+#ifndef MANGO_NO_I64
+  int64_t i64;
+  uint64_t u64;
+#endif
+#ifndef MANGO_NO_F64
+  double f64;
+#endif
+} stackval2;
+#pragma pack(pop)
+
+typedef struct MangoVM {
+  union {
+    uintptr_t base;
+    uint64_t _base;
+  };
+  union {
+    void *context;
+    uint64_t _context;
+  };
+
+  uint32_t heap_size;
+  uint32_t heap_used;
+
+  ModuleName startup_module;
+
+  ModuleRef modules;
+  uint8_t modules_created;
+  uint8_t modules_imported;
+  uint8_t module_init_head;
+  uint8_t _reserved1;
+
+  stackvalRef stack;
+
+  StackFrame sf;
+  stackvalRef rp;
+  stackvalRef sp;
+
+  uint32_t _reserved2;
+} MangoVM;
+
+typedef struct Module {
+  union {
+    const uint8_t *image;
+    uint64_t _image;
+  };
+  union {
+    void *context;
+    uint64_t _context;
+  };
+
+  uint8_t flags;
+  uint8_t init_next;
+  uint8_t init_prev;
+  uint8_t _reserved1;
+
+  ModuleNameRef name;
+
+  uint8_tRef imports;
+  voidRef static_data;
+} Module;
+
+MANGO_DEFINE_REF_TYPE(void, )
+MANGO_DEFINE_REF_TYPE(uint8_t, const)
+MANGO_DEFINE_REF_TYPE(stackval, )
+MANGO_DEFINE_REF_TYPE(Module, )
+MANGO_DEFINE_REF_TYPE(ModuleName, const)
+
+#if defined(__clang__) || defined(__GNUC__)
+_Static_assert(sizeof(StackFrame) == 4, "Incorrect layout");
+_Static_assert(__alignof(StackFrame) == 2, "Incorrect layout");
+_Static_assert(sizeof(stackval) == 4, "Incorrect layout");
+_Static_assert(__alignof(stackval) == 4, "Incorrect layout");
+_Static_assert(sizeof(stackval2) == 8, "Incorrect layout");
+_Static_assert(__alignof(stackval2) == 4, "Incorrect layout");
+_Static_assert(sizeof(MangoVM) == 64, "Incorrect layout");
+_Static_assert(__alignof(MangoVM) == 8, "Incorrect layout");
+_Static_assert(sizeof(Module) == 32, "Incorrect layout");
+_Static_assert(__alignof(Module) == 8, "Incorrect layout");
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+
+uint32_t MangoVersionMajor(void) { return MANGO_VERSION_MAJOR; }
+
+uint32_t MangoVersionMinor(void) { return MANGO_VERSION_MINOR; }
+
+const char *MangoVersionString(void) { return MANGO_VERSION_STRING; }
+
+uint32_t MangoQueryFeatures(void) {
+  uint32_t features = 0;
+#ifndef MANGO_NO_I64
+  features |= MANGO_FEATURE_I64;
+#endif
+#ifndef MANGO_NO_F32
+  features |= MANGO_FEATURE_F32;
+#endif
+#ifndef MANGO_NO_F64
+  features |= MANGO_FEATURE_F64;
+#endif
+  return features;
 }
+
+MangoVM *MangoInitialize(const void *base, void *address, uint32_t size,
+                         void *context) {
+  uintptr_t base_end;
+  uintptr_t address_end;
+
+  if (!address) {
+    return NULL;
+  }
+  if (address < base) {
+    return NULL;
+  }
+  if ((uintptr_t)address & (__alignof(MangoVM) - 1)) {
+    return NULL;
+  }
+  if (size < sizeof(MangoVM)) {
+    return NULL;
+  }
+  if (__builtin_add_overflow((uintptr_t)base, UINT32_MAX, &base_end)) {
+    base_end = UINTPTR_MAX;
+  }
+  if (__builtin_add_overflow((uintptr_t)address, size - 1, &address_end)) {
+    return NULL;
+  }
+  if (address_end > base_end) {
+    return NULL;
+  }
+
+  printf("allocate %u bytes\n", (uint32_t)sizeof(MangoVM));
+
+  MangoVM *vm = address;
+  memset(vm, 0, sizeof(MangoVM));
+  vm->base = (uintptr_t)base;
+  vm->context = context;
+  vm->heap_size = size;
+  vm->heap_used = sizeof(MangoVM);
+  return vm;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
+                     uint32_t alignment, uint32_t flags) {
+  uint32_t total_size;
+  uint32_t offset;
+  uint32_t available;
+
+  if (!vm) {
+    return NULL;
+  }
+  if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+    return NULL;
+  }
+  if (__builtin_mul_overflow(count, size, &total_size)) {
+    return NULL;
+  }
+  if (__builtin_add_overflow(vm->heap_used, alignment - 1, &offset)) {
+    return NULL;
+  }
+  offset &= ~(alignment - 1);
+  if (__builtin_sub_overflow(vm->heap_size, offset, &available)) {
+    return NULL;
+  }
+  if (total_size > available) {
+    return NULL;
+  }
+
+  printf("allocate %u bytes\n", total_size);
+
+  vm->heap_used = offset + total_size;
+  void *block = (void *)((uintptr_t)vm + offset);
+
+  if ((flags & MANGO_ALLOC_ZERO_MEMORY) != 0) {
+    memset(block, 0, total_size);
+  }
+
+  return block;
+}
+
+uint32_t MangoHeapAvailable(const MangoVM *vm) {
+  if (!vm) {
+    return 0;
+  }
+
+  return vm->heap_size - vm->heap_used;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
+  if (!vm) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (size > 65535 * sizeof(stackval)) {
+    return MANGO_E_ARGUMENT;
+  }
+  if (vm->stack.address) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+
+  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+
+  stackval *stack =
+      MangoHeapAlloc(vm, count, sizeof(stackval), __alignof(stackval), 0);
+
+  if (!stack) {
+    return MANGO_E_OUT_OF_MEMORY;
+  }
+
+  vm->rp = stackval_as_ref(vm, stack);
+  vm->sp = stackval_as_ref(vm, stack + count);
+  vm->stack = vm->sp;
+  return MANGO_E_SUCCESS;
+}
+
+void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags) {
+  if (!vm) {
+    return NULL;
+  }
+  if (size > 65535 * sizeof(stackval)) {
+    return NULL;
+  }
+  if (!vm->stack.address) {
+    return NULL;
+  }
+
+  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+
+  stackval *rp = stackval_as_ptr(vm, vm->rp);
+  stackval *sp = stackval_as_ptr(vm, vm->sp);
+
+  if ((uint32_t)(sp - rp) < count) {
+    return NULL;
+  }
+
+  sp -= count;
+  vm->sp = stackval_as_ref(vm, sp);
+
+  if ((flags & MANGO_ALLOC_ZERO_MEMORY) != 0) {
+    memset(sp, 0, size);
+  }
+
+  return sp;
+}
+
+MangoResult MangoStackFree(MangoVM *vm, uint32_t size) {
+  if (!vm) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (size > 65535 * sizeof(stackval)) {
+    return MANGO_E_ARGUMENT;
+  }
+  if (!vm->stack.address) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+
+  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+
+  stackval *stack = stackval_as_ptr(vm, vm->stack);
+  stackval *sp = stackval_as_ptr(vm, vm->sp);
+
+  if ((uint32_t)(stack - sp) < count) {
+    return MANGO_E_STACK_UNDERFLOW;
+  }
+
+  sp += count;
+  vm->sp = stackval_as_ref(vm, sp);
+  return MANGO_E_SUCCESS;
+}
+
+void *MangoStackTop(const MangoVM *vm) {
+  if (!vm) {
+    return NULL;
+  }
+  if (!vm->stack.address) {
+    return NULL;
+  }
+
+  return stackval_as_ptr(vm, vm->sp);
+}
+
+uint32_t MangoStackAvailable(const MangoVM *vm) {
+  if (!vm) {
+    return 0;
+  }
+  if (!vm->stack.address) {
+    return 0;
+  }
+
+  stackval *rp = stackval_as_ptr(vm, vm->rp);
+  stackval *sp = stackval_as_ptr(vm, vm->sp);
+  return (uint32_t)(sp - rp) * sizeof(stackval);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define INVALID_MODULE 255
+
+static uint8_t GetOrCreateModule(MangoVM *vm, const ModuleName *name) {
+  Module *modules = Module_as_ptr(vm, vm->modules);
+
+  for (uint8_t i = 0; i < vm->modules_created; i++) {
+    const ModuleName *n = ModuleName_as_ptr(vm, modules[i].name);
+    if (memcmp(name, n, sizeof(ModuleName)) == 0) {
+      return i;
+    }
+  }
+
+  uint8_t index = vm->modules_created++;
+  modules[index].name = ModuleName_as_ref(vm, name);
+  return index;
+}
+
+static MangoResult InitializeModule(MangoVM *vm, Module *module) {
+  const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
+
+  if (m->import_count != 0) {
+    uint8_t *imports = MangoHeapAlloc(vm, m->import_count, sizeof(uint8_t),
+                                      __alignof(uint8_t), 0);
+
+    if (!imports) {
+      return MANGO_E_OUT_OF_MEMORY;
+    }
+
+    for (uint8_t i = 0; i < m->import_count; i++) {
+      imports[i] = GetOrCreateModule(vm, &m->imports[i]);
+    }
+
+    module->imports = uint8_t_as_ref(vm, imports);
+  }
+
+  if (m->static_size != 0) {
+    void *static_data = MangoHeapAlloc(vm, m->static_size, sizeof(uint8_t),
+                                       __alignof(stackval), 0);
+
+    if (!static_data) {
+      return MANGO_E_OUT_OF_MEMORY;
+    }
+
+    module->static_data = void_as_ref(vm, static_data);
+  }
+
+  return MANGO_E_SUCCESS;
+}
+
+static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
+                                       const uint8_t *image, void *context,
+                                       uint32_t flags) {
+  const ModuleDef *m = (const ModuleDef *)(image + MANGO_HEADER_SIZE);
+
+  if ((m->flags & MANGO_MF_EXECUTABLE) == 0) {
+    return MANGO_E_BAD_IMAGE_FORMAT;
+  }
+
+  const StartupDef *s =
+      (const StartupDef *)(image + MANGO_HEADER_SIZE + sizeof(ModuleDef) +
+                           m->import_count * sizeof(ModuleName));
+
+  if ((s->features & MangoQueryFeatures()) != s->features) {
+    return MANGO_E_NOT_SUPPORTED;
+  }
+
+  if (!vm->stack.address) {
+    MangoResult result = MangoStackCreate(vm, s->stack_size * sizeof(stackval));
+    if (result != 0) {
+      return result;
+    }
+  }
+
+  Module *modules = MangoHeapAlloc(vm, s->module_count, sizeof(Module),
+                                   __alignof(Module), MANGO_ALLOC_ZERO_MEMORY);
+
+  if (!modules) {
+    return MANGO_E_OUT_OF_MEMORY;
+  }
+
+  memcpy(&vm->startup_module, name, sizeof(ModuleName));
+  vm->modules = Module_as_ref(vm, modules);
+  vm->modules_created = 1;
+  vm->modules_imported = 1;
+  vm->sf.ip = (uint16_t)(s->exit_stub - image);
+
+  Module *module = &modules[0];
+  module->image = image;
+  module->context = context;
+  module->flags = (uint8_t)flags;
+  module->init_next = INVALID_MODULE;
+  module->init_prev = INVALID_MODULE;
+  module->name = ModuleName_as_ref(vm, &vm->startup_module);
+
+  return InitializeModule(vm, module);
+}
+
+static MangoResult ImportMissingModule(MangoVM *vm, const uint8_t *name,
+                                       const uint8_t *image, void *context,
+                                       uint32_t flags) {
+  Module *modules = Module_as_ptr(vm, vm->modules);
+  Module *module = &modules[vm->modules_imported];
+  const ModuleName *n = ModuleName_as_ptr(vm, module->name);
+
+  if (memcmp(name, n, sizeof(ModuleName)) != 0) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+
+  vm->modules_imported++;
+
+  module->image = image;
+  module->context = context;
+  module->flags = (uint8_t)flags;
+  module->init_next = INVALID_MODULE;
+  module->init_prev = INVALID_MODULE;
+
+  return InitializeModule(vm, module);
+}
+
+MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
+                              const uint8_t *image, uint32_t size,
+                              void *context, uint32_t flags) {
+  uintptr_t base_end;
+
+  if (!vm || !name || !image) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (__builtin_add_overflow(vm->base, UINT32_MAX, &base_end)) {
+    base_end = UINTPTR_MAX;
+  }
+  if ((uintptr_t)image < vm->base || (uintptr_t)image > base_end) {
+    return MANGO_E_ARGUMENT;
+  }
+  if (size < 2 || size > UINT16_MAX || size - 1 > base_end - (uintptr_t)image) {
+    return MANGO_E_ARGUMENT;
+  }
+  if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
+    return MANGO_E_NOT_IMPLEMENTED;
+  }
+  if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
+    return MANGO_E_BAD_IMAGE_FORMAT;
+  }
+
+  if (vm->modules_imported == 0) {
+    return ImportStartupModule(vm, name, image, context, flags);
+  } else if (vm->modules_imported != vm->modules_created) {
+    return ImportMissingModule(vm, name, image, context, flags);
+  } else {
+    return MANGO_E_INVALID_OPERATION;
+  }
+}
+
+const uint8_t *MangoModuleMissing(const MangoVM *vm) {
+  if (!vm) {
+    return NULL;
+  }
+  if (vm->modules_imported == vm->modules_created) {
+    return NULL;
+  }
+
+  Module *modules = Module_as_ptr(vm, vm->modules);
+  Module *module = &modules[vm->modules_imported];
+  const ModuleName *n = ModuleName_as_ptr(vm, module->name);
+
+  return (const uint8_t *)n;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-label-as-value"
+#pragma clang diagnostic ignored "-Wunused-macros"
+#pragma clang diagnostic ignored "-Wunused-variable"
+#pragma clang diagnostic ignored "-Wfloat-equal"
+
+#if defined(__clang__) || defined(__GNUC__)
+#define NEXT                                                                   \
+  do {                                                                         \
+    printf("* %s\n", opcodes[*ip]);                                            \
+    goto *dispatch_table[*ip];                                                 \
+  } while (0)
+#elif defined(_MSC_VER)
+#error Unsupported compiler
+#define NEXT
+#else
+#error Unsupported compiler
+#endif
+
+#pragma pack(push, 1)
+typedef union packed {
+  int8_t i8;
+  uint8_t u8;
+  int16_t i16;
+  uint16_t u16;
+  int32_t i32;
+  uint32_t u32;
+  int64_t i64;
+  uint64_t u64;
+} packed;
+#pragma pack(pop)
+
+#define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
+
+#define LOAD_IP                                                                \
+  do {                                                                         \
+    ip = Module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;              \
+  } while (0)
+
+#define SAVE_IP                                                                \
+  do {                                                                         \
+    sf.ip = (uint16_t)(ip - Module_as_ptr(vm, vm->modules)[sf.module].image);  \
+  } while (0)
+
+#define LOAD_STATE                                                             \
+  do {                                                                         \
+    rp = stackval_as_ptr(vm, vm->rp);                                          \
+    sp = stackval_as_ptr(vm, vm->sp);                                          \
+    sf = vm->sf;                                                               \
+    LOAD_IP;                                                                   \
+  } while (0)
+
+#define SAVE_STATE                                                             \
+  do {                                                                         \
+    SAVE_IP;                                                                   \
+    vm->sf = sf;                                                               \
+    vm->sp = stackval_as_ref(vm, sp);                                          \
+    vm->rp = stackval_as_ref(vm, rp);                                          \
+  } while (0)
+
+#define RETURN(result)                                                         \
+  do {                                                                         \
+    SAVE_STATE;                                                                \
+    return (result);                                                           \
+  } while (0)
+
+#define INVALID                                                                \
+  do {                                                                         \
+    printf("<< INVALID PROGRAM >>\n");                                         \
+    RETURN(MANGO_E_INVALID_PROGRAM);                                           \
+  } while (0)
+
+#define BINARY1(ty, op)                                                        \
+  sp[1].ty = sp[1].ty op sp[0].ty;                                             \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define BINARY1F(ty, op)                                                       \
+  op(sp[1].ty, sp[0].ty, &sp[1].ty);                                           \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define BINARY1D(ty, op)                                                       \
+  if (sp[0].ty == 0) {                                                         \
+    RETURN(MANGO_E_DIVIDE_BY_ZERO);                                            \
+  }                                                                            \
+  sp[1].ty = sp[1].ty op sp[0].ty;                                             \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define UNARY1(ty, op)                                                         \
+  sp[0].ty = op(sp[0].ty);                                                     \
+  ip++;                                                                        \
+  NEXT;
+
+#define SHIFT1(ty, op)                                                         \
+  sp[1].ty = sp[1].ty op sp[0].i32;                                            \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT1(cast, dest, src)                                              \
+  sp[0].dest = (cast)sp[0].src;                                                \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT21(cast, dest, src)                                             \
+  tmp_##src = sp[0].src;                                                       \
+  sp--;                                                                        \
+  sp2 = (stackval2 *)sp;                                                       \
+  sp2[0].dest = (cast)tmp_##src;                                               \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE1(mem, op)                                                      \
+  sp[1].i32 = sp[1].mem op sp[0].mem;                                          \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE1F(mem, op)                                                     \
+  sp[1].i32 = op(sp[1].mem, sp[0].mem);                                        \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define BINARY2(ty, op)                                                        \
+  sp2 = (stackval2 *)sp;                                                       \
+  sp2[1].ty = sp2[1].ty op sp2[0].ty;                                          \
+  sp += 2;                                                                     \
+  ip++;                                                                        \
+  NEXT;
+
+#define BINARY2F(ty, op)                                                       \
+  sp2 = (stackval2 *)sp;                                                       \
+  op(sp2[1].ty, sp2[0].ty, &sp2[1].ty);                                        \
+  sp += 2;                                                                     \
+  ip++;                                                                        \
+  NEXT;
+
+#define BINARY2D(ty, op)                                                       \
+  sp2 = (stackval2 *)sp;                                                       \
+  if (sp2[0].ty == 0) {                                                        \
+    RETURN(MANGO_E_DIVIDE_BY_ZERO);                                            \
+  }                                                                            \
+  sp2[1].ty = sp2[1].ty op sp2[0].ty;                                          \
+  sp += 2;                                                                     \
+  ip++;                                                                        \
+  NEXT;
+
+#define UNARY2(ty, op)                                                         \
+  sp2 = (stackval2 *)sp;                                                       \
+  sp2[0].ty = op(sp2[0].ty);                                                   \
+  ip++;                                                                        \
+  NEXT;
+
+#define SHIFT2(ty, op)                                                         \
+  sp2 = (stackval2 *)(sp + 1);                                                 \
+  sp2[0].ty = sp2[0].ty op sp[0].i32;                                          \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT12(cast, dest, src)                                             \
+  sp2 = (stackval2 *)sp;                                                       \
+  tmp_##src = sp2[0].src;                                                      \
+  sp++;                                                                        \
+  sp[0].dest = (cast)tmp_##src;                                                \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT2(cast, dest, src)                                              \
+  sp2 = (stackval2 *)sp;                                                       \
+  sp2[0].dest = (cast)sp2[0].src;                                              \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE2(mem, op)                                                      \
+  sp2 = (stackval2 *)sp;                                                       \
+  tmp_i32 = sp2[1].mem op sp2[0].mem;                                          \
+  sp += 3;                                                                     \
+  sp[0].i32 = tmp_i32;                                                         \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE2F(mem, op)                                                     \
+  sp2 = (stackval2 *)sp;                                                       \
+  tmp_i32 = op(sp2[1].mem, sp2[0].mem);                                        \
+  sp += 3;                                                                     \
+  sp[0].i32 = tmp_i32;                                                         \
+  ip++;                                                                        \
+  NEXT;
+
+static MangoResult Execute(MangoVM *vm) {
+  static const void *const dispatch_table[] = {
+#define OPCODE(c, s, i) &&c,
+#include "mango_opcodes.inc"
+#undef OPCODE
+  };
+#ifdef _DEBUG
+  static const char *const opcodes[] = {
+#define OPCODE(c, s, i) s,
+#include "mango_opcodes.inc"
+#undef OPCODE
+  };
+#endif
+
+  register StackFrame sf;
+  register const uint8_t *ip;
+  register stackval *rp;
+  register stackval *sp;
+
+  stackval2 *sp2;
+  int32_t tmp_i32;
+  uint32_t tmp_u32;
+  int64_t tmp_i64;
+  uint64_t tmp_u64;
+  float tmp_f32;
+  double tmp_f64;
+
+  LOAD_STATE;
+  NEXT;
+
+#pragma region basic
+
+NOP:
+  ++ip;
+  NEXT;
+
+BREAK:
+  ++ip;
+  RETURN(MANGO_E_BREAKPOINT);
+
+HALT:
+  RETURN(MANGO_E_SUCCESS);
+
+POP:
+  sp++;
+  ip++;
+  NEXT;
+
+POP2:
+  sp += 2;
+  ip++;
+  NEXT;
+
+DUP:
+  sp--;
+  sp[0].i32 = sp[1].i32;
+  ip++;
+  NEXT;
+
+DUP2:
+  sp -= 2;
+  sp[0].i32 = sp[2].i32;
+  sp[1].i32 = sp[3].i32;
+  ip++;
+  NEXT;
+
+SWAP:
+  tmp_i32 = sp[0].i32;
+  sp[0].i32 = sp[1].i32;
+  sp[1].i32 = tmp_i32;
+  ip++;
+  NEXT;
+
+SWAP2:
+  tmp_i32 = sp[0].i32;
+  tmp_u32 = sp[1].u32;
+  sp[0].i32 = sp[2].i32;
+  sp[1].u32 = sp[3].u32;
+  sp[2].i32 = tmp_i32;
+  sp[3].u32 = tmp_u32;
+  ip++;
+  NEXT;
+
+OVER:
+  sp--;
+  sp[0].i32 = sp[2].i32;
+  ip++;
+  NEXT;
+
+ROT:
+  tmp_i32 = sp[0].i32;
+  sp[0].i32 = sp[1].i32;
+  sp[1].i32 = sp[2].i32;
+  sp[2].i32 = tmp_i32;
+  ip++;
+  NEXT;
+
+NIP:
+  sp[1].i32 = sp[0].i32;
+  sp++;
+  ip++;
+  NEXT;
+
+TUCK:
+  sp--;
+  sp[0].i32 = sp[1].i32;
+  sp[1].i32 = sp[2].i32;
+  sp[2].i32 = sp[0].i32;
+  ip++;
+  NEXT;
+
+#pragma endregion
+
+#pragma region calls
+
+RET2:
+  sp[sf.pop + 1].i32 = sp[1].i32;
+
+RET1:
+  sp[sf.pop + 0].i32 = sp[0].i32;
+
+RET:
+  sp += sf.pop;
+  --rp;
+
+#ifdef _DEBUG
+  if (sf.in_full_trust && !rp->sf.in_full_trust) {
+    printf("------------------------------ LEAVE FULL TRUST "
+           "------------------------------\n");
+  }
+#endif
+
+  sf = rp->sf;
+  LOAD_IP;
+
+  NEXT;
+
+CALL:
+  do {
+    Module *modules = Module_as_ptr(vm, vm->modules);
+    uint8_t index = FETCH(1, u8);
+
+    if (index == INVALID_MODULE) {
+      index = sf.module;
+    } else {
+      const uint8_t *imports = uint8_t_as_ptr(vm, modules[sf.module].imports);
+      index = imports[index];
+    }
+
+    Module *module = &modules[index];
+    const FuncDef *f = (const FuncDef *)(module->image + FETCH(2, u16));
+
+    bool in_full_trust = sf.in_full_trust;
+    if (!in_full_trust &&
+        (f->flags &
+         (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
+      if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+          (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+        printf("<< SECURITY VIOLATION >>\n");
+        RETURN(MANGO_E_SECURITY);
+      }
+      printf("------------------------------ ENTER FULL TRUST "
+             "------------------------------\n");
+      in_full_trust = true;
+    }
+
+    if (sp - rp < 1 + f->loc_count + f->max_stack) {
+      printf("<< STACK OVERFLOW >>\n");
+      RETURN(MANGO_E_STACK_OVERFLOW);
+    }
+
+    ip += 4;
+    if ((f->flags & MANGO_FF_MACRO) == 0 || *ip != RET) {
+      SAVE_IP;
+      rp->sf = sf;
+      rp++;
+    }
+    sf.in_full_trust = in_full_trust;
+    sf.pop = (f->flags & MANGO_FF_MACRO) ? 0 : f->arg_count + f->loc_count;
+    sf.module = index;
+    ip = f->code;
+    sp -= f->loc_count;
+
+    NEXT;
+  } while (0);
+
+SYSCALL:
+  do {
+    Module *modules = Module_as_ptr(vm, vm->modules);
+    Module *module = &modules[sf.module];
+    const SysCallDef *f = (const SysCallDef *)(module->image + FETCH(1, u16));
+
+    if (!sf.in_full_trust) {
+      if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+          (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+        printf("<< SECURITY VIOLATION >>\n");
+        RETURN(MANGO_E_SECURITY);
+      }
+    }
+
+    if ((sp - rp) + f->arg_count < f->ret_count) {
+      printf("<< STACK OVERFLOW >>\n");
+      RETURN(MANGO_E_STACK_OVERFLOW);
+    }
+
+    ip += 3;
+    RETURN(MANGO_E_SYSCALL);
+  } while (0);
+
+#pragma endregion
+
+#pragma region i32 arithmetic
+
+ADD_I32:
+  BINARY1F(u32, __builtin_add_overflow);
+
+SUB_I32:
+  BINARY1F(u32, __builtin_sub_overflow);
+
+MUL_I32:
+  BINARY1F(u32, __builtin_mul_overflow);
+
+DIV_I32:
+  BINARY1D(i32, /);
+
+DIV_U32:
+  BINARY1D(u32, /);
+
+REM_I32:
+  BINARY1D(i32, %);
+
+REM_U32:
+  BINARY1D(u32, %);
+
+NEG_I32:
+  __builtin_sub_overflow(0, sp[0].i32, &sp[0].i32);
+  ip++;
+  NEXT;
+
+#pragma endregion
+
+#pragma region i64 arithmetic
+#ifndef MANGO_NO_I64
+
+ADD_I64:
+  BINARY2F(u64, __builtin_add_overflow);
+
+SUB_I64:
+  BINARY2F(u64, __builtin_sub_overflow);
+
+MUL_I64:
+  BINARY2F(u64, __builtin_mul_overflow);
+
+DIV_I64:
+  BINARY2D(i64, /);
+
+DIV_U64:
+  BINARY2D(u64, /);
+
+REM_I64:
+  BINARY2D(i64, %);
+
+REM_U64:
+  BINARY2D(u64, %);
+
+NEG_I64:
+  sp2 = (stackval2 *)sp;
+  __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
+  ip++;
+  NEXT;
+
+#else
+ADD_I64:
+SUB_I64:
+MUL_I64:
+DIV_I64:
+DIV_U64:
+REM_I64:
+REM_U64:
+NEG_I64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f32 arithmetic
+#ifndef MANGO_NO_F32
+
+ADD_F32:
+  BINARY1(f32, +);
+
+SUB_F32:
+  BINARY1(f32, -);
+
+MUL_F32:
+  BINARY1(f32, *);
+
+DIV_F32:
+  BINARY1(f32, /);
+
+REM_F32:
+  sp[1].f32 = fmodf(sp[1].f32, sp[0].f32);
+  sp++;
+  ip++;
+  NEXT;
+
+NEG_F32:
+  UNARY1(f32, -);
+
+#else
+ADD_F32:
+SUB_F32:
+MUL_F32:
+DIV_F32:
+REM_F32:
+NEG_F32:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f64 arithmetic
+#ifndef MANGO_NO_F64
+
+ADD_F64:
+  BINARY2(f64, +);
+
+SUB_F64:
+  BINARY2(f64, -);
+
+MUL_F64:
+  BINARY2(f64, *);
+
+DIV_F64:
+  BINARY2(f64, /);
+
+REM_F64:
+  sp2 = (stackval2 *)sp;
+  sp2[1].f64 = fmod(sp2[1].f64, sp2[0].f64);
+  sp += 2;
+  ip++;
+  NEXT;
+
+NEG_F64:
+  UNARY2(f64, -);
+
+#else
+ADD_F64:
+SUB_F64:
+MUL_F64:
+DIV_F64:
+REM_F64:
+NEG_F64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region i32 bitwise
+
+SHL_I32:
+  SHIFT1(u32, <<);
+
+SHR_I32:
+  SHIFT1(i32, >>);
+
+SHR_U32:
+  SHIFT1(u32, >>);
+
+AND_I32:
+  BINARY1(u32, &);
+
+OR_I32:
+  BINARY1(u32, |);
+
+XOR_I32:
+  BINARY1(u32, ^);
+
+NOT_I32:
+  UNARY1(u32, ~);
+
+#pragma endregion
+
+#pragma region i64 bitwise
+#ifndef MANGO_NO_I64
+
+SHL_I64:
+  SHIFT2(u64, <<);
+
+SHR_I64:
+  SHIFT2(i64, >>);
+
+SHR_U64:
+  SHIFT2(u64, >>);
+
+AND_I64:
+  BINARY2(u64, &);
+
+OR_I64:
+  BINARY2(u64, |);
+
+XOR_I64:
+  BINARY2(u64, ^);
+
+NOT_I64:
+  UNARY2(u64, ~);
+
+#else
+SHL_I64:
+SHR_I64:
+SHR_U64:
+AND_I64:
+OR_I64:
+XOR_I64:
+NOT_I64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region constants
+
+LDC_I32_M1:
+LDC_I32_0:
+LDC_I32_1:
+LDC_I32_2:
+LDC_I32_3:
+LDC_I32_4:
+LDC_I32_5:
+LDC_I32_6:
+LDC_I32_7:
+LDC_I32_8:
+  sp--;
+  sp[0].i32 = *ip - LDC_I32_0;
+  ip++;
+  NEXT;
+
+LDC_I32_S:
+  sp--;
+  sp[0].i32 = FETCH(1, i8);
+  ip += 2;
+  NEXT;
+
+LDC_I32:
+LDC_F32:
+  sp--;
+  sp[0].i32 = FETCH(1, i32);
+  ip += 5;
+  NEXT;
+
+LDC_I64:
+LDC_F64:
+#ifndef MANGO_NO_I64
+  sp -= 2;
+  sp2 = (stackval2 *)sp;
+  sp2[0].i64 = FETCH(1, i64);
+  ip += 9;
+  NEXT;
+#else
+  INVALID;
+#endif
+
+#pragma endregion
+
+#pragma region i32 conversion
+
+CONV_I8_I32:
+  CONVERT1(int8_t, i32, i32);
+
+CONV_I16_I32:
+  CONVERT1(int16_t, i32, i32);
+
+CONV_I64_I32:
+#ifndef MANGO_NO_I64
+  CONVERT21(int64_t, i64, i32);
+#else
+  INVALID;
+#endif
+
+CONV_F32_I32:
+#ifndef MANGO_NO_F32
+  CONVERT1(float, f32, i32);
+#else
+  INVALID;
+#endif
+
+CONV_F64_I32:
+#ifndef MANGO_NO_F64
+  CONVERT21(double, f64, i32);
+#else
+  INVALID;
+#endif
+
+#pragma endregion
+
+#pragma region i64 conversion
+#ifndef MANGO_NO_I64
+
+CONV_I8_I64:
+  CONVERT12(int8_t, i32, i64);
+
+CONV_I16_I64:
+  CONVERT12(int16_t, i32, i64);
+
+CONV_I32_I64:
+  CONVERT12(int32_t, i32, i64);
+
+CONV_F32_I64:
+#ifndef MANGO_NO_F32
+  CONVERT12(float, f32, i64);
+#else
+  INVALID;
+#endif
+
+CONV_F64_I64:
+#ifndef MANGO_NO_F64
+  CONVERT2(double, f64, i64);
+#else
+  INVALID;
+#endif
+
+#else
+CONV_I8_I64:
+CONV_I16_I64:
+CONV_I32_I64:
+CONV_F32_I64:
+CONV_F64_I64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f32 conversion
+#ifndef MANGO_NO_F32
+
+CONV_I8_F32:
+  CONVERT1(int8_t, i32, f32);
+
+CONV_I16_F32:
+  CONVERT1(int16_t, i32, f32);
+
+CONV_I32_F32:
+  CONVERT1(int32_t, i32, f32);
+
+CONV_I64_F32:
+#ifndef MANGO_NO_I64
+  CONVERT21(int64_t, i64, f32);
+#else
+  INVALID;
+#endif
+
+CONV_F64_F32:
+#ifndef MANGO_NO_F64
+  CONVERT21(double, f64, f32);
+#else
+  INVALID;
+#endif
+
+CONV_U8_F32:
+  CONVERT1(uint8_t, u32, f32);
+
+CONV_U16_F32:
+  CONVERT1(uint16_t, u32, f32);
+
+CONV_U32_F32:
+  CONVERT1(uint32_t, u32, f32);
+
+CONV_U64_F32:
+#ifndef MANGO_NO_I64
+  CONVERT21(uint64_t, u64, f32);
+#else
+  INVALID;
+#endif
+
+#else
+CONV_I8_F32:
+CONV_I16_F32:
+CONV_I32_F32:
+CONV_I64_F32:
+CONV_F64_F32:
+CONV_U8_F32:
+CONV_U16_F32:
+CONV_U32_F32:
+CONV_U64_F32:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f64 conversion
+#ifndef MANGO_NO_F64
+
+CONV_I8_F64:
+  CONVERT12(int8_t, i32, f64);
+
+CONV_I16_F64:
+  CONVERT12(int16_t, i32, f64);
+
+CONV_I32_F64:
+  CONVERT12(int32_t, i32, f64);
+
+CONV_I64_F64:
+#ifndef MANGO_NO_I64
+  CONVERT2(int64_t, i64, f64);
+#else
+  INVALID;
+#endif
+
+CONV_F32_F64:
+#ifndef MANGO_NO_F32
+  CONVERT12(float, f32, f64);
+#else
+  INVALID;
+#endif
+
+CONV_U8_F64:
+  CONVERT12(uint8_t, u32, f64);
+
+CONV_U16_F64:
+  CONVERT12(uint16_t, u32, f64);
+
+CONV_U32_F64:
+  CONVERT12(uint32_t, u32, f64);
+
+CONV_U64_F64:
+#ifndef MANGO_NO_I64
+  CONVERT2(uint64_t, u64, f64);
+#else
+  INVALID;
+#endif
+
+#else
+CONV_I8_F64:
+CONV_I16_F64:
+CONV_I32_F64:
+CONV_I64_F64:
+CONV_F32_F64:
+CONV_U8_F64:
+CONV_U16_F64:
+CONV_U32_F64:
+CONV_U64_F64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region u32 conversion
+
+CONV_F32_U32:
+#ifndef MANGO_NO_F32
+  CONVERT1(float, f32, u32);
+#else
+  INVALID;
+#endif
+
+CONV_F64_U32:
+#ifndef MANGO_NO_F64
+  CONVERT21(double, f64, u32);
+#else
+  INVALID;
+#endif
+
+CONV_U8_U32:
+  CONVERT1(uint8_t, u32, u32);
+
+CONV_U16_U32:
+  CONVERT1(uint16_t, u32, u32);
+
+CONV_U64_U32:
+#ifndef MANGO_NO_I64
+  CONVERT21(uint64_t, u64, u32);
+#else
+  INVALID;
+#endif
+
+#pragma endregion
+
+#pragma region u64 conversion
+#ifndef MANGO_NO_I64
+
+CONV_F32_U64:
+#ifndef MANGO_NO_F32
+  CONVERT12(float, f32, u64);
+#else
+  INVALID;
+#endif
+
+CONV_F64_U64:
+#ifndef MANGO_NO_F64
+  CONVERT2(double, f64, u64);
+#else
+  INVALID;
+#endif
+
+CONV_U8_U64:
+  CONVERT12(uint8_t, u32, u64);
+
+CONV_U16_U64:
+  CONVERT12(uint16_t, u32, u64);
+
+CONV_U32_U64:
+  CONVERT12(uint32_t, u32, u64);
+
+#else
+CONV_F32_U64:
+CONV_F64_U64:
+CONV_U8_U64:
+CONV_U16_U64:
+CONV_U32_U64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region i32 comparison
+
+CMP_EQ_I32:
+  COMPARE1(i32, ==);
+
+CMP_GT_I32:
+  COMPARE1(i32, >);
+
+CMP_GE_I32:
+  COMPARE1(i32, >=);
+
+CMP_LT_I32:
+  COMPARE1(i32, <);
+
+CMP_LE_I32:
+  COMPARE1(i32, <=);
+
+CMP_NE_I32:
+  COMPARE1(u32, !=);
+
+CMP_GT_U32:
+  COMPARE1(u32, >);
+
+CMP_GE_U32:
+  COMPARE1(u32, >=);
+
+CMP_LT_U32:
+  COMPARE1(u32, <);
+
+CMP_LE_U32:
+  COMPARE1(u32, <=);
+
+#pragma endregion
+
+#pragma region i64 comparison
+#ifndef MANGO_NO_I64
+
+CMP_EQ_I64:
+  COMPARE2(i64, ==);
+
+CMP_GT_I64:
+  COMPARE2(i64, >);
+
+CMP_GE_I64:
+  COMPARE2(i64, >=);
+
+CMP_LT_I64:
+  COMPARE2(i64, <);
+
+CMP_LE_I64:
+  COMPARE2(i64, <=);
+
+CMP_NE_I64:
+  COMPARE2(u64, !=);
+
+CMP_GT_U64:
+  COMPARE2(u64, >);
+
+CMP_GE_U64:
+  COMPARE2(u64, >=);
+
+CMP_LT_U64:
+  COMPARE2(u64, <);
+
+CMP_LE_U64:
+  COMPARE2(u64, <=);
+
+#else
+CMP_EQ_I64:
+CMP_GT_I64:
+CMP_GE_I64:
+CMP_LT_I64:
+CMP_LE_I64:
+CMP_NE_I64:
+CMP_GT_U64:
+CMP_GE_U64:
+CMP_LT_U64:
+CMP_LE_U64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f32 comparison
+#ifndef MANGO_NO_F32
+
+CMP_OEQ_F32:
+  COMPARE1(f32, ==);
+
+CMP_ONE_F32:
+  COMPARE1F(f32, islessgreater);
+
+CMP_OGT_F32:
+  COMPARE1F(f32, isgreater);
+
+CMP_OGE_F32:
+  COMPARE1F(f32, isgreaterequal);
+
+CMP_OLT_F32:
+  COMPARE1F(f32, isless);
+
+CMP_OLE_F32:
+  COMPARE1F(f32, islessequal);
+
+CMP_UEQ_F32:
+  COMPARE1F(f32, !islessgreater);
+
+CMP_UNE_F32:
+  COMPARE1(f32, !=);
+
+CMP_UGT_F32:
+  COMPARE1F(f32, !islessequal);
+
+CMP_UGE_F32:
+  COMPARE1F(f32, !isless);
+
+CMP_ULT_F32:
+  COMPARE1F(f32, !isgreaterequal);
+
+CMP_ULE_F32:
+  COMPARE1F(f32, !isgreater);
+
+#else
+CMP_OEQ_F32:
+CMP_ONE_F32:
+CMP_OGT_F32:
+CMP_OGE_F32:
+CMP_OLT_F32:
+CMP_OLE_F32:
+CMP_UEQ_F32:
+CMP_UNE_F32:
+CMP_UGT_F32:
+CMP_UGE_F32:
+CMP_ULT_F32:
+CMP_ULE_F32:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region f64 comparison
+#ifndef MANGO_NO_F64
+
+CMP_OEQ_F64:
+  COMPARE2(f64, ==);
+
+CMP_ONE_F64:
+  COMPARE2F(f64, islessgreater);
+
+CMP_OGT_F64:
+  COMPARE2F(f64, isgreater);
+
+CMP_OGE_F64:
+  COMPARE2F(f64, isgreaterequal);
+
+CMP_OLT_F64:
+  COMPARE2F(f64, isless);
+
+CMP_OLE_F64:
+  COMPARE2F(f64, islessequal);
+
+CMP_UEQ_F64:
+  COMPARE2F(f64, !islessgreater);
+
+CMP_UNE_F64:
+  COMPARE2(f64, !=);
+
+CMP_UGT_F64:
+  COMPARE2F(f64, !islessequal);
+
+CMP_UGE_F64:
+  COMPARE2F(f64, !isless);
+
+CMP_ULT_F64:
+  COMPARE2F(f64, !isgreaterequal);
+
+CMP_ULE_F64:
+  COMPARE2F(f64, !isgreater);
+
+#else
+CMP_OEQ_F64:
+CMP_ONE_F64:
+CMP_OGT_F64:
+CMP_OGE_F64:
+CMP_OLT_F64:
+CMP_OLE_F64:
+CMP_UEQ_F64:
+CMP_UNE_F64:
+CMP_UGT_F64:
+CMP_UGE_F64:
+CMP_ULT_F64:
+CMP_ULE_F64:
+  INVALID;
+#endif
+#pragma endregion
+
+#pragma region branches
+
+BR:
+  ip += 3 + FETCH(1, i16);
+  NEXT;
+
+BR_S:
+  ip += 2 + FETCH(1, i8);
+  NEXT;
+
+BRFALSE:
+  ip += 3 + (sp[0].i32 == 0 ? FETCH(1, i16) : 0);
+  sp++;
+  NEXT;
+
+BRFALSE_S:
+  ip += 2 + (sp[0].i32 == 0 ? FETCH(1, i8) : 0);
+  sp++;
+  NEXT;
+
+BRTRUE:
+  ip += 3 + (sp[0].i32 != 0 ? FETCH(1, i16) : 0);
+  sp++;
+  NEXT;
+
+BRTRUE_S:
+  ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
+  sp++;
+  NEXT;
+
+#pragma endregion
+
+#pragma region locals
+
+LDLOC_I32:
+  tmp_i32 = sp[FETCH(1, u8)].i32;
+  sp--;
+  sp[0].i32 = tmp_i32;
+  ip += 2;
+  NEXT;
+
+STLOC_I32:
+  sp[FETCH(1, u8)].i32 = sp[0].i32;
+  sp++;
+  ip += 2;
+  NEXT;
+
+#pragma endregion
+
+#pragma region object model
+
+NEWOBJ:
+  do {
+    uint32_t size = FETCH(1, u16);
+    void *obj = MangoHeapAlloc(vm, 1, size, __alignof(stackval), 0);
+    if (!obj) {
+      RETURN(MANGO_E_OUT_OF_MEMORY);
+    }
+    sp--;
+    sp[0].ref = void_as_ref(vm, obj);
+    ip += 3;
+    NEXT;
+  } while (0);
+
+NEWARR:
+  do {
+    int32_t count = sp[0].i32;
+    if (count < 0) {
+      RETURN(MANGO_E_ARGUMENT);
+    }
+    uint32_t size = FETCH(1, u16);
+    void *arr =
+        MangoHeapAlloc(vm, (uint32_t)count, size, __alignof(stackval), 0);
+    if (!arr) {
+      RETURN(MANGO_E_OUT_OF_MEMORY);
+    }
+    sp--;
+    sp[0].ref = void_as_ref(vm, arr);
+    ip += 3;
+    NEXT;
+  } while (0);
+
+LDFLD_I32:
+  sp[0].i32 = MangoReadI32(void_as_ptr(vm, sp[0].ref), FETCH(1, u16));
+  ip += 3;
+  NEXT;
+
+STFLD_I32:
+  MangoWriteI32(void_as_ptr(vm, sp[1].ref), FETCH(1, u16), sp[0].i32);
+  sp += 2;
+  ip += 3;
+  NEXT;
+
+LDSFLD_I32:
+  do {
+    Module *modules = Module_as_ptr(vm, vm->modules);
+    Module *module = &modules[sf.module];
+    void *static_data = void_as_ptr(vm, module->static_data);
+    sp--;
+    sp[0].i32 = MangoReadI32(static_data, FETCH(1, u16));
+    ip += 3;
+    NEXT;
+  } while (0);
+
+STSFLD_I32:
+  do {
+    Module *modules = Module_as_ptr(vm, vm->modules);
+    Module *module = &modules[sf.module];
+    void *static_data = void_as_ptr(vm, module->static_data);
+    MangoWriteI32(static_data, FETCH(1, u16), sp[0].i32);
+    sp++;
+    ip += 3;
+    NEXT;
+  } while (0);
+
+#pragma endregion
+
+UNUSED:
+  INVALID;
+}
+
+#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define VISITED 1
+
+static MangoResult SetEntryPoint(MangoVM *vm, uint8_t index, uint32_t offset) {
+  Module *modules = Module_as_ptr(vm, vm->modules);
+  Module *module = &modules[index];
+  const FuncDef *f = (const FuncDef *)(module->image + offset);
+
+  register StackFrame sf;
+  register const uint8_t *ip;
+  register stackval *rp;
+  register stackval *sp;
+
+  LOAD_STATE;
+
+  bool in_full_trust = sf.in_full_trust;
+  if (!in_full_trust &&
+      (f->flags &
+       (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
+    if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+        (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+      printf("<< SECURITY VIOLATION >>\n");
+      RETURN(MANGO_E_SECURITY);
+    }
+    printf("------------------------------ ENTER FULL TRUST "
+           "------------------------------\n");
+    in_full_trust = true;
+  }
+
+  if (sp - rp < 1 + f->loc_count + f->max_stack) {
+    printf("<< STACK OVERFLOW >>\n");
+    RETURN(MANGO_E_STACK_OVERFLOW);
+  }
+
+  ip += 0;
+  SAVE_IP;
+  rp->sf = sf;
+  rp++;
+  sf.in_full_trust = in_full_trust;
+  sf.pop = (f->flags & MANGO_FF_MACRO) ? 0 : f->arg_count + f->loc_count;
+  sf.module = index;
+  ip = f->code;
+  sp -= f->loc_count;
+
+  RETURN(MANGO_E_SUCCESS);
+}
+
+MangoResult MangoExecute(MangoVM *vm) {
+  if (!vm) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (vm->modules_imported == 0) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+  if (vm->modules_imported != vm->modules_created) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+
+  MangoResult result = Execute(vm);
+  if (result != MANGO_E_SUCCESS) {
+    return result;
+  }
+
+  Module *modules = Module_as_ptr(vm, vm->modules);
+  uint8_t head = vm->module_init_head;
+
+  while (head != INVALID_MODULE) {
+    uint8_t index = head;
+    Module *module = &modules[index];
+    const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
+
+    if ((module->flags & VISITED) == 0) {
+      module->flags |= VISITED;
+
+      const uint8_t *imports = uint8_t_as_ptr(vm, module->imports);
+
+      for (uint8_t i = 0; i < m->import_count; i++) {
+        uint8_t p = imports[i];
+        Module *import = &modules[p];
+
+        if ((import->flags & VISITED) == 0) {
+          if (head != p) {
+            if (import->init_prev != INVALID_MODULE) {
+              modules[import->init_prev].init_next = import->init_next;
+            }
+            if (import->init_next != INVALID_MODULE) {
+              modules[import->init_next].init_prev = import->init_prev;
+            }
+            if (head != INVALID_MODULE) {
+              modules[head].init_prev = p;
+            }
+            import->init_next = head;
+            import->init_prev = INVALID_MODULE;
+            head = p;
+          }
+        }
+      }
+    } else {
+      head = module->init_next;
+      vm->module_init_head = head;
+      module->init_next = INVALID_MODULE;
+      module->init_prev = INVALID_MODULE;
+      if (head != INVALID_MODULE) {
+        modules[head].init_prev = INVALID_MODULE;
+      }
+
+      printf("initialize module %u\n", index);
+      if (m->static_init != 0) {
+        result = SetEntryPoint(vm, index, m->static_init);
+        if (result != MANGO_E_SUCCESS) {
+          return result;
+        }
+        result = Execute(vm);
+        if (result != MANGO_E_SUCCESS) {
+          return result;
+        }
+      }
+    }
+  }
+
+#ifdef _DEBUG
+  printf("\n  stack\n  -----\n");
+  for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
+                      *sp = stackval_as_ptr(vm, vm->sp),
+                      *rp = stackval_as_ptr(vm, vm->rp), *p = rp;
+       p != stack; p++) {
+    printf("   %3u %c   %8X\n", (uint32_t)(p - rp), (p == sp) ? '*' : ' ',
+           p->u32);
+  }
+#endif
+
+  return MANGO_E_SUCCESS;
+}
+
+////////////////////////////////////////////////////////////////////////////////

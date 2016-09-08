@@ -19,5 +19,13 @@
     <ClInclude Include="src\mango.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\mango_metadata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\mango_opcodes.inc">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
