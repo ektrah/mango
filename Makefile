@@ -21,11 +21,11 @@ all: $(LIBMANGO)
 
 bin/libmango.so: src/mango.c src/mango.h
 	mkdir -p bin
-	$(CC) $(CFLAGS) -shared -fPIC -o $@ $<
+	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -fPIC -o $@ $<
 
 bin/libmango.dylib: src/mango.c src/mango.h
 	mkdir -p bin
-	$(CC) $(CFLAGS) -dynamiclib -o $@ $<
+	$(CC) $(CFLAGS) -DMANGO_EXPORTS -dynamiclib -o $@ $<
 
 clean:
 	rm -rf bin obj
