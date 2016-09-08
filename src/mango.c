@@ -483,7 +483,7 @@ static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
 
   if (!vm->stack.address) {
     MangoResult result = MangoStackCreate(vm, s->stack_size * sizeof(stackval));
-    if (result != 0) {
+    if (result != MANGO_E_SUCCESS) {
       return result;
     }
   }
