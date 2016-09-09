@@ -58,7 +58,7 @@ typedef struct StartupDef {
 
 typedef enum FuncFlags {
   MANGO_FF_NONE = 0,
-  MANGO_FF_MACRO = 1,
+  MANGO_FF_NAKED = 1,
   MANGO_FF_SECURITY_CRITICAL = 2,
   MANGO_FF_SECURITY_SAFE_CRITICAL = 4,
 } FuncFlags;

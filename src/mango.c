@@ -974,7 +974,7 @@ CALL:
       rp++;
     }
     in_full_trust = in_full_trust_new;
-    pop = (f->flags & MANGO_FF_MACRO) != 0 ? 0 : f->arg_count + f->loc_count;
+    pop = (f->flags & MANGO_FF_NAKED) != 0 ? 0 : f->arg_count + f->loc_count;
     mp = module;
     ip = f->code;
     sp -= f->loc_count;
@@ -1852,7 +1852,7 @@ static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
   rp->sf = PACK_STATE();
   rp++;
   in_full_trust = in_full_trust_new;
-  pop = (f->flags & MANGO_FF_MACRO) != 0 ? 0 : f->arg_count + f->loc_count;
+  pop = (f->flags & MANGO_FF_NAKED) != 0 ? 0 : f->arg_count + f->loc_count;
   mp = module;
   ip = f->code;
   sp -= f->loc_count;
