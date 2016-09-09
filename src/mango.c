@@ -969,7 +969,7 @@ CALL:
     }
 
     ip += 4;
-    if ((f->flags & MANGO_FF_MACRO) == 0 || *ip != RET) {
+    if (!(pop == 0 && *ip == RET)) {
       rp->sf = PACK_STATE();
       rp++;
     }
