@@ -646,30 +646,15 @@ typedef union packed {
 #define PACK_STATE()                                                           \
   (StackFrame) { in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image) }
 
-#define LOAD_STATE                                                             \
+#define RETURN(Result)                                                         \
   do {                                                                         \
-    rp = stackval_as_ptr(vm, vm->stack) + vm->rp;                              \
-    sp = stackval_as_ptr(vm, vm->stack) + vm->sp;                              \
-    UNPACK_STATE(vm->sf);                                                      \
-  } while (0)
-
-#define SAVE_STATE                                                             \
-  do {                                                                         \
-    vm->sf = PACK_STATE();                                                     \
-    vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));                  \
-    vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));                  \
-  } while (0)
-
-#define RETURN(result)                                                         \
-  do {                                                                         \
-    SAVE_STATE;                                                                \
-    return (result);                                                           \
+    result = Result;                                                           \
+    goto done;                                                                 \
   } while (0)
 
 #define INVALID                                                                \
   do {                                                                         \
-    printf("<< INVALID PROGRAM >>\n");                                         \
-    RETURN(MANGO_E_INVALID_PROGRAM);                                           \
+    goto invalid;                                                              \
   } while (0)
 
 #define BINARY1(ty, op)                                                        \
@@ -812,13 +797,14 @@ static MangoResult Execute(MangoVM *vm) {
   };
 #endif
 
+  stackval *rp;
+  stackval *sp;
   bool in_full_trust;
   uint8_t pop;
   Module *mp;
   const uint8_t *ip;
-  stackval *rp;
-  stackval *sp;
 
+  MangoResult result;
   stackval2 *sp2;
   int32_t tmp_i32;
   uint32_t tmp_u32;
@@ -827,7 +813,9 @@ static MangoResult Execute(MangoVM *vm) {
   float tmp_f32;
   double tmp_f64;
 
-  LOAD_STATE;
+  rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
+  sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
+  UNPACK_STATE(vm->sf);
   NEXT;
 
 #pragma region basic
@@ -1816,6 +1804,16 @@ STSFLD_I32:
 
 UNUSED:
   INVALID;
+
+invalid:
+  printf("<< INVALID PROGRAM >>\n");
+  result = MANGO_E_INVALID_PROGRAM;
+
+done:
+  vm->sf = PACK_STATE();
+  vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
+  vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
+  return result;
 }
 
 #pragma clang diagnostic pop
