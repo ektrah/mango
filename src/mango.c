@@ -148,11 +148,12 @@ typedef struct MangoVM {
   uint8_t module_init_head;
   uint8_t _reserved1;
 
-  stackvalRef stack;
-
   StackFrame sf;
-  stackvalRef rp;
-  stackvalRef sp;
+  stackvalRef stack;
+  uint16_t stack_size;
+  uint16_t rp;
+  uint16_t sp;
+  uint16_t sp_expected;
 
   uint32_t _reserved2;
 } MangoVM;
@@ -313,14 +314,14 @@ MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (size > 65535 * sizeof(stackval)) {
+  if (size > UINT16_MAX * sizeof(stackval)) {
     return MANGO_E_ARGUMENT;
   }
   if (vm->stack.address) {
     return MANGO_E_INVALID_OPERATION;
   }
 
-  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+  uint16_t count = (uint16_t)((size + sizeof(stackval) - 1) / sizeof(stackval));
 
   stackval *stack =
       MangoHeapAlloc(vm, count, sizeof(stackval), __alignof(stackval), 0);
@@ -329,9 +330,11 @@ MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
     return MANGO_E_OUT_OF_MEMORY;
   }
 
-  vm->rp = stackval_as_ref(vm, stack);
-  vm->sp = stackval_as_ref(vm, stack + count);
-  vm->stack = vm->sp;
+  vm->stack = stackval_as_ref(vm, stack);
+  vm->stack_size = count;
+  vm->rp = 0;
+  vm->sp = count;
+  vm->sp_expected = count;
   return MANGO_E_SUCCESS;
 }
 
@@ -339,54 +342,48 @@ void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags) {
   if (!vm) {
     return NULL;
   }
-  if (size > 65535 * sizeof(stackval)) {
+  if (size > UINT16_MAX * sizeof(stackval)) {
     return NULL;
   }
   if (!vm->stack.address) {
     return NULL;
   }
 
-  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+  uint16_t count = (uint16_t)((size + sizeof(stackval) - 1) / sizeof(stackval));
 
-  stackval *rp = stackval_as_ptr(vm, vm->rp);
-  stackval *sp = stackval_as_ptr(vm, vm->sp);
-
-  if ((uint32_t)(sp - rp) < count) {
+  if (vm->sp - vm->rp < count) {
     return NULL;
   }
 
-  sp -= count;
-  vm->sp = stackval_as_ref(vm, sp);
+  vm->sp -= count;
+
+  stackval *block = stackval_as_ptr(vm, vm->stack) + vm->sp;
 
   if ((flags & MANGO_ALLOC_ZERO_MEMORY) != 0) {
-    memset(sp, 0, size);
+    memset(block, 0, size);
   }
 
-  return sp;
+  return block;
 }
 
 MangoResult MangoStackFree(MangoVM *vm, uint32_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (size > 65535 * sizeof(stackval)) {
+  if (size > UINT16_MAX * sizeof(stackval)) {
     return MANGO_E_ARGUMENT;
   }
   if (!vm->stack.address) {
     return MANGO_E_INVALID_OPERATION;
   }
 
-  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+  uint16_t count = (uint16_t)((size + sizeof(stackval) - 1) / sizeof(stackval));
 
-  stackval *stack = stackval_as_ptr(vm, vm->stack);
-  stackval *sp = stackval_as_ptr(vm, vm->sp);
-
-  if ((uint32_t)(stack - sp) < count) {
-    return MANGO_E_STACK_UNDERFLOW;
+  if (vm->stack_size - vm->sp < count) {
+    return MANGO_E_STACK_OVERFLOW;
   }
 
-  sp += count;
-  vm->sp = stackval_as_ref(vm, sp);
+  vm->sp += count;
   return MANGO_E_SUCCESS;
 }
 
@@ -398,7 +395,7 @@ void *MangoStackTop(const MangoVM *vm) {
     return NULL;
   }
 
-  return stackval_as_ptr(vm, vm->sp);
+  return stackval_as_ptr(vm, vm->stack) + vm->sp;
 }
 
 uint32_t MangoStackAvailable(const MangoVM *vm) {
@@ -409,9 +406,7 @@ uint32_t MangoStackAvailable(const MangoVM *vm) {
     return 0;
   }
 
-  stackval *rp = stackval_as_ptr(vm, vm->rp);
-  stackval *sp = stackval_as_ptr(vm, vm->sp);
-  return (uint32_t)(sp - rp) * sizeof(stackval);
+  return (vm->sp - vm->rp) * sizeof(stackval);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -610,6 +605,8 @@ const uint8_t *MangoModuleMissing(const MangoVM *vm) {
 #pragma clang diagnostic ignored "-Wunused-macros"
 #pragma clang diagnostic ignored "-Wfloat-equal"
 
+#pragma region macros
+
 #if defined(__clang__) || defined(__GNUC__)
 #define NEXT                                                                   \
   do {                                                                         \
@@ -652,16 +649,16 @@ typedef union packed {
 
 #define LOAD_STATE                                                             \
   do {                                                                         \
-    rp = stackval_as_ptr(vm, vm->rp);                                          \
-    sp = stackval_as_ptr(vm, vm->sp);                                          \
+    rp = stackval_as_ptr(vm, vm->stack) + vm->rp;                              \
+    sp = stackval_as_ptr(vm, vm->stack) + vm->sp;                              \
     UNPACK_STATE(vm->sf);                                                      \
   } while (0)
 
 #define SAVE_STATE                                                             \
   do {                                                                         \
     vm->sf = PACK_STATE();                                                     \
-    vm->sp = stackval_as_ref(vm, sp);                                          \
-    vm->rp = stackval_as_ref(vm, rp);                                          \
+    vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));                  \
+    vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));                  \
   } while (0)
 
 #define RETURN(result)                                                         \
@@ -800,6 +797,8 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
+#pragma endregion
+
 static MangoResult Execute(MangoVM *vm) {
   static const void *const dispatch_table[] = {
 #define OPCODE(c, s, i) &&c,
@@ -840,9 +839,14 @@ NOP:
 
 BREAK:
   ++ip;
+  vm->sp_expected = vm->stack_size;
   RETURN(MANGO_E_BREAKPOINT);
 
 HALT:
+  if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
+    RETURN(MANGO_E_STACK_IMBALANCE);
+  }
+  vm->sp_expected = vm->stack_size;
   RETURN(MANGO_E_SUCCESS);
 
 POP:
@@ -1002,6 +1006,8 @@ SYSCALL:
     }
 
     ip += 3;
+    vm->sp_expected = (uint16_t)(
+        ((sp - stackval_as_ptr(vm, vm->stack)) + f->arg_count) - f->ret_count);
     RETURN(MANGO_E_SYSCALL);
   } while (0);
 
@@ -1872,6 +1878,9 @@ MangoResult MangoExecute(MangoVM *vm) {
   if (vm->modules_imported != vm->modules_created) {
     return MANGO_E_INVALID_OPERATION;
   }
+  if (vm->sp != vm->sp_expected) {
+    return MANGO_E_STACK_IMBALANCE;
+  }
 
   MangoResult result = Execute(vm);
   if (result != MANGO_E_SUCCESS) {
@@ -1937,11 +1946,10 @@ MangoResult MangoExecute(MangoVM *vm) {
 #ifdef _DEBUG
   printf("\n  stack\n  -----\n");
   for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
-                      *sp = stackval_as_ptr(vm, vm->sp),
-                      *rp = stackval_as_ptr(vm, vm->rp), *p = rp;
-       p != stack; p++) {
-    printf("   %3u %c   %8X\n", (uint32_t)(p - rp), (p == sp) ? '*' : ' ',
-           p->u32);
+                      *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
+       p != stack + vm->stack_size; p++) {
+    printf("   %3u %c   %8X\n", (uint32_t)(p - stack),
+           (p == sp || p == rp) ? '*' : ' ', p->u32);
   }
 #endif
 
