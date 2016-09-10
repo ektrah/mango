@@ -78,6 +78,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#pragma pack(push, 4)
+
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
@@ -107,7 +109,6 @@ typedef union Value {
   voidRef ref;
 } stackval;
 
-#pragma pack(push, 4)
 typedef union Value2 {
   struct {
     uint8_tRef ref;
@@ -125,7 +126,6 @@ typedef union Value2 {
   double f64;
 #endif
 } stackval2;
-#pragma pack(pop)
 
 typedef struct MangoVM {
   union {
@@ -184,6 +184,8 @@ MANGO_DEFINE_REF_TYPE(stackval, )
 MANGO_DEFINE_REF_TYPE(Module, )
 MANGO_DEFINE_REF_TYPE(ModuleName, const)
 
+#pragma pack(pop)
+
 #if defined(__clang__) || defined(__GNUC__)
 _Static_assert(sizeof(StackFrame) == 4, "Incorrect layout");
 _Static_assert(__alignof(StackFrame) == 2, "Incorrect layout");
@@ -192,9 +194,9 @@ _Static_assert(__alignof(stackval) == 4, "Incorrect layout");
 _Static_assert(sizeof(stackval2) == 8, "Incorrect layout");
 _Static_assert(__alignof(stackval2) == 4, "Incorrect layout");
 _Static_assert(sizeof(MangoVM) == 64, "Incorrect layout");
-_Static_assert(__alignof(MangoVM) == 8, "Incorrect layout");
+_Static_assert(__alignof(MangoVM) == 4, "Incorrect layout");
 _Static_assert(sizeof(Module) == 32, "Incorrect layout");
-_Static_assert(__alignof(Module) == 8, "Incorrect layout");
+_Static_assert(__alignof(Module) == 4, "Incorrect layout");
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -268,7 +270,7 @@ void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
   if (!vm) {
     return NULL;
   }
-  if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
+  if (!(alignment == 1 || alignment == 2 || alignment == 4)) {
     return NULL;
   }
   if (__builtin_mul_overflow(count, size, &total_size)) {
