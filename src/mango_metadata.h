@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#define MANGO_HEADER_MAGIC 127
+#define MANGO_HEADER_MAGIC 2
 #define MANGO_HEADER_SIZE 2
 
 #pragma pack(push, 1)
@@ -53,7 +53,6 @@ typedef struct StartupDef {
   uint16_t features;
   uint16_t stack_size;
   uint8_t module_count;
-  uint8_t exit_stub[1];
 } StartupDef;
 
 typedef enum FuncFlags {

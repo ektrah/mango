@@ -496,7 +496,6 @@ static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
   vm->modules = Module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
-  vm->sf.ip = (uint16_t)(s->exit_stub - image);
 
   Module *module = &modules[0];
   module->image = image;
@@ -1827,45 +1826,34 @@ UNUSED:
 #define VISITED 1
 
 static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
-  bool in_full_trust;
-  uint8_t pop;
-  Module *mp;
-  const uint8_t *ip;
-  stackval *rp;
-  stackval *sp;
-
-  LOAD_STATE;
-
   const FuncDef *f = (const FuncDef *)(module->image + offset);
 
-  bool in_full_trust_new = in_full_trust;
-  if (!in_full_trust &&
-      (f->flags &
+  bool in_full_trust = false;
+  if ((f->flags &
        (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
     if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
         (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
       printf("<< SECURITY VIOLATION >>\n");
-      RETURN(MANGO_E_SECURITY);
+      return MANGO_E_SECURITY;
     }
     printf("------------------------------ ENTER FULL TRUST "
            "------------------------------\n");
-    in_full_trust_new = true;
+    in_full_trust = true;
   }
 
-  if (sp - rp < 1 + f->loc_count + f->max_stack) {
+  if (vm->stack_size < 1 + f->loc_count + f->max_stack) {
     printf("<< STACK OVERFLOW >>\n");
-    RETURN(MANGO_E_STACK_OVERFLOW);
+    return MANGO_E_STACK_OVERFLOW;
   }
 
-  rp->sf = PACK_STATE();
-  rp++;
-  in_full_trust = in_full_trust_new;
-  pop = (f->flags & MANGO_FF_NAKED) != 0 ? 0 : f->arg_count + f->loc_count;
-  mp = module;
-  ip = f->code;
-  sp -= f->loc_count;
+  stackval *rp = stackval_as_ptr(vm, vm->stack);
+  rp->sf = (StackFrame){false, 0, 0, 0};
+  vm->rp = 1;
 
-  RETURN(MANGO_E_SUCCESS);
+  uint16_t ip = (uint16_t)(f->code - module->image);
+  vm->sf = (StackFrame){in_full_trust, f->loc_count, module->index, ip};
+  vm->sp -= f->loc_count;
+  return MANGO_E_SUCCESS;
 }
 
 MangoResult MangoExecute(MangoVM *vm) {
