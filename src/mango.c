@@ -87,7 +87,7 @@ MANGO_DECLARE_REF_TYPE(Module)
 MANGO_DECLARE_REF_TYPE(ModuleName)
 
 typedef enum OpCode {
-#define OPCODE(c, s, i) c,
+#define OPCODE(c,s,pop,push,args,i) c,
 #include "mango_opcodes.inc"
 #undef OPCODE
 } OpCode;
@@ -785,13 +785,13 @@ typedef union packed {
 
 static MangoResult Execute(MangoVM *vm) {
   static const void *const dispatch_table[] = {
-#define OPCODE(c, s, i) &&c,
+#define OPCODE(c,s,pop,push,args,i) &&c,
 #include "mango_opcodes.inc"
 #undef OPCODE
   };
 #ifdef _DEBUG
   static const char *const opcodes[] = {
-#define OPCODE(c, s, i) s,
+#define OPCODE(c,s,pop,push,args,i) s,
 #include "mango_opcodes.inc"
 #undef OPCODE
   };
