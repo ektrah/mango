@@ -781,11 +781,11 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
-#define LOAD(ref, cast, ty)                                                     \
+#define LOAD(ref, cast, ty)                                                    \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
-    sp[0].ty = ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0];                     \
+    sp[0].ty = ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0];                    \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (0)
@@ -801,11 +801,11 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define STORE(ref, cast, ty, pop)                                               \
+#define STORE(ref, cast, ty, pop)                                              \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
-    ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0] = (cast)sp[0].ty;                 \
+    ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0] = (cast)sp[0].ty;              \
     sp += 1 + pop;                                                             \
     ip += 3;                                                                   \
     NEXT;                                                                      \
