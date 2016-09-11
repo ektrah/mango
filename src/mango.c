@@ -678,42 +678,6 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
-#define UNARY1(ty, op)                                                         \
-  sp[0].ty = op(sp[0].ty);                                                     \
-  ip++;                                                                        \
-  NEXT;
-
-#define SHIFT1(ty, op)                                                         \
-  sp[1].ty = sp[1].ty op sp[0].i32;                                            \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
-
-#define CONVERT1(cast, dest, src)                                              \
-  sp[0].dest = (cast)sp[0].src;                                                \
-  ip++;                                                                        \
-  NEXT;
-
-#define CONVERT21(cast, dest, src)                                             \
-  tmp_##src = sp[0].src;                                                       \
-  sp--;                                                                        \
-  sp2 = (stackval2 *)sp;                                                       \
-  sp2[0].dest = (cast)tmp_##src;                                               \
-  ip++;                                                                        \
-  NEXT;
-
-#define COMPARE1(mem, op)                                                      \
-  sp[1].i32 = sp[1].mem op sp[0].mem;                                          \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
-
-#define COMPARE1F(mem, op)                                                     \
-  sp[1].i32 = op(sp[1].mem, sp[0].mem);                                        \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
-
 #define BINARY2(ty, op)                                                        \
   sp2 = (stackval2 *)sp;                                                       \
   sp2[1].ty = sp2[1].ty op sp2[0].ty;                                          \
@@ -738,9 +702,20 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
+#define UNARY1(ty, op)                                                         \
+  sp[0].ty = op(sp[0].ty);                                                     \
+  ip++;                                                                        \
+  NEXT;
+
 #define UNARY2(ty, op)                                                         \
   sp2 = (stackval2 *)sp;                                                       \
   sp2[0].ty = op(sp2[0].ty);                                                   \
+  ip++;                                                                        \
+  NEXT;
+
+#define SHIFT1(ty, op)                                                         \
+  sp[1].ty = sp[1].ty op sp[0].i32;                                            \
+  sp++;                                                                        \
   ip++;                                                                        \
   NEXT;
 
@@ -748,6 +723,19 @@ typedef union packed {
   sp2 = (stackval2 *)(sp + 1);                                                 \
   sp2[0].ty = sp2[0].ty op sp[0].i32;                                          \
   sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT1(cast, dest, src)                                              \
+  sp[0].dest = (cast)sp[0].src;                                                \
+  ip++;                                                                        \
+  NEXT;
+
+#define CONVERT21(cast, dest, src)                                             \
+  tmp_##src = sp[0].src;                                                       \
+  sp--;                                                                        \
+  sp2 = (stackval2 *)sp;                                                       \
+  sp2[0].dest = (cast)tmp_##src;                                               \
   ip++;                                                                        \
   NEXT;
 
@@ -762,6 +750,18 @@ typedef union packed {
 #define CONVERT2(cast, dest, src)                                              \
   sp2 = (stackval2 *)sp;                                                       \
   sp2[0].dest = (cast)sp2[0].src;                                              \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE1(mem, op)                                                      \
+  sp[1].i32 = sp[1].mem op sp[0].mem;                                          \
+  sp++;                                                                        \
+  ip++;                                                                        \
+  NEXT;
+
+#define COMPARE1F(mem, op)                                                     \
+  sp[1].i32 = op(sp[1].mem, sp[0].mem);                                        \
+  sp++;                                                                        \
   ip++;                                                                        \
   NEXT;
 
