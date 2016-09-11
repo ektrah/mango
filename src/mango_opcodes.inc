@@ -41,6 +41,7 @@ OPCODE(TUCK,            "tuck",             2,      3,      0,      0x00)
 
 OPCODE(LDLOC,           "ldloc",            0,      1,      1,      0x00)
 OPCODE(LDLOC2,          "ldloc2",           0,      2,      1,      0x00)
+OPCODE(LDLOCA,          "ldloca",           0,      1,      1,      0x00)
 OPCODE(STLOC,           "stloc",            1,      0,      1,      0x00)
 OPCODE(STLOC2,          "stloc2",           2,      0,      1,      0x00)
 

@@ -923,6 +923,13 @@ LDLOC2:
   ip += 2;
   NEXT;
 
+LDLOCA:
+  tmp_u32 = FETCH(1, u8);
+  sp--;
+  sp[0].ref = void_as_ref(vm, &sp[1 + tmp_u32]);
+  ip += 2;
+  NEXT;
+
 STLOC:
   tmp_u32 = FETCH(1, u8);
   sp[tmp_u32].i32 = sp[0].i32;
