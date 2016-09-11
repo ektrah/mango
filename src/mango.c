@@ -781,6 +781,46 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
+#define LOAD(ref, cast, ty)                                                     \
+  do {                                                                         \
+    tmp_u32 = FETCH(1, u16);                                                   \
+    tmp_ref = void_as_ptr(vm, ref);                                            \
+    sp[0].ty = ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0];                     \
+    ip += 3;                                                                   \
+    NEXT;                                                                      \
+  } while (0)
+
+#define LOAD2(ref)                                                             \
+  do {                                                                         \
+    tmp_u32 = FETCH(1, u16);                                                   \
+    tmp_ref = void_as_ptr(vm, ref);                                            \
+    sp--;                                                                      \
+    sp[0].i32 = ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[0];                \
+    sp[1].i32 = ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[1];                \
+    ip += 3;                                                                   \
+    NEXT;                                                                      \
+  } while (0)
+
+#define STORE(ref, cast, ty, pop)                                               \
+  do {                                                                         \
+    tmp_u32 = FETCH(1, u16);                                                   \
+    tmp_ref = void_as_ptr(vm, ref);                                            \
+    ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0] = (cast)sp[0].ty;                 \
+    sp += 1 + pop;                                                             \
+    ip += 3;                                                                   \
+    NEXT;                                                                      \
+  } while (0)
+
+#define STORE2(ref, pop)                                                       \
+  do {                                                                         \
+    tmp_u32 = FETCH(1, u16);                                                   \
+    tmp_ref = void_as_ptr(vm, ref);                                            \
+    ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[0] = sp[0].i32;                \
+    ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[1] = sp[1].i32;                \
+    sp += 2 + pop;                                                             \
+    ip += 3;                                                                   \
+  } while (0)
+
 #pragma endregion
 
 static MangoResult Execute(MangoVM *vm) {
@@ -812,6 +852,7 @@ static MangoResult Execute(MangoVM *vm) {
   uint64_t tmp_u64;
   float tmp_f32;
   double tmp_f64;
+  void *tmp_ref;
 
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
@@ -1795,34 +1836,76 @@ NEWARR:
     NEXT;
   } while (0);
 
-LDFLD_I32:
-  sp[0].i32 = MangoReadI32(void_as_ptr(vm, sp[0].ref), FETCH(1, u16));
+LDFLD_I8:
+  LOAD(sp[0].ref, int8_t, i32);
+
+LDFLD_I16:
+  LOAD(sp[0].ref, int16_t, i32);
+
+LDFLD:
+  LOAD(sp[0].ref, int32_t, i32);
+
+LDFLD2:
+  LOAD2(sp[0].ref);
+
+LDFLDA:
+  sp[0].ref.address += FETCH(1, u16);
   ip += 3;
   NEXT;
 
-STFLD_I32:
-  MangoWriteI32(void_as_ptr(vm, sp[1].ref), FETCH(1, u16), sp[0].i32);
-  sp += 2;
+LDFLD_U8:
+  LOAD(sp[0].ref, uint8_t, u32);
+
+LDFLD_U16:
+  LOAD(sp[0].ref, uint16_t, u32);
+
+STFLD_I8:
+  STORE(sp[1].ref, int8_t, i32, 1);
+
+STFLD_I16:
+  STORE(sp[1].ref, int16_t, i32, 1);
+
+STFLD:
+  STORE(sp[1].ref, int32_t, i32, 1);
+
+STFLD2:
+  STORE2(sp[2].ref, 1);
+
+LDSFLD_I8:
+  LOAD(mp->static_data, int8_t, i32);
+
+LDSFLD_I16:
+  LOAD(mp->static_data, int16_t, i32);
+
+LDSFLD:
+  LOAD(mp->static_data, int32_t, i32);
+
+LDSFLD2:
+  LOAD2(mp->static_data);
+
+LDSFLDA:
+  sp--;
+  sp[0].ref.address = mp->static_data.address + FETCH(1, u16);
   ip += 3;
   NEXT;
 
-LDSFLD_I32:
-  do {
-    void *static_data = void_as_ptr(vm, mp->static_data);
-    sp--;
-    sp[0].i32 = MangoReadI32(static_data, FETCH(1, u16));
-    ip += 3;
-    NEXT;
-  } while (0);
+LDSFLD_U8:
+  LOAD(mp->static_data, uint8_t, u32);
 
-STSFLD_I32:
-  do {
-    void *static_data = void_as_ptr(vm, mp->static_data);
-    MangoWriteI32(static_data, FETCH(1, u16), sp[0].i32);
-    sp++;
-    ip += 3;
-    NEXT;
-  } while (0);
+LDSFLD_U16:
+  LOAD(mp->static_data, uint16_t, u32);
+
+STSFLD_I8:
+  STORE(mp->static_data, int8_t, i32, 0);
+
+STSFLD_I16:
+  STORE(mp->static_data, int16_t, i32, 0);
+
+STSFLD:
+  STORE(mp->static_data, int32_t, i32, 0);
+
+STSFLD2:
+  STORE2(mp->static_data, 0);
 
 #pragma endregion
 
