@@ -906,6 +906,40 @@ TUCK:
 
 #pragma endregion
 
+#pragma region locals
+
+LDLOC:
+  tmp_u32 = FETCH(1, u8);
+  sp--;
+  sp[0].i32 = sp[1 + tmp_u32].i32;
+  ip += 2;
+  NEXT;
+
+LDLOC2:
+  tmp_u32 = FETCH(1, u8);
+  sp -= 2;
+  sp[0].i32 = sp[2 + tmp_u32 + 0].i32;
+  sp[1].i32 = sp[2 + tmp_u32 + 1].i32;
+  ip += 2;
+  NEXT;
+
+STLOC:
+  tmp_u32 = FETCH(1, u8);
+  sp[tmp_u32].i32 = sp[0].i32;
+  sp++;
+  ip += 2;
+  NEXT;
+
+STLOC2:
+  tmp_u32 = FETCH(1, u8);
+  sp[tmp_u32 + 0].i32 = sp[0].i32;
+  sp[tmp_u32 + 1].i32 = sp[1].i32;
+  sp += 2;
+  ip += 2;
+  NEXT;
+
+#pragma endregion
+
 #pragma region calls
 
 RET2:
@@ -1717,23 +1751,6 @@ BRTRUE:
 BRTRUE_S:
   ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
   sp++;
-  NEXT;
-
-#pragma endregion
-
-#pragma region locals
-
-LDLOC_I32:
-  tmp_i32 = sp[FETCH(1, u8)].i32;
-  sp--;
-  sp[0].i32 = tmp_i32;
-  ip += 2;
-  NEXT;
-
-STLOC_I32:
-  sp[FETCH(1, u8)].i32 = sp[0].i32;
-  sp++;
-  ip += 2;
   NEXT;
 
 #pragma endregion

@@ -37,6 +37,11 @@ OPCODE(ROT,             "rot",            0x00)
 OPCODE(NIP,             "nip",            0x00)
 OPCODE(TUCK,            "tuck",           0x00)
 
+OPCODE(LDLOC,           "ldloc",          0x00)
+OPCODE(LDLOC2,          "ldloc2",         0x00)
+OPCODE(STLOC,           "stloc",          0x00)
+OPCODE(STLOC2,          "stloc2",         0x00)
+
 OPCODE(RET,             "ret",            0x00)
 OPCODE(RET1,            "ret1",           0x00)
 OPCODE(RET2,            "ret2",           0x00)
@@ -205,10 +210,6 @@ OPCODE(BRFALSE,         "brfalse",        0x00)
 OPCODE(BRFALSE_S,       "brfalse.s",      0x00)
 OPCODE(BRTRUE,          "brtrue",         0x00)
 OPCODE(BRTRUE_S,        "brtrue.s",       0x00)
-
-OPCODE(LDLOC_I32,       "ldloc.i32",      0x00)
-
-OPCODE(STLOC_I32,       "stloc.i32",      0x00)
 
 OPCODE(NEWOBJ,          "newobj",         0x00)
 OPCODE(NEWARR,          "newarr",         0x00)
