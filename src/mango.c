@@ -1329,6 +1329,12 @@ LDC_F64:
   INVALID;
 #endif
 
+LDCA:
+  sp--;
+  sp[0].ref = void_as_ref(vm, (void *)((uintptr_t)mp->image + FETCH(1, u16)));
+  ip += 3;
+  NEXT;
+
 #pragma endregion
 
 #pragma region i32 conversion

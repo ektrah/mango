@@ -114,6 +114,7 @@ OPCODE(LDC_I32,         "ldc.i32",          0,      1,      4,      0x00)
 OPCODE(LDC_I64,         "ldc.i64",          0,      2,      8,      0x00)
 OPCODE(LDC_F32,         "ldc.f32",          0,      1,      4,      0x00)
 OPCODE(LDC_F64,         "ldc.f64",          0,      2,      8,      0x00)
+OPCODE(LDCA,            "ldca",             0,      1,      2,      0x00)
 
 OPCODE(CONV_I8_I32,     "conv.i8.i32",      1,      1,      0,      0x00)
 OPCODE(CONV_I16_I32,    "conv.i16.i32",     1,      1,      0,      0x00)
