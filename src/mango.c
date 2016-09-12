@@ -1852,6 +1852,36 @@ MKSLICE:
 MKRANGE:
   goto NOP;
 
+SLICE:
+  do {
+    int32_t start = sp[0].i32;
+    if (start < 0 || start > sp[2].i32) {
+      return MANGO_E_OUT_OF_RANGE;
+    }
+    sp++;
+    sp[0].ref.address += (uint32_t)start;
+    sp[1].i32 -= start;
+    ip++;
+    NEXT;
+  } while (0);
+
+SLICE2:
+  do {
+    int32_t start = sp[1].i32;
+    int32_t length = sp[0].i32;
+    if (start < 0 || start > sp[3].i32) {
+      return MANGO_E_OUT_OF_RANGE;
+    }
+    if (length < 0 || length > sp[3].i32 - start) {
+      return MANGO_E_OUT_OF_RANGE;
+    }
+    sp += 2;
+    sp[0].ref.address += (uint32_t)start;
+    sp[1].i32 = length;
+    ip++;
+    NEXT;
+  } while (0);
+
 LDFLD_I8:
   LOAD(sp[0].ref, int8_t, i32);
 
