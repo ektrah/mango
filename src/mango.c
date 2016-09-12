@@ -1872,11 +1872,7 @@ NEWARR:
     NEXT;
   } while (0);
 
-LDLEN:
-  goto POP;
-
 MKSLICE:
-MKRANGE:
   goto NOP;
 
 SLICE:
@@ -1908,6 +1904,9 @@ SLICE2:
     ip++;
     NEXT;
   } while (0);
+
+LDLEN:
+  goto POP;
 
 LDFLD_I8:
   LOAD_FIELD(sp[0].ref, int8_t, i32);
