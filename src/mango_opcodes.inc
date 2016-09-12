@@ -218,6 +218,8 @@ OPCODE(BRTRUE_S,        "brtrue.s",         1,      0,      1,      0x00)
 OPCODE(NEWOBJ,          "newobj",           0,      1,      2,      0x00)
 OPCODE(NEWARR,          "newarr",           1,      2,      2,      0x00)
 OPCODE(LDLEN,           "ldlen",            2,      1,      0,      0x00)
+OPCODE(MKSLICE,         "mkslice",          2,      2,      0,      0x00)
+OPCODE(MKRANGE,         "mkrange",          2,      2,      0,      0x00)
 
 OPCODE(LDFLD_I8,        "ldfld.i8",         1,      1,      2,      0x00)
 OPCODE(LDFLD_I16,       "ldfld.i16",        1,      1,      2,      0x00)

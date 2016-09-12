@@ -1848,6 +1848,10 @@ NEWARR:
 LDLEN:
   goto POP;
 
+MKSLICE:
+MKRANGE:
+  goto NOP;
+
 LDFLD_I8:
   LOAD(sp[0].ref, int8_t, i32);
 
