@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#define MANGO_HEADER_MAGIC 2
+#define MANGO_HEADER_MAGIC 255
 #define MANGO_HEADER_SIZE 2
 
 #pragma pack(push, 1)

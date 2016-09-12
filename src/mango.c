@@ -888,6 +888,13 @@ static MangoResult Execute(MangoVM *vm) {
 
 #pragma region basic
 
+HALT:
+  if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
+    RETURN(MANGO_E_STACK_IMBALANCE);
+  }
+  vm->sp_expected = vm->stack_size;
+  RETURN(MANGO_E_SUCCESS);
+
 NOP:
   ++ip;
   NEXT;
@@ -896,13 +903,6 @@ BREAK:
   ++ip;
   vm->sp_expected = vm->stack_size;
   RETURN(MANGO_E_BREAKPOINT);
-
-HALT:
-  if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
-    RETURN(MANGO_E_STACK_IMBALANCE);
-  }
-  vm->sp_expected = vm->stack_size;
-  RETURN(MANGO_E_SUCCESS);
 
 POP:
   sp++;
@@ -972,11 +972,6 @@ TUCK:
   ip++;
   NEXT;
 
-UNUSED13:
-UNUSED14:
-UNUSED15:
-  INVALID;
-
 #pragma endregion
 
 #pragma region locals
@@ -1017,11 +1012,6 @@ STLOC2:
   sp += 2;
   ip += 2;
   NEXT;
-
-UNUSED21:
-UNUSED22:
-UNUSED23:
-  INVALID;
 
 #pragma endregion
 
@@ -1116,11 +1106,6 @@ SYSCALL:
         ((sp - stackval_as_ptr(vm, vm->stack)) + f->arg_count) - f->ret_count);
     RETURN(MANGO_E_SYSCALL);
   } while (0);
-
-UNUSED29:
-UNUSED30:
-UNUSED31:
-  INVALID;
 
 #pragma endregion
 
@@ -1328,14 +1313,6 @@ NOT_I64:
   INVALID;
 #endif
 #pragma endregion
-
-UNUSED74:
-UNUSED75:
-UNUSED76:
-UNUSED77:
-UNUSED78:
-UNUSED79:
-  INVALID;
 
 #pragma region constants
 
@@ -1636,10 +1613,6 @@ CONV_U32_U64:
 #endif
 #pragma endregion
 
-UNUSED134:
-UNUSED135:
-  INVALID;
-
 #pragma region i32 comparison
 
 CMP_EQ_I32:
@@ -1834,12 +1807,6 @@ CMP_ULE_F64:
 #endif
 #pragma endregion
 
-UNUSED180:
-UNUSED181:
-UNUSED182:
-UNUSED183:
-  INVALID;
-
 #pragma region branches
 
 BR:
@@ -1869,10 +1836,6 @@ BRTRUE_S:
   ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
   sp++;
   NEXT;
-
-UNUSED190:
-UNUSED191:
-  INVALID;
 
 #pragma endregion
 
@@ -1944,10 +1907,6 @@ SLICE2:
 
 LDLEN:
   goto POP;
-
-UNUSED198:
-UNUSED199:
-  INVALID;
 
 LDFLD_I8:
   LOAD_FIELD(sp[0].ref, int8_t, i32);
@@ -2108,6 +2067,32 @@ STELEM2: // value1 value2 index array length ... -> ...
 
 #pragma region unused
 
+UNUSED2:
+UNUSED3:
+UNUSED14:
+UNUSED15:
+UNUSED21:
+UNUSED22:
+UNUSED23:
+UNUSED29:
+UNUSED30:
+UNUSED31:
+UNUSED74:
+UNUSED75:
+UNUSED76:
+UNUSED77:
+UNUSED78:
+UNUSED79:
+UNUSED134:
+UNUSED135:
+UNUSED180:
+UNUSED181:
+UNUSED182:
+UNUSED183:
+UNUSED190:
+UNUSED191:
+UNUSED198:
+UNUSED199:
 UNUSED237:
 UNUSED238:
 UNUSED239:
@@ -2126,7 +2111,6 @@ UNUSED251:
 UNUSED252:
 UNUSED253:
 UNUSED254:
-UNUSED255:
   INVALID;
 
 #pragma endregion
