@@ -781,7 +781,7 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
-#define LOAD(ref, cast, ty)                                                    \
+#define LOAD_FIELD(ref, cast, ty)                                                    \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -790,7 +790,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define LOAD2(ref)                                                             \
+#define LOAD_FIELD2(ref)                                                             \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -801,7 +801,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define STORE(ref, cast, ty, pop)                                              \
+#define STORE_FIELD(ref, cast, ty, pop)                                              \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -811,7 +811,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define STORE2(ref, pop)                                                       \
+#define STORE_FIELD2(ref, pop)                                                       \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -1910,16 +1910,16 @@ SLICE2:
   } while (0);
 
 LDFLD_I8:
-  LOAD(sp[0].ref, int8_t, i32);
+  LOAD_FIELD(sp[0].ref, int8_t, i32);
 
 LDFLD_I16:
-  LOAD(sp[0].ref, int16_t, i32);
+  LOAD_FIELD(sp[0].ref, int16_t, i32);
 
 LDFLD:
-  LOAD(sp[0].ref, int32_t, i32);
+  LOAD_FIELD(sp[0].ref, int32_t, i32);
 
 LDFLD2:
-  LOAD2(sp[0].ref);
+  LOAD_FIELD2(sp[0].ref);
 
 LDFLDA:
   sp[0].ref.address += FETCH(1, u16);
@@ -1927,34 +1927,34 @@ LDFLDA:
   NEXT;
 
 LDFLD_U8:
-  LOAD(sp[0].ref, uint8_t, u32);
+  LOAD_FIELD(sp[0].ref, uint8_t, u32);
 
 LDFLD_U16:
-  LOAD(sp[0].ref, uint16_t, u32);
+  LOAD_FIELD(sp[0].ref, uint16_t, u32);
 
 STFLD_I8:
-  STORE(sp[1].ref, int8_t, i32, 1);
+  STORE_FIELD(sp[1].ref, int8_t, i32, 1);
 
 STFLD_I16:
-  STORE(sp[1].ref, int16_t, i32, 1);
+  STORE_FIELD(sp[1].ref, int16_t, i32, 1);
 
 STFLD:
-  STORE(sp[1].ref, int32_t, i32, 1);
+  STORE_FIELD(sp[1].ref, int32_t, i32, 1);
 
 STFLD2:
-  STORE2(sp[2].ref, 1);
+  STORE_FIELD2(sp[2].ref, 1);
 
 LDSFLD_I8:
-  LOAD(mp->static_data, int8_t, i32);
+  LOAD_FIELD(mp->static_data, int8_t, i32);
 
 LDSFLD_I16:
-  LOAD(mp->static_data, int16_t, i32);
+  LOAD_FIELD(mp->static_data, int16_t, i32);
 
 LDSFLD:
-  LOAD(mp->static_data, int32_t, i32);
+  LOAD_FIELD(mp->static_data, int32_t, i32);
 
 LDSFLD2:
-  LOAD2(mp->static_data);
+  LOAD_FIELD2(mp->static_data);
 
 LDSFLDA:
   sp--;
@@ -1963,22 +1963,22 @@ LDSFLDA:
   NEXT;
 
 LDSFLD_U8:
-  LOAD(mp->static_data, uint8_t, u32);
+  LOAD_FIELD(mp->static_data, uint8_t, u32);
 
 LDSFLD_U16:
-  LOAD(mp->static_data, uint16_t, u32);
+  LOAD_FIELD(mp->static_data, uint16_t, u32);
 
 STSFLD_I8:
-  STORE(mp->static_data, int8_t, i32, 0);
+  STORE_FIELD(mp->static_data, int8_t, i32, 0);
 
 STSFLD_I16:
-  STORE(mp->static_data, int16_t, i32, 0);
+  STORE_FIELD(mp->static_data, int16_t, i32, 0);
 
 STSFLD:
-  STORE(mp->static_data, int32_t, i32, 0);
+  STORE_FIELD(mp->static_data, int32_t, i32, 0);
 
 STSFLD2:
-  STORE2(mp->static_data, 0);
+  STORE_FIELD2(mp->static_data, 0);
 
 LDELEM_I8: // index array length ... -> value ...
   LOAD_ELEMENT(int8_t, i32);
