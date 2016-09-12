@@ -55,6 +55,11 @@ typedef struct StartupDef {
   uint8_t module_count;
 } StartupDef;
 
+typedef struct ConstDef {
+  uint8_t flags;
+  uint8_t value[];
+} ConstDef;
+
 typedef enum FuncFlags {
   MANGO_FF_NONE = 0,
   MANGO_FF_NAKED = 1,

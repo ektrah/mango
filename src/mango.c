@@ -1330,10 +1330,13 @@ LDC_F64:
 #endif
 
 LDCA:
-  sp--;
-  sp[0].ref = void_as_ref(vm, (void *)((uintptr_t)mp->image + FETCH(1, u16)));
-  ip += 3;
-  NEXT;
+  do {
+    const ConstDef *c = (const ConstDef *)(mp->image + FETCH(1, u16));
+    sp--;
+    sp[0].ref = void_as_ref(vm, (void *)(uintptr_t)(c->value));
+    ip += 3;
+    NEXT;
+  } while (0);
 
 #pragma endregion
 
