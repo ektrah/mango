@@ -55,6 +55,11 @@ typedef struct StartupDef {
   uint8_t module_count;
 } StartupDef;
 
+typedef struct TypeDef {
+  uint8_t flags;
+  uint16_t size;
+} TypeDef;
+
 typedef struct ConstDef {
   uint8_t flags;
   uint8_t value[];

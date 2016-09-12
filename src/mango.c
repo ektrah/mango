@@ -1816,8 +1816,8 @@ BRTRUE_S:
 
 NEWOBJ:
   do {
-    uint32_t size = FETCH(1, u16);
-    void *obj = MangoHeapAlloc(vm, 1, size, __alignof(stackval), 0);
+    const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
+    void *obj = MangoHeapAlloc(vm, 1, t->size, __alignof(stackval), 0);
     if (!obj) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
@@ -1833,9 +1833,9 @@ NEWARR:
     if (count < 0) {
       RETURN(MANGO_E_ARGUMENT);
     }
-    uint32_t size = FETCH(1, u16);
+    const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
     void *arr =
-        MangoHeapAlloc(vm, (uint32_t)count, size, __alignof(stackval), 0);
+        MangoHeapAlloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
     if (!arr) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
