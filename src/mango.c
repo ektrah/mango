@@ -825,7 +825,7 @@ typedef union packed {
   do {                                                                         \
     int32_t index = sp[0].i32;                                                 \
     if (index < 0 || index >= sp[2].i32) {                                     \
-      RETURN(MANGO_E_OUT_OF_RANGE);                                            \
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
     void *arr = void_as_ptr(vm, sp[1].ref);                                    \
     sp += 2;                                                                   \
@@ -839,7 +839,7 @@ typedef union packed {
     int32_t value = sp[0].i32;                                                 \
     int32_t index = sp[1].i32;                                                 \
     if (index < 0 || index >= sp[3].i32) {                                     \
-      RETURN(MANGO_E_OUT_OF_RANGE);                                            \
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
     void *arr = void_as_ptr(vm, sp[2].ref);                                    \
     sp += 4;                                                                   \
@@ -1889,7 +1889,7 @@ SLICE:
   do {
     int32_t start = sp[0].i32;
     if (start < 0 || start > sp[2].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_ARGUMENT);
     }
     sp++;
     sp[0].ref.address += (uint32_t)start;
@@ -1903,10 +1903,10 @@ SLICE2:
     int32_t start = sp[1].i32;
     int32_t length = sp[0].i32;
     if (start < 0 || start > sp[3].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_ARGUMENT);
     }
     if (length < 0 || length > sp[3].i32 - start) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_ARGUMENT);
     }
     sp += 2;
     sp[0].ref.address += (uint32_t)start;
@@ -2002,7 +2002,7 @@ LDELEM2: // index array length ... -> value1 value2 ...
   do {
     int32_t index = sp[0].i32;
     if (index < 0 || index >= sp[2].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     void *arr = void_as_ptr(vm, sp[1].ref);
     sp += 1;
@@ -2025,7 +2025,7 @@ LDELEMA8: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
     if (index < 0 || index >= sp[2].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     uint32_t address = sp[1].ref.address;
     sp += 2;
@@ -2038,7 +2038,7 @@ LDELEMA: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
     if (index < 0 || index >= sp[2].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
     uint32_t address = sp[1].ref.address;
@@ -2063,7 +2063,7 @@ STELEM2: // value1 value2 index array length ... -> ...
     int32_t value2 = sp[1].i32;
     int32_t index = sp[2].i32;
     if (index < 0 || index >= sp[4].i32) {
-      RETURN(MANGO_E_OUT_OF_RANGE);
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     void *arr = void_as_ptr(vm, sp[3].ref);
     sp += 5;
