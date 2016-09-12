@@ -821,6 +821,33 @@ typedef union packed {
     ip += 3;                                                                   \
   } while (0)
 
+#define LOAD_ELEMENT(cast, ty)                                                 \
+  do {                                                                         \
+    int32_t index = sp[0].i32;                                                 \
+    if (index < 0 || index >= sp[2].i32) {                                     \
+      RETURN(MANGO_E_OUT_OF_RANGE);                                            \
+    }                                                                          \
+    void *arr = void_as_ptr(vm, sp[1].ref);                                    \
+    sp += 2;                                                                   \
+    sp[0].ty = ((cast *)arr)[index];                                           \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
+
+#define STORE_ELEMENT(cast)                                                    \
+  do {                                                                         \
+    int32_t value = sp[0].i32;                                                 \
+    int32_t index = sp[1].i32;                                                 \
+    if (index < 0 || index >= sp[3].i32) {                                     \
+      RETURN(MANGO_E_OUT_OF_RANGE);                                            \
+    }                                                                          \
+    void *arr = void_as_ptr(vm, sp[2].ref);                                    \
+    sp += 4;                                                                   \
+    ((cast *)arr)[index] = (cast)value;                                        \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
+
 #pragma endregion
 
 static MangoResult Execute(MangoVM *vm) {
@@ -1952,6 +1979,90 @@ STSFLD:
 
 STSFLD2:
   STORE2(mp->static_data, 0);
+
+LDELEM_I8: // index array length ... -> value ...
+  LOAD_ELEMENT(int8_t, i32);
+
+LDELEM_I16: // index array length ... -> value ...
+  LOAD_ELEMENT(int16_t, i32);
+
+LDELEM: // index array length ... -> value ...
+  LOAD_ELEMENT(int32_t, i32);
+
+LDELEM2: // index array length ... -> value1 value2 ...
+  do {
+    int32_t index = sp[0].i32;
+    if (index < 0 || index >= sp[2].i32) {
+      RETURN(MANGO_E_OUT_OF_RANGE);
+    }
+    void *arr = void_as_ptr(vm, sp[1].ref);
+    sp += 1;
+    sp[0].i32 = ((int32_t *)arr)[2 * index + 0];
+    sp[1].i32 = ((int32_t *)arr)[2 * index + 1];
+    ip++;
+    NEXT;
+  } while (0);
+
+LDELEM_U8: // index array length ... -> value ...
+  LOAD_ELEMENT(uint8_t, u32);
+
+LDELEM_U16: // index array length ... -> value ...
+  LOAD_ELEMENT(uint16_t, u32);
+
+LDELEMA1:
+LDELEMA2:
+LDELEMA4:
+LDELEMA8: // index array length ... -> address ...
+  do {
+    int32_t index = sp[0].i32;
+    if (index < 0 || index >= sp[2].i32) {
+      RETURN(MANGO_E_OUT_OF_RANGE);
+    }
+    uint32_t address = sp[1].ref.address;
+    sp += 2;
+    sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA1));
+    ip++;
+    NEXT;
+  } while (0);
+
+LDELEMA: // index array length ... -> address ...
+  do {
+    int32_t index = sp[0].i32;
+    if (index < 0 || index >= sp[2].i32) {
+      RETURN(MANGO_E_OUT_OF_RANGE);
+    }
+    const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
+    uint32_t address = sp[1].ref.address;
+    sp += 2;
+    sp[0].ref.address = address + (uint32_t)index * t->size;
+    ip += 3;
+    NEXT;
+  } while (0);
+
+STELEM_I8: // value index array length ... -> ...
+  STORE_ELEMENT(int8_t);
+
+STELEM_I16: // value index array length ... -> ...
+  STORE_ELEMENT(int16_t);
+
+STELEM: // value index array length ... -> ...
+  STORE_ELEMENT(int32_t);
+
+STELEM2: // value1 value2 index array length ... -> ...
+  do {
+    int32_t value1 = sp[0].i32;
+    int32_t value2 = sp[1].i32;
+    int32_t index = sp[2].i32;
+    if (index < 0 || index >= sp[4].i32) {
+      RETURN(MANGO_E_OUT_OF_RANGE);
+    }
+    void *arr = void_as_ptr(vm, sp[3].ref);
+    sp += 5;
+    ((int32_t *)arr)[2 * index + 0] = value1;
+    ((int32_t *)arr)[2 * index + 1] = value2;
+    ip++;
+    NEXT;
+  } while (0);
 
 #pragma endregion
 
