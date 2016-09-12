@@ -781,7 +781,7 @@ typedef union packed {
   ip++;                                                                        \
   NEXT;
 
-#define LOAD_FIELD(ref, cast, ty)                                                    \
+#define LOAD_FIELD(ref, cast, ty)                                              \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -790,7 +790,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define LOAD_FIELD2(ref)                                                             \
+#define LOAD_FIELD2(ref)                                                       \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -801,7 +801,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define STORE_FIELD(ref, cast, ty, pop)                                              \
+#define STORE_FIELD(ref, cast, ty, pop)                                        \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -811,7 +811,7 @@ typedef union packed {
     NEXT;                                                                      \
   } while (0)
 
-#define STORE_FIELD2(ref, pop)                                                       \
+#define STORE_FIELD2(ref, pop)                                                 \
   do {                                                                         \
     tmp_u32 = FETCH(1, u16);                                                   \
     tmp_ref = void_as_ptr(vm, ref);                                            \
@@ -1086,7 +1086,7 @@ CALL:
 
 SYSCALL:
   do {
-    uint8_t index = FETCH(1,u8);
+    uint8_t index = FETCH(1, u8);
     Module *module;
 
     if (index == INVALID_MODULE) {
