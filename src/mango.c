@@ -1086,7 +1086,17 @@ CALL:
 
 SYSCALL:
   do {
-    const SysCallDef *f = (const SysCallDef *)(mp->image + FETCH(1, u16));
+    uint8_t index = FETCH(1,u8);
+    Module *module;
+
+    if (index == INVALID_MODULE) {
+      module = mp;
+    } else {
+      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+      module = &Module_as_ptr(vm, vm->modules)[imports[index]];
+    }
+
+    const SysCallDef *f = (const SysCallDef *)(module->image + FETCH(2, u16));
 
     if (!in_full_trust) {
       if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
@@ -1101,7 +1111,7 @@ SYSCALL:
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    ip += 3;
+    ip += 4;
     vm->sp_expected = (uint16_t)(
         ((sp - stackval_as_ptr(vm, vm->stack)) + f->arg_count) - f->ret_count);
     RETURN(MANGO_E_SYSCALL);
