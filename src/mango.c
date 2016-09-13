@@ -622,14 +622,14 @@ static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
 
   bool in_full_trust = false;
   if ((f->flags &
-    (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
+       (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
     if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
-      (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+        (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
       printf("<< SECURITY VIOLATION >>\n");
       return MANGO_E_SECURITY;
     }
     printf("------------------------------ ENTER FULL TRUST "
-      "------------------------------\n");
+           "------------------------------\n");
     in_full_trust = true;
   }
 
@@ -726,10 +726,10 @@ MangoResult MangoExecute(MangoVM *vm) {
 #ifdef _DEBUG
   printf("\n  stack\n  -----\n");
   for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
-    *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
-    p != stack + vm->stack_size; p++) {
+                      *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
+       p != stack + vm->stack_size; p++) {
     printf("   %3u %c   %8X\n", (uint32_t)(p - stack),
-      (p == sp || p == rp) ? '*' : ' ', p->u32);
+           (p == sp || p == rp) ? '*' : ' ', p->u32);
   }
 #endif
 
@@ -760,7 +760,6 @@ MangoResult MangoExecute(MangoVM *vm) {
 #else
 #error Unsupported compiler
 #endif
-
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
 
