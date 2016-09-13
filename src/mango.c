@@ -111,13 +111,9 @@ typedef union Value {
 
 typedef union Value2 {
   struct {
-    uint8_tRef ref;
+    voidRef ref;
     int32_t length;
   } slice;
-  struct {
-    int32_t start;
-    int32_t end;
-  } range;
 #ifndef MANGO_NO_I64
   int64_t i64;
   uint64_t u64;
