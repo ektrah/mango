@@ -78,13 +78,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma pack(push, 4)
-
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
 MANGO_DECLARE_REF_TYPE(Module)
 MANGO_DECLARE_REF_TYPE(ModuleName)
+
+#pragma pack(push, 4)
 
 typedef enum OpCode {
 #define OPCODE(c, s, pop, push, args, i) c,
@@ -179,13 +179,28 @@ typedef struct Module {
   voidRef static_data;
 } Module;
 
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+
+typedef union packed {
+  int8_t i8;
+  uint8_t u8;
+  int16_t i16;
+  uint16_t u16;
+  int32_t i32;
+  uint32_t u32;
+  int64_t i64;
+  uint64_t u64;
+} packed;
+
+#pragma pack(pop)
+
 MANGO_DEFINE_REF_TYPE(void, )
 MANGO_DEFINE_REF_TYPE(uint8_t, const)
 MANGO_DEFINE_REF_TYPE(stackval, )
 MANGO_DEFINE_REF_TYPE(Module, )
 MANGO_DEFINE_REF_TYPE(ModuleName, const)
-
-#pragma pack(pop)
 
 #if defined(__clang__) || defined(__GNUC__)
 _Static_assert(sizeof(StackFrame) == 4, "Incorrect layout");
@@ -198,6 +213,8 @@ _Static_assert(sizeof(MangoVM) == 64, "Incorrect layout");
 _Static_assert(__alignof(MangoVM) == 4, "Incorrect layout");
 _Static_assert(sizeof(Module) == 32, "Incorrect layout");
 _Static_assert(__alignof(Module) == 4, "Incorrect layout");
+_Static_assert(sizeof(packed) == 8, "Incorrect layout");
+_Static_assert(__alignof(packed) == 1, "Incorrect layout");
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -744,18 +761,6 @@ MangoResult MangoExecute(MangoVM *vm) {
 #error Unsupported compiler
 #endif
 
-#pragma pack(push, 1)
-typedef union packed {
-  int8_t i8;
-  uint8_t u8;
-  int16_t i16;
-  uint16_t u16;
-  int32_t i32;
-  uint32_t u32;
-  int64_t i64;
-  uint64_t u64;
-} packed;
-#pragma pack(pop)
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
 
