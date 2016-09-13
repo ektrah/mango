@@ -596,6 +596,131 @@ const uint8_t *MangoModuleMissing(const MangoVM *vm) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define VISITED 1
+
+static MangoResult Execute(MangoVM *vm);
+
+static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
+  const FuncDef *f = (const FuncDef *)(module->image + offset);
+
+  bool in_full_trust = false;
+  if ((f->flags &
+    (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
+    if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+      (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
+      printf("<< SECURITY VIOLATION >>\n");
+      return MANGO_E_SECURITY;
+    }
+    printf("------------------------------ ENTER FULL TRUST "
+      "------------------------------\n");
+    in_full_trust = true;
+  }
+
+  if (vm->stack_size < 1 + f->loc_count + f->max_stack) {
+    printf("<< STACK OVERFLOW >>\n");
+    return MANGO_E_STACK_OVERFLOW;
+  }
+
+  stackval *rp = stackval_as_ptr(vm, vm->stack);
+  rp->sf = (StackFrame){false, 0, 0, 0};
+  vm->rp = 1;
+
+  uint16_t ip = (uint16_t)(f->code - module->image);
+  vm->sf = (StackFrame){in_full_trust, f->loc_count, module->index, ip};
+  vm->sp -= f->loc_count;
+  return MANGO_E_SUCCESS;
+}
+
+MangoResult MangoExecute(MangoVM *vm) {
+  if (!vm) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (vm->modules_imported == 0) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+  if (vm->modules_imported != vm->modules_created) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+  if (vm->sp != vm->sp_expected) {
+    return MANGO_E_STACK_IMBALANCE;
+  }
+
+  MangoResult result = Execute(vm);
+  if (result != MANGO_E_SUCCESS) {
+    return result;
+  }
+
+  Module *modules = Module_as_ptr(vm, vm->modules);
+  uint8_t head = vm->module_init_head;
+
+  while (head != INVALID_MODULE) {
+    Module *module = &modules[head];
+    const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
+
+    if ((module->flags & VISITED) == 0) {
+      module->flags |= VISITED;
+
+      const uint8_t *imports = uint8_t_as_ptr(vm, module->imports);
+
+      for (uint8_t i = 0; i < m->import_count; i++) {
+        uint8_t p = imports[i];
+        Module *import = &modules[p];
+
+        if ((import->flags & VISITED) == 0) {
+          if (head != p) {
+            if (import->init_prev != INVALID_MODULE) {
+              modules[import->init_prev].init_next = import->init_next;
+            }
+            if (import->init_next != INVALID_MODULE) {
+              modules[import->init_next].init_prev = import->init_prev;
+            }
+            if (head != INVALID_MODULE) {
+              modules[head].init_prev = p;
+            }
+            import->init_next = head;
+            import->init_prev = INVALID_MODULE;
+            head = p;
+          }
+        }
+      }
+    } else {
+      head = module->init_next;
+      vm->module_init_head = head;
+      module->init_next = INVALID_MODULE;
+      module->init_prev = INVALID_MODULE;
+      if (head != INVALID_MODULE) {
+        modules[head].init_prev = INVALID_MODULE;
+      }
+
+      printf("initialize module %u\n", module->index);
+      if (m->static_init != 0) {
+        result = SetEntryPoint(vm, module, m->static_init);
+        if (result != MANGO_E_SUCCESS) {
+          return result;
+        }
+        result = Execute(vm);
+        if (result != MANGO_E_SUCCESS) {
+          return result;
+        }
+      }
+    }
+  }
+
+#ifdef _DEBUG
+  printf("\n  stack\n  -----\n");
+  for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
+    *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
+    p != stack + vm->stack_size; p++) {
+    printf("   %3u %c   %8X\n", (uint32_t)(p - stack),
+      (p == sp || p == rp) ? '*' : ' ', p->u32);
+  }
+#endif
+
+  return MANGO_E_SUCCESS;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wunused-variable"
@@ -2138,128 +2263,5 @@ done:
 
 #pragma clang diagnostic pop
 #pragma GCC diagnostic pop
-
-////////////////////////////////////////////////////////////////////////////////
-
-#define VISITED 1
-
-static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
-  const FuncDef *f = (const FuncDef *)(module->image + offset);
-
-  bool in_full_trust = false;
-  if ((f->flags &
-       (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
-    if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
-        (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
-      printf("<< SECURITY VIOLATION >>\n");
-      return MANGO_E_SECURITY;
-    }
-    printf("------------------------------ ENTER FULL TRUST "
-           "------------------------------\n");
-    in_full_trust = true;
-  }
-
-  if (vm->stack_size < 1 + f->loc_count + f->max_stack) {
-    printf("<< STACK OVERFLOW >>\n");
-    return MANGO_E_STACK_OVERFLOW;
-  }
-
-  stackval *rp = stackval_as_ptr(vm, vm->stack);
-  rp->sf = (StackFrame){false, 0, 0, 0};
-  vm->rp = 1;
-
-  uint16_t ip = (uint16_t)(f->code - module->image);
-  vm->sf = (StackFrame){in_full_trust, f->loc_count, module->index, ip};
-  vm->sp -= f->loc_count;
-  return MANGO_E_SUCCESS;
-}
-
-MangoResult MangoExecute(MangoVM *vm) {
-  if (!vm) {
-    return MANGO_E_ARGUMENT_NULL;
-  }
-  if (vm->modules_imported == 0) {
-    return MANGO_E_INVALID_OPERATION;
-  }
-  if (vm->modules_imported != vm->modules_created) {
-    return MANGO_E_INVALID_OPERATION;
-  }
-  if (vm->sp != vm->sp_expected) {
-    return MANGO_E_STACK_IMBALANCE;
-  }
-
-  MangoResult result = Execute(vm);
-  if (result != MANGO_E_SUCCESS) {
-    return result;
-  }
-
-  Module *modules = Module_as_ptr(vm, vm->modules);
-  uint8_t head = vm->module_init_head;
-
-  while (head != INVALID_MODULE) {
-    Module *module = &modules[head];
-    const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
-
-    if ((module->flags & VISITED) == 0) {
-      module->flags |= VISITED;
-
-      const uint8_t *imports = uint8_t_as_ptr(vm, module->imports);
-
-      for (uint8_t i = 0; i < m->import_count; i++) {
-        uint8_t p = imports[i];
-        Module *import = &modules[p];
-
-        if ((import->flags & VISITED) == 0) {
-          if (head != p) {
-            if (import->init_prev != INVALID_MODULE) {
-              modules[import->init_prev].init_next = import->init_next;
-            }
-            if (import->init_next != INVALID_MODULE) {
-              modules[import->init_next].init_prev = import->init_prev;
-            }
-            if (head != INVALID_MODULE) {
-              modules[head].init_prev = p;
-            }
-            import->init_next = head;
-            import->init_prev = INVALID_MODULE;
-            head = p;
-          }
-        }
-      }
-    } else {
-      head = module->init_next;
-      vm->module_init_head = head;
-      module->init_next = INVALID_MODULE;
-      module->init_prev = INVALID_MODULE;
-      if (head != INVALID_MODULE) {
-        modules[head].init_prev = INVALID_MODULE;
-      }
-
-      printf("initialize module %u\n", module->index);
-      if (m->static_init != 0) {
-        result = SetEntryPoint(vm, module, m->static_init);
-        if (result != MANGO_E_SUCCESS) {
-          return result;
-        }
-        result = Execute(vm);
-        if (result != MANGO_E_SUCCESS) {
-          return result;
-        }
-      }
-    }
-  }
-
-#ifdef _DEBUG
-  printf("\n  stack\n  -----\n");
-  for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
-                      *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
-       p != stack + vm->stack_size; p++) {
-    printf("   %3u %c   %8X\n", (uint32_t)(p - stack),
-           (p == sp || p == rp) ? '*' : ' ', p->u32);
-  }
-#endif
-
-  return MANGO_E_SUCCESS;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
