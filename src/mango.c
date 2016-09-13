@@ -1048,6 +1048,8 @@ static MangoResult Execute(MangoVM *vm) {
   const uint8_t *ip;
   MangoResult result;
 
+  vm->sp_expected = vm->stack_size;
+
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
   UNPACK_STATE(vm->sf);
@@ -1059,7 +1061,6 @@ HALT:
   if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
     RETURN(MANGO_E_STACK_IMBALANCE);
   }
-  vm->sp_expected = vm->stack_size;
   RETURN(MANGO_E_SUCCESS);
 
 NOP:
@@ -1068,7 +1069,7 @@ NOP:
 
 BREAK:
   ++ip;
-  vm->sp_expected = vm->stack_size;
+  vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
   RETURN(MANGO_E_BREAKPOINT);
 
 POP:
