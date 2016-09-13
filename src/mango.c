@@ -752,7 +752,6 @@ MangoResult MangoExecute(MangoVM *vm) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-label-as-value"
 #pragma clang diagnostic ignored "-Wunused-macros"
@@ -799,154 +798,190 @@ MangoResult MangoExecute(MangoVM *vm) {
   } while (0)
 
 #define BINARY1(ty, op)                                                        \
-  sp[1].ty = sp[1].ty op sp[0].ty;                                             \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define BINARY1F(ty, op)                                                       \
-  op(sp[1].ty, sp[0].ty, &sp[1].ty);                                           \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    op(sp[1].ty, sp[0].ty, &sp[1].ty);                                         \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define BINARY1D(ty, op)                                                       \
-  if (sp[0].ty == 0) {                                                         \
-    RETURN(MANGO_E_DIVIDE_BY_ZERO);                                            \
-  }                                                                            \
-  sp[1].ty = sp[1].ty op sp[0].ty;                                             \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    if (sp[0].ty == 0) {                                                       \
+      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
+    }                                                                          \
+    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define BINARY2(ty, op)                                                        \
-  sp2 = (stackval2 *)sp;                                                       \
-  sp2[1].ty = sp2[1].ty op sp2[0].ty;                                          \
-  sp += 2;                                                                     \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
+    sp += 2;                                                                   \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define BINARY2F(ty, op)                                                       \
-  sp2 = (stackval2 *)sp;                                                       \
-  op(sp2[1].ty, sp2[0].ty, &sp2[1].ty);                                        \
-  sp += 2;                                                                     \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    op(sp2[1].ty, sp2[0].ty, &sp2[1].ty);                                      \
+    sp += 2;                                                                   \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define BINARY2D(ty, op)                                                       \
-  sp2 = (stackval2 *)sp;                                                       \
-  if (sp2[0].ty == 0) {                                                        \
-    RETURN(MANGO_E_DIVIDE_BY_ZERO);                                            \
-  }                                                                            \
-  sp2[1].ty = sp2[1].ty op sp2[0].ty;                                          \
-  sp += 2;                                                                     \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    if (sp2[0].ty == 0) {                                                      \
+      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
+    }                                                                          \
+    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
+    sp += 2;                                                                   \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define UNARY1(ty, op)                                                         \
-  sp[0].ty = op(sp[0].ty);                                                     \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[0].ty = op(sp[0].ty);                                                   \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define UNARY2(ty, op)                                                         \
-  sp2 = (stackval2 *)sp;                                                       \
-  sp2[0].ty = op(sp2[0].ty);                                                   \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    sp2[0].ty = op(sp2[0].ty);                                                 \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define SHIFT1(ty, op)                                                         \
-  sp[1].ty = sp[1].ty op sp[0].i32;                                            \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[1].ty = sp[1].ty op sp[0].i32;                                          \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define SHIFT2(ty, op)                                                         \
-  sp2 = (stackval2 *)(sp + 1);                                                 \
-  sp2[0].ty = sp2[0].ty op sp[0].i32;                                          \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)(sp + 1);                                    \
+    sp2[0].ty = sp2[0].ty op sp[0].i32;                                        \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define CONVERT1(cast, dest, src)                                              \
-  sp[0].dest = (cast)sp[0].src;                                                \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[0].dest = (cast)sp[0].src;                                              \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define CONVERT21(cast, dest, src)                                             \
-  tmp_##src = sp[0].src;                                                       \
-  sp--;                                                                        \
-  sp2 = (stackval2 *)sp;                                                       \
-  sp2[0].dest = (cast)tmp_##src;                                               \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    cast tmp = (cast)sp[0].src;                                                \
+    sp--;                                                                      \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    sp2[0].dest = tmp;                                                         \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define CONVERT12(cast, dest, src)                                             \
-  sp2 = (stackval2 *)sp;                                                       \
-  tmp_##src = sp2[0].src;                                                      \
-  sp++;                                                                        \
-  sp[0].dest = (cast)tmp_##src;                                                \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    cast tmp = (cast)sp2[0].src;                                               \
+    sp++;                                                                      \
+    sp[0].dest = tmp;                                                          \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define CONVERT2(cast, dest, src)                                              \
-  sp2 = (stackval2 *)sp;                                                       \
-  sp2[0].dest = (cast)sp2[0].src;                                              \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    sp2[0].dest = (cast)sp2[0].src;                                            \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define COMPARE1(mem, op)                                                      \
-  sp[1].i32 = sp[1].mem op sp[0].mem;                                          \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[1].i32 = sp[1].mem op sp[0].mem;                                        \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define COMPARE1F(mem, op)                                                     \
-  sp[1].i32 = op(sp[1].mem, sp[0].mem);                                        \
-  sp++;                                                                        \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    sp[1].i32 = op(sp[1].mem, sp[0].mem);                                      \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define COMPARE2(mem, op)                                                      \
-  sp2 = (stackval2 *)sp;                                                       \
-  tmp_i32 = sp2[1].mem op sp2[0].mem;                                          \
-  sp += 3;                                                                     \
-  sp[0].i32 = tmp_i32;                                                         \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    int32_t tmp = sp2[1].mem op sp2[0].mem;                                    \
+    sp += 3;                                                                   \
+    sp[0].i32 = tmp;                                                           \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define COMPARE2F(mem, op)                                                     \
-  sp2 = (stackval2 *)sp;                                                       \
-  tmp_i32 = op(sp2[1].mem, sp2[0].mem);                                        \
-  sp += 3;                                                                     \
-  sp[0].i32 = tmp_i32;                                                         \
-  ip++;                                                                        \
-  NEXT;
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    int32_t tmp = op(sp2[1].mem, sp2[0].mem);                                  \
+    sp += 3;                                                                   \
+    sp[0].i32 = tmp;                                                           \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
 
 #define LOAD_FIELD(ref, cast, ty)                                              \
   do {                                                                         \
-    tmp_u32 = FETCH(1, u16);                                                   \
-    tmp_ref = void_as_ptr(vm, ref);                                            \
-    sp[0].ty = ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0];                    \
+    uint32_t offset = FETCH(1, u16);                                           \
+    void *obj = void_as_ptr(vm, ref);                                          \
+    sp[0].ty = ((cast *)((uintptr_t)obj + offset))[0];                         \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (0)
 
 #define LOAD_FIELD2(ref)                                                       \
   do {                                                                         \
-    tmp_u32 = FETCH(1, u16);                                                   \
-    tmp_ref = void_as_ptr(vm, ref);                                            \
+    uint32_t offset = FETCH(1, u16);                                           \
+    void *obj = void_as_ptr(vm, ref);                                          \
     sp--;                                                                      \
-    sp[0].i32 = ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[0];                \
-    sp[1].i32 = ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[1];                \
+    sp[0].i32 = ((int32_t *)((uintptr_t)obj + offset))[0];                     \
+    sp[1].i32 = ((int32_t *)((uintptr_t)obj + offset))[1];                     \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (0)
 
 #define STORE_FIELD(ref, cast, ty, pop)                                        \
   do {                                                                         \
-    tmp_u32 = FETCH(1, u16);                                                   \
-    tmp_ref = void_as_ptr(vm, ref);                                            \
-    ((cast *)((uintptr_t)tmp_ref + tmp_u32))[0] = (cast)sp[0].ty;              \
+    uint32_t offset = FETCH(1, u16);                                           \
+    void *obj = void_as_ptr(vm, ref);                                          \
+    ((cast *)((uintptr_t)obj + offset))[0] = (cast)sp[0].ty;                   \
     sp += 1 + pop;                                                             \
     ip += 3;                                                                   \
     NEXT;                                                                      \
@@ -954,10 +989,10 @@ MangoResult MangoExecute(MangoVM *vm) {
 
 #define STORE_FIELD2(ref, pop)                                                 \
   do {                                                                         \
-    tmp_u32 = FETCH(1, u16);                                                   \
-    tmp_ref = void_as_ptr(vm, ref);                                            \
-    ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[0] = sp[0].i32;                \
-    ((int32_t *)((uintptr_t)tmp_ref + tmp_u32))[1] = sp[1].i32;                \
+    uint32_t offset = FETCH(1, u16);                                           \
+    void *obj = void_as_ptr(vm, ref);                                          \
+    ((int32_t *)((uintptr_t)obj + offset))[0] = sp[0].i32;                     \
+    ((int32_t *)((uintptr_t)obj + offset))[1] = sp[1].i32;                     \
     sp += 2 + pop;                                                             \
     ip += 3;                                                                   \
   } while (0)
@@ -1011,16 +1046,7 @@ static MangoResult Execute(MangoVM *vm) {
   uint8_t pop;
   Module *mp;
   const uint8_t *ip;
-
   MangoResult result;
-  stackval2 *sp2;
-  int32_t tmp_i32;
-  uint32_t tmp_u32;
-  int64_t tmp_i64;
-  uint64_t tmp_u64;
-  float tmp_f32;
-  double tmp_f64;
-  void *tmp_ref;
 
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
@@ -1069,21 +1095,25 @@ DUP2:
   NEXT;
 
 SWAP:
-  tmp_i32 = sp[0].i32;
-  sp[0].i32 = sp[1].i32;
-  sp[1].i32 = tmp_i32;
-  ip++;
-  NEXT;
+  do {
+    int32_t tmp = sp[0].i32;
+    sp[0].i32 = sp[1].i32;
+    sp[1].i32 = tmp;
+    ip++;
+    NEXT;
+  } while (0);
 
 SWAP2:
-  tmp_i32 = sp[0].i32;
-  tmp_u32 = sp[1].u32;
-  sp[0].i32 = sp[2].i32;
-  sp[1].u32 = sp[3].u32;
-  sp[2].i32 = tmp_i32;
-  sp[3].u32 = tmp_u32;
-  ip++;
-  NEXT;
+  do {
+    int32_t tmp0 = sp[0].i32;
+    int32_t tmp1 = sp[1].i32;
+    sp[0].i32 = sp[2].i32;
+    sp[1].i32 = sp[3].i32;
+    sp[2].i32 = tmp0;
+    sp[3].i32 = tmp1;
+    ip++;
+    NEXT;
+  } while (0);
 
 OVER:
   sp--;
@@ -1092,12 +1122,14 @@ OVER:
   NEXT;
 
 ROT:
-  tmp_i32 = sp[0].i32;
-  sp[0].i32 = sp[1].i32;
-  sp[1].i32 = sp[2].i32;
-  sp[2].i32 = tmp_i32;
-  ip++;
-  NEXT;
+  do {
+    int32_t tmp = sp[0].i32;
+    sp[0].i32 = sp[1].i32;
+    sp[1].i32 = sp[2].i32;
+    sp[2].i32 = tmp;
+    ip++;
+    NEXT;
+  } while (0);
 
 NIP:
   sp[1].i32 = sp[0].i32;
@@ -1118,41 +1150,51 @@ TUCK:
 #pragma region locals
 
 LDLOC:
-  tmp_u32 = FETCH(1, u8);
-  sp--;
-  sp[0].i32 = sp[1 + tmp_u32].i32;
-  ip += 2;
-  NEXT;
+  do {
+    uint8_t index = FETCH(1, u8);
+    sp--;
+    sp[0].i32 = sp[1 + index].i32;
+    ip += 2;
+    NEXT;
+  } while (0);
 
 LDLOC2:
-  tmp_u32 = FETCH(1, u8);
-  sp -= 2;
-  sp[0].i32 = sp[2 + tmp_u32 + 0].i32;
-  sp[1].i32 = sp[2 + tmp_u32 + 1].i32;
-  ip += 2;
-  NEXT;
+  do {
+    uint8_t index = FETCH(1, u8);
+    sp -= 2;
+    sp[0].i32 = sp[2 + index + 0].i32;
+    sp[1].i32 = sp[2 + index + 1].i32;
+    ip += 2;
+    NEXT;
+  } while (0);
 
 LDLOCA:
-  tmp_u32 = FETCH(1, u8);
-  sp--;
-  sp[0].ref = void_as_ref(vm, &sp[1 + tmp_u32]);
-  ip += 2;
-  NEXT;
+  do {
+    uint8_t index = FETCH(1, u8);
+    sp--;
+    sp[0].ref = void_as_ref(vm, &sp[1 + index]);
+    ip += 2;
+    NEXT;
+  } while (0);
 
 STLOC:
-  tmp_u32 = FETCH(1, u8);
-  sp[tmp_u32].i32 = sp[0].i32;
-  sp++;
-  ip += 2;
-  NEXT;
+  do {
+    uint8_t index = FETCH(1, u8);
+    sp[index].i32 = sp[0].i32;
+    sp++;
+    ip += 2;
+    NEXT;
+  } while (0);
 
 STLOC2:
-  tmp_u32 = FETCH(1, u8);
-  sp[tmp_u32 + 0].i32 = sp[0].i32;
-  sp[tmp_u32 + 1].i32 = sp[1].i32;
-  sp += 2;
-  ip += 2;
-  NEXT;
+  do {
+    uint8_t index = FETCH(1, u8);
+    sp[index + 0].i32 = sp[0].i32;
+    sp[index + 1].i32 = sp[1].i32;
+    sp += 2;
+    ip += 2;
+    NEXT;
+  } while (0);
 
 #pragma endregion
 
@@ -1315,10 +1357,12 @@ REM_U64:
   BINARY2D(u64, %);
 
 NEG_I64:
-  sp2 = (stackval2 *)sp;
-  __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
-  ip++;
-  NEXT;
+  do {
+    stackval2 *sp2 = (stackval2 *)sp;
+    __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
+    ip++;
+    NEXT;
+  } while (0);
 
 #else
 ADD_I64:
@@ -1384,11 +1428,13 @@ DIV_F64:
   BINARY2(f64, /);
 
 REM_F64:
-  sp2 = (stackval2 *)sp;
-  sp2[1].f64 = fmod(sp2[1].f64, sp2[0].f64);
-  sp += 2;
-  ip++;
-  NEXT;
+  do {
+    stackval2 *sp2 = (stackval2 *)sp;
+    sp2[1].f64 = fmod(sp2[1].f64, sp2[0].f64);
+    sp += 2;
+    ip++;
+    NEXT;
+  } while (0);
 
 NEG_F64:
   UNARY2(f64, -);
@@ -1498,11 +1544,13 @@ LDC_F32:
 LDC_I64:
 LDC_F64:
 #ifndef MANGO_NO_I64
-  sp -= 2;
-  sp2 = (stackval2 *)sp;
-  sp2[0].i64 = FETCH(1, i64);
-  ip += 9;
-  NEXT;
+  do {
+    sp -= 2;
+    stackval2 *sp2 = (stackval2 *)sp;
+    sp2[0].i64 = FETCH(1, i64);
+    ip += 9;
+    NEXT;
+  } while (0);
 #else
   INVALID;
 #endif
@@ -1510,6 +1558,7 @@ LDC_F64:
 LDCA:
   do {
     const ConstDef *c = (const ConstDef *)(mp->image + FETCH(1, u16));
+
     sp--;
     sp[0].ref = void_as_ref(vm, (void *)(uintptr_t)(c->value));
     ip += 3;
@@ -1995,10 +2044,12 @@ BRTRUE_S:
 NEWOBJ:
   do {
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
+
     void *obj = MangoHeapAlloc(vm, 1, t->size, __alignof(stackval), 0);
     if (!obj) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
+
     sp--;
     sp[0].ref = void_as_ref(vm, obj);
     ip += 3;
@@ -2008,15 +2059,20 @@ NEWOBJ:
 NEWARR:
   do {
     int32_t count = sp[0].i32;
+
     if (count < 0) {
       RETURN(MANGO_E_ARGUMENT);
     }
+
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
+
     void *arr =
         MangoHeapAlloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
+
     if (!arr) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
+
     sp--;
     sp[0].ref = void_as_ref(vm, arr);
     ip += 3;
@@ -2029,9 +2085,11 @@ MKSLICE:
 SLICE:
   do {
     int32_t start = sp[0].i32;
+
     if (start < 0 || start > sp[2].i32) {
       RETURN(MANGO_E_ARGUMENT);
     }
+
     sp++;
     sp[0].ref.address += (uint32_t)start;
     sp[1].i32 -= start;
@@ -2043,12 +2101,14 @@ SLICE2:
   do {
     int32_t start = sp[1].i32;
     int32_t length = sp[0].i32;
+
     if (start < 0 || start > sp[3].i32) {
       RETURN(MANGO_E_ARGUMENT);
     }
     if (length < 0 || length > sp[3].i32 - start) {
       RETURN(MANGO_E_ARGUMENT);
     }
+
     sp += 2;
     sp[0].ref.address += (uint32_t)start;
     sp[1].i32 = length;
@@ -2142,10 +2202,13 @@ LDELEM: // index array length ... -> value ...
 LDELEM2: // index array length ... -> value1 value2 ...
   do {
     int32_t index = sp[0].i32;
+
     if (index < 0 || index >= sp[2].i32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
+
     void *arr = void_as_ptr(vm, sp[1].ref);
+
     sp += 1;
     sp[0].i32 = ((int32_t *)arr)[2 * index + 0];
     sp[1].i32 = ((int32_t *)arr)[2 * index + 1];
@@ -2165,9 +2228,11 @@ LDELEMA4:
 LDELEMA8: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
+
     if (index < 0 || index >= sp[2].i32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
+
     uint32_t address = sp[1].ref.address;
     sp += 2;
     sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA1));
@@ -2178,10 +2243,13 @@ LDELEMA8: // index array length ... -> address ...
 LDELEMA: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
+
     if (index < 0 || index >= sp[2].i32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
+
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
+
     uint32_t address = sp[1].ref.address;
     sp += 2;
     sp[0].ref.address = address + (uint32_t)index * t->size;
@@ -2203,10 +2271,13 @@ STELEM2: // value1 value2 index array length ... -> ...
     int32_t value1 = sp[0].i32;
     int32_t value2 = sp[1].i32;
     int32_t index = sp[2].i32;
+
     if (index < 0 || index >= sp[4].i32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
+
     void *arr = void_as_ptr(vm, sp[3].ref);
+
     sp += 5;
     ((int32_t *)arr)[2 * index + 0] = value1;
     ((int32_t *)arr)[2 * index + 1] = value2;
