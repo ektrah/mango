@@ -100,6 +100,8 @@ MANGO_API MangoVM *MangoInitialize(const void *base, void *address,
 MANGO_API void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
                                uint32_t alignment, uint32_t flags);
 
+MANGO_API uint32_t MangoHeapSize(const MangoVM *vm);
+
 MANGO_API uint32_t MangoHeapAvailable(const MangoVM *vm);
 
 MANGO_API MangoResult MangoStackCreate(MangoVM *vm, uint32_t size);
@@ -109,6 +111,8 @@ MANGO_API void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags);
 MANGO_API MangoResult MangoStackFree(MangoVM *vm, uint32_t size);
 
 MANGO_API void *MangoStackTop(const MangoVM *vm);
+
+MANGO_API uint32_t MangoStackSize(const MangoVM *vm);
 
 MANGO_API uint32_t MangoStackAvailable(const MangoVM *vm);
 

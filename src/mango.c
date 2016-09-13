@@ -313,6 +313,14 @@ void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
   return block;
 }
 
+uint32_t MangoHeapSize(const MangoVM *vm) {
+  if (!vm) {
+    return 0;
+  }
+
+  return vm->heap_size;
+}
+
 uint32_t MangoHeapAvailable(const MangoVM *vm) {
   if (!vm) {
     return 0;
@@ -409,6 +417,14 @@ void *MangoStackTop(const MangoVM *vm) {
   }
 
   return stackval_as_ptr(vm, vm->stack) + vm->sp;
+}
+
+uint32_t MangoStackSize(const MangoVM *vm) {
+  if (!vm) {
+    return 0;
+  }
+
+  return vm->stack_size;
 }
 
 uint32_t MangoStackAvailable(const MangoVM *vm) {
