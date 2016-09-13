@@ -32,7 +32,6 @@
 
 #define MANGO_VERSION_STRING "0.32-dev"
 
-#ifndef MANGO_API
 #ifdef MANGO_EXPORTS
 #ifdef _WIN32
 #define MANGO_API __declspec(dllexport)
@@ -41,7 +40,6 @@
 #endif
 #else
 #define MANGO_API
-#endif
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
