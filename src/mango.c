@@ -42,34 +42,38 @@
 
 #define MANGO_DECLARE_REF_TYPE(Type)                                           \
                                                                                \
-  typedef struct Type##Ref { uint32_t address; } Type##Ref;
+  typedef struct Type##_ref { uint32_t address; } Type##_ref;
 
 #define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
                                                                                \
-  static inline Const Type *Type##_as_ptr(const mango_vm *vm, Type##Ref ref) { \
+  static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
+                                          Type##_ref ref) {                    \
     (void)vm;                                                                  \
     return (Const Type *)ref.address;                                          \
   }                                                                            \
                                                                                \
-  static inline Type##Ref Type##_as_ref(const mango_vm *vm, Const Type *ptr) { \
+  static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
+                                         Const Type *ptr) {                    \
     (void)vm;                                                                  \
-    return (Type##Ref){(uint32_t)ptr};                                         \
+    return (Type##_ref){(uint32_t)ptr};                                        \
   }
 
 #elif UINTPTR_MAX == UINT64_MAX
 
 #define MANGO_DECLARE_REF_TYPE(Type)                                           \
                                                                                \
-  typedef struct Type##Ref { uint32_t address; } Type##Ref;
+  typedef struct Type##_ref { uint32_t address; } Type##_ref;
 
 #define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
                                                                                \
-  static inline Const Type *Type##_as_ptr(const mango_vm *vm, Type##Ref ref) { \
+  static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
+                                          Type##_ref ref) {                    \
     return (Const Type *)(vm->base + ref.address);                             \
   }                                                                            \
                                                                                \
-  static inline Type##Ref Type##_as_ref(const mango_vm *vm, Const Type *ptr) { \
-    return (Type##Ref){(uint32_t)((uintptr_t)ptr - vm->base)};                 \
+  static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
+                                         Const Type *ptr) {                    \
+    return (Type##_ref){(uint32_t)((uintptr_t)ptr - vm->base)};                \
   }
 
 #else
@@ -81,37 +85,37 @@
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
-MANGO_DECLARE_REF_TYPE(Module)
+MANGO_DECLARE_REF_TYPE(mango_module)
 MANGO_DECLARE_REF_TYPE(ModuleName)
 
 #pragma pack(push, 4)
 
-typedef enum OpCode {
+typedef enum opcode {
 #define OPCODE(c, s, pop, push, args, i) c,
 #include "mango_opcodes.inc"
 #undef OPCODE
-} OpCode;
+} opcode;
 
-typedef struct StackFrame {
+typedef struct stack_frame {
   uint8_t in_full_trust : 1;
   uint8_t pop : 7;
   uint8_t module;
   uint16_t ip;
-} StackFrame;
+} stack_frame;
 
-typedef union Value {
-  StackFrame sf;
+typedef union stackval {
+  stack_frame sf;
   int32_t i32;
   uint32_t u32;
 #ifndef MANGO_NO_F32
   float f32;
 #endif
-  voidRef ref;
+  void_ref ref;
 } stackval;
 
-typedef union Value2 {
+typedef union stackval2 {
   struct {
-    voidRef ref;
+    void_ref ref;
     int32_t length;
   } slice;
 #ifndef MANGO_NO_I64
@@ -138,14 +142,14 @@ typedef struct mango_vm {
 
   ModuleName startup_module;
 
-  ModuleRef modules;
+  mango_module_ref modules;
   uint8_t modules_created;
   uint8_t modules_imported;
   uint8_t module_init_head;
   uint8_t _reserved1;
 
-  StackFrame sf;
-  stackvalRef stack;
+  stack_frame sf;
+  stackval_ref stack;
   uint16_t stack_size;
   uint16_t rp;
   uint16_t sp;
@@ -154,7 +158,7 @@ typedef struct mango_vm {
   uint32_t _reserved2;
 } mango_vm;
 
-typedef struct Module {
+typedef struct mango_module {
   union {
     const uint8_t *image;
     uint64_t _image;
@@ -169,11 +173,11 @@ typedef struct Module {
   uint8_t init_next;
   uint8_t init_prev;
 
-  ModuleNameRef name;
+  ModuleName_ref name;
 
-  uint8_tRef imports;
-  voidRef static_data;
-} Module;
+  uint8_t_ref imports;
+  void_ref static_data;
+} mango_module;
 
 #pragma pack(pop)
 
@@ -195,20 +199,20 @@ typedef union packed {
 MANGO_DEFINE_REF_TYPE(void, )
 MANGO_DEFINE_REF_TYPE(uint8_t, const)
 MANGO_DEFINE_REF_TYPE(stackval, )
-MANGO_DEFINE_REF_TYPE(Module, )
+MANGO_DEFINE_REF_TYPE(mango_module, )
 MANGO_DEFINE_REF_TYPE(ModuleName, const)
 
 #if defined(__clang__) || defined(__GNUC__)
-_Static_assert(sizeof(StackFrame) == 4, "Incorrect layout");
-_Static_assert(__alignof(StackFrame) == 2, "Incorrect layout");
+_Static_assert(sizeof(stack_frame) == 4, "Incorrect layout");
+_Static_assert(__alignof(stack_frame) == 2, "Incorrect layout");
 _Static_assert(sizeof(stackval) == 4, "Incorrect layout");
 _Static_assert(__alignof(stackval) == 4, "Incorrect layout");
 _Static_assert(sizeof(stackval2) == 8, "Incorrect layout");
 _Static_assert(__alignof(stackval2) == 4, "Incorrect layout");
 _Static_assert(sizeof(mango_vm) == 64, "Incorrect layout");
 _Static_assert(__alignof(mango_vm) == 4, "Incorrect layout");
-_Static_assert(sizeof(Module) == 32, "Incorrect layout");
-_Static_assert(__alignof(Module) == 4, "Incorrect layout");
+_Static_assert(sizeof(mango_module) == 32, "Incorrect layout");
+_Static_assert(__alignof(mango_module) == 4, "Incorrect layout");
 _Static_assert(sizeof(packed) == 8, "Incorrect layout");
 _Static_assert(__alignof(packed) == 1, "Incorrect layout");
 #endif
@@ -443,7 +447,7 @@ uint32_t mango_stack_available(const mango_vm *vm) {
 #define INVALID_MODULE 255
 
 static uint8_t get_or_create_module(mango_vm *vm, const ModuleName *name) {
-  Module *modules = Module_as_ptr(vm, vm->modules);
+  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
 
   for (uint8_t i = 0; i < vm->modules_created; i++) {
     const ModuleName *n = ModuleName_as_ptr(vm, modules[i].name);
@@ -458,7 +462,7 @@ static uint8_t get_or_create_module(mango_vm *vm, const ModuleName *name) {
   return index;
 }
 
-static mango_result initialize_module(mango_vm *vm, Module *module) {
+static mango_result initialize_module(mango_vm *vm, mango_module *module) {
   const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
 
   if (m->import_count != 0) {
@@ -515,20 +519,20 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
     }
   }
 
-  Module *modules =
-      mango_heap_alloc(vm, s->module_count, sizeof(Module), __alignof(Module),
-                       MANGO_ALLOC_ZERO_MEMORY);
+  mango_module *modules =
+      mango_heap_alloc(vm, s->module_count, sizeof(mango_module),
+                       __alignof(mango_module), MANGO_ALLOC_ZERO_MEMORY);
 
   if (!modules) {
     return MANGO_E_OUT_OF_MEMORY;
   }
 
   memcpy(&vm->startup_module, name, sizeof(ModuleName));
-  vm->modules = Module_as_ref(vm, modules);
+  vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
 
-  Module *module = &modules[0];
+  mango_module *module = &modules[0];
   module->image = image;
   module->context = context;
   module->index = 0;
@@ -543,8 +547,8 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
 static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
                                           const uint8_t *image, void *context,
                                           uint32_t flags) {
-  Module *modules = Module_as_ptr(vm, vm->modules);
-  Module *module = &modules[vm->modules_imported];
+  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+  mango_module *module = &modules[vm->modules_imported];
   const ModuleName *n = ModuleName_as_ptr(vm, module->name);
 
   if (memcmp(name, n, sizeof(ModuleName)) != 0) {
@@ -618,8 +622,8 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
     return NULL;
   }
 
-  Module *modules = Module_as_ptr(vm, vm->modules);
-  Module *module = &modules[vm->modules_imported];
+  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+  mango_module *module = &modules[vm->modules_imported];
   const ModuleName *n = ModuleName_as_ptr(vm, module->name);
 
   return (const uint8_t *)n;
@@ -631,7 +635,7 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
 
 static mango_result execute(mango_vm *vm);
 
-static mango_result set_entry_point(mango_vm *vm, Module *module,
+static mango_result set_entry_point(mango_vm *vm, mango_module *module,
                                     uint32_t offset) {
   const FuncDef *f = (const FuncDef *)(module->image + offset);
 
@@ -654,11 +658,11 @@ static mango_result set_entry_point(mango_vm *vm, Module *module,
   }
 
   stackval *rp = stackval_as_ptr(vm, vm->stack);
-  rp->sf = (StackFrame){false, 0, 0, 0};
+  rp->sf = (stack_frame){false, 0, 0, 0};
   vm->rp = 1;
 
   uint16_t ip = (uint16_t)(f->code - module->image);
-  vm->sf = (StackFrame){in_full_trust, f->loc_count, module->index, ip};
+  vm->sf = (stack_frame){in_full_trust, f->loc_count, module->index, ip};
   vm->sp -= f->loc_count;
   return MANGO_E_SUCCESS;
 }
@@ -682,11 +686,11 @@ mango_result mango_execute(mango_vm *vm) {
     return result;
   }
 
-  Module *modules = Module_as_ptr(vm, vm->modules);
+  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   uint8_t head = vm->module_init_head;
 
   while (head != INVALID_MODULE) {
-    Module *module = &modules[head];
+    mango_module *module = &modules[head];
     const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
 
     if ((module->flags & VISITED) == 0) {
@@ -696,7 +700,7 @@ mango_result mango_execute(mango_vm *vm) {
 
       for (uint8_t i = 0; i < m->import_count; i++) {
         uint8_t p = imports[i];
-        Module *import = &modules[p];
+        mango_module *import = &modules[p];
 
         if ((import->flags & VISITED) == 0) {
           if (head != p) {
@@ -779,15 +783,15 @@ mango_result mango_execute(mango_vm *vm) {
 
 #define UNPACK_STATE(sf)                                                       \
   do {                                                                         \
-    StackFrame sf_ = (sf);                                                     \
-    mp = &Module_as_ptr(vm, vm->modules)[sf_.module];                          \
+    stack_frame sf_ = (sf);                                                    \
+    mp = &mango_module_as_ptr(vm, vm->modules)[sf_.module];                    \
     ip = mp->image + sf_.ip;                                                   \
     pop = sf_.pop;                                                             \
     in_full_trust = sf_.in_full_trust;                                         \
   } while (0)
 
 #define PACK_STATE()                                                           \
-  (StackFrame) { in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image) }
+  ((stack_frame){in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image)})
 
 #define RETURN(Result)                                                         \
   do {                                                                         \
@@ -1047,7 +1051,7 @@ static mango_result execute(mango_vm *vm) {
   stackval *sp;
   bool in_full_trust;
   uint8_t pop;
-  Module *mp;
+  mango_module *mp;
   const uint8_t *ip;
   mango_result result;
 
@@ -1227,13 +1231,13 @@ RET:
 CALL:
   do {
     uint8_t index = FETCH(1, u8);
-    Module *module;
+    mango_module *module;
 
     if (index == INVALID_MODULE) {
       module = mp;
     } else {
       const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      module = &Module_as_ptr(vm, vm->modules)[imports[index]];
+      module = &mango_module_as_ptr(vm, vm->modules)[imports[index]];
     }
 
     const FuncDef *f = (const FuncDef *)(module->image + FETCH(2, u16));
@@ -1274,13 +1278,13 @@ CALL:
 SYSCALL:
   do {
     uint8_t index = FETCH(1, u8);
-    Module *module;
+    mango_module *module;
 
     if (index == INVALID_MODULE) {
       module = mp;
     } else {
       const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      module = &Module_as_ptr(vm, vm->modules)[imports[index]];
+      module = &mango_module_as_ptr(vm, vm->modules)[imports[index]];
     }
 
     const SysCallDef *f = (const SysCallDef *)(module->image + FETCH(2, u16));
