@@ -1008,20 +1008,21 @@ uint32_t mango_syscall_function(mango_vm *vm) {
     NEXT;                                                                      \
   } while (0);
 
-#define LOAD_FIELD(ref, cast, ty)                                              \
+#define LOAD_FIELD(ref, cast, ty, push)                                        \
   do {                                                                         \
     uint32_t offset = FETCH(1, u16);                                           \
     void *obj = void_as_ptr(vm, ref);                                          \
+    sp -= push;                                                                \
     sp[0].ty = ((cast *)((uintptr_t)obj + offset))[0];                         \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (0)
 
-#define LOAD_FIELD2(ref)                                                       \
+#define LOAD_FIELD2(ref, push)                                                 \
   do {                                                                         \
     uint32_t offset = FETCH(1, u16);                                           \
     void *obj = void_as_ptr(vm, ref);                                          \
-    sp--;                                                                      \
+    sp -= push;                                                                \
     sp[0].i32 = ((int32_t *)((uintptr_t)obj + offset))[0];                     \
     sp[1].i32 = ((int32_t *)((uintptr_t)obj + offset))[1];                     \
     ip += 3;                                                                   \
@@ -1033,7 +1034,7 @@ uint32_t mango_syscall_function(mango_vm *vm) {
     uint32_t offset = FETCH(1, u16);                                           \
     void *obj = void_as_ptr(vm, ref);                                          \
     ((cast *)((uintptr_t)obj + offset))[0] = (cast)sp[0].ty;                   \
-    sp += 1 + pop;                                                             \
+    sp += pop;                                                                 \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (0)
@@ -1044,7 +1045,7 @@ uint32_t mango_syscall_function(mango_vm *vm) {
     void *obj = void_as_ptr(vm, ref);                                          \
     ((int32_t *)((uintptr_t)obj + offset))[0] = sp[0].i32;                     \
     ((int32_t *)((uintptr_t)obj + offset))[1] = sp[1].i32;                     \
-    sp += 2 + pop;                                                             \
+    sp += pop;                                                                 \
     ip += 3;                                                                   \
   } while (0)
 
@@ -2197,76 +2198,76 @@ SLICE2:
 LDLEN:
   goto POP;
 
-LDFLD_I8:
-  LOAD_FIELD(sp[0].ref, int8_t, i32);
+LDFLD_I8: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, int8_t, i32, 0);
 
-LDFLD_I16:
-  LOAD_FIELD(sp[0].ref, int16_t, i32);
+LDFLD_I16: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, int16_t, i32, 0);
 
-LDFLD:
-  LOAD_FIELD(sp[0].ref, int32_t, i32);
+LDFLD: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, int32_t, i32, 0);
 
-LDFLD2:
-  LOAD_FIELD2(sp[0].ref);
+LDFLD2: // address ... -> value1 value2 ...
+  LOAD_FIELD2(sp[0].ref, 1);
 
-LDFLDA:
+LDFLDA: // address ... -> address ...
   sp[0].ref.address += FETCH(1, u16);
   ip += 3;
   NEXT;
 
-LDFLD_U8:
-  LOAD_FIELD(sp[0].ref, uint8_t, u32);
+LDFLD_U8: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, uint8_t, u32, 0);
 
-LDFLD_U16:
-  LOAD_FIELD(sp[0].ref, uint16_t, u32);
+LDFLD_U16: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, uint16_t, u32, 0);
 
-STFLD_I8:
-  STORE_FIELD(sp[1].ref, int8_t, i32, 1);
+STFLD_I8: // value address ... -> ...
+  STORE_FIELD(sp[1].ref, int8_t, i32, 2);
 
-STFLD_I16:
-  STORE_FIELD(sp[1].ref, int16_t, i32, 1);
+STFLD_I16: // value address ... -> ...
+  STORE_FIELD(sp[1].ref, int16_t, i32, 2);
 
-STFLD:
-  STORE_FIELD(sp[1].ref, int32_t, i32, 1);
+STFLD: // value address ... -> ...
+  STORE_FIELD(sp[1].ref, int32_t, i32, 2);
 
-STFLD2:
-  STORE_FIELD2(sp[2].ref, 1);
+STFLD2: // value1 value2 address -> ...
+  STORE_FIELD2(sp[2].ref, 3);
 
-LDSFLD_I8:
-  LOAD_FIELD(mp->static_data, int8_t, i32);
+LDSFLD_I8: // ... -> value ...
+  LOAD_FIELD(mp->static_data, int8_t, i32, 1);
 
-LDSFLD_I16:
-  LOAD_FIELD(mp->static_data, int16_t, i32);
+LDSFLD_I16: // ... -> value ...
+  LOAD_FIELD(mp->static_data, int16_t, i32, 1);
 
-LDSFLD:
-  LOAD_FIELD(mp->static_data, int32_t, i32);
+LDSFLD: // ... -> value ...
+  LOAD_FIELD(mp->static_data, int32_t, i32, 1);
 
-LDSFLD2:
-  LOAD_FIELD2(mp->static_data);
+LDSFLD2: // ... -> value1 value2 ...
+  LOAD_FIELD2(mp->static_data, 2);
 
-LDSFLDA:
+LDSFLDA: // ... -> address ...
   sp--;
   sp[0].ref.address = mp->static_data.address + FETCH(1, u16);
   ip += 3;
   NEXT;
 
-LDSFLD_U8:
-  LOAD_FIELD(mp->static_data, uint8_t, u32);
+LDSFLD_U8: // ... -> value ...
+  LOAD_FIELD(mp->static_data, uint8_t, u32, 1);
 
-LDSFLD_U16:
-  LOAD_FIELD(mp->static_data, uint16_t, u32);
+LDSFLD_U16: // ... -> value ...
+  LOAD_FIELD(mp->static_data, uint16_t, u32, 1);
 
-STSFLD_I8:
-  STORE_FIELD(mp->static_data, int8_t, i32, 0);
+STSFLD_I8: // value ... -> ...
+  STORE_FIELD(mp->static_data, int8_t, i32, 1);
 
-STSFLD_I16:
-  STORE_FIELD(mp->static_data, int16_t, i32, 0);
+STSFLD_I16: // value ... -> ...
+  STORE_FIELD(mp->static_data, int16_t, i32, 1);
 
-STSFLD:
-  STORE_FIELD(mp->static_data, int32_t, i32, 0);
+STSFLD: // value ... -> ...
+  STORE_FIELD(mp->static_data, int32_t, i32, 1);
 
-STSFLD2:
-  STORE_FIELD2(mp->static_data, 0);
+STSFLD2: // value1 value2 ... -> ...
+  STORE_FIELD2(mp->static_data, 2);
 
 LDELEM_I8: // index array length ... -> value ...
   LOAD_ELEMENT(int8_t, i32);
