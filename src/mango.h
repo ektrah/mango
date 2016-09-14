@@ -25,7 +25,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <string.h>
 
 #define MANGO_VERSION_MAJOR 0
 #define MANGO_VERSION_MINOR 32
