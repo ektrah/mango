@@ -31,61 +31,61 @@
 
 #pragma pack(push, 1)
 
-typedef struct ModuleName {
+typedef struct mango_module_name {
   uint8_t bytes[12];
-} ModuleName;
+} mango_module_name;
 
-typedef enum ModuleFlags {
+typedef enum mango_module_flags {
   MANGO_MF_NONE = 0,
   MANGO_MF_TINY = 1,
   MANGO_MF_EXECUTABLE = 2,
-} ModuleFlags;
+} mango_module_flags;
 
-typedef struct ModuleDef {
+typedef struct mango_module_def {
   uint8_t flags;
   uint8_t import_count;
   uint16_t static_size;
   uint16_t static_init;
-  ModuleName imports[];
-} ModuleDef;
+  mango_module_name imports[];
+} mango_module_def;
 
-typedef struct StartupDef {
+typedef struct mango_startup_def {
   uint16_t features;
   uint16_t stack_size;
   uint8_t module_count;
-} StartupDef;
+} mango_startup_def;
 
-typedef struct TypeDef {
+typedef struct mango_type_def {
   uint8_t flags;
   uint16_t size;
-} TypeDef;
+} mango_type_def;
 
-typedef struct ConstDef {
+typedef struct mango_const_def {
   uint8_t flags;
   uint8_t value[];
-} ConstDef;
+} mango_const_def;
 
-typedef enum FuncFlags {
+typedef enum mango_func_flags {
   MANGO_FF_NONE = 0,
   MANGO_FF_NAKED = 1,
   MANGO_FF_SECURITY_CRITICAL = 2,
   MANGO_FF_SECURITY_SAFE_CRITICAL = 4,
-} FuncFlags;
+} mango_func_flags;
 
-typedef struct FuncDef {
+typedef struct mango_func_def {
   uint8_t flags;
   uint8_t max_stack;
   uint8_t arg_count;
   uint8_t loc_count;
   uint8_t code[];
-} FuncDef;
+} mango_func_def;
 
-typedef struct SysCallDef {
+typedef struct mango_syscall_def {
   uint8_t flags;
   uint8_t arg_count;
   uint8_t ret_count;
   uint16_t function;
-} SysCallDef;
+} mango_syscall_def;
 
 #pragma pack(pop)
 
