@@ -155,7 +155,8 @@ typedef struct mango_vm {
   uint16_t sp;
   uint16_t sp_expected;
 
-  uint32_t _reserved2;
+  uint16_t syscall_function;
+  uint16_t _reserved2;
 } mango_vm;
 
 typedef struct mango_module {
@@ -277,6 +278,14 @@ mango_vm *mango_initialize(const void *base, void *address, uint32_t size,
   vm->heap_size = size;
   vm->heap_used = sizeof(mango_vm);
   return vm;
+}
+
+void *mango_context(const mango_vm *vm) {
+  if (!vm) {
+    return NULL;
+  }
+
+  return vm->context;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -635,6 +644,23 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
   return (const uint8_t *)n;
 }
 
+void *mango_module_context(const mango_vm *vm) {
+  if (!vm) {
+    return NULL;
+  }
+  if (vm->modules_imported == 0) {
+    return NULL;
+  }
+  if (vm->modules_imported != vm->modules_created) {
+    return NULL;
+  }
+
+  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+  mango_module *module = &modules[vm->sf.module];
+
+  return module->context;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #define VISITED 1
@@ -686,6 +712,9 @@ mango_result mango_execute(mango_vm *vm) {
   if (vm->sp != vm->sp_expected) {
     return MANGO_E_STACK_IMBALANCE;
   }
+
+  vm->sp_expected = vm->stack_size;
+  vm->syscall_function = 0;
 
   mango_result result = execute(vm);
   if (result != MANGO_E_SUCCESS) {
@@ -760,6 +789,14 @@ mango_result mango_execute(mango_vm *vm) {
 #endif
 
   return MANGO_E_SUCCESS;
+}
+
+uint32_t mango_syscall_function(mango_vm *vm) {
+  if (!vm) {
+    return 0;
+  }
+
+  return vm->syscall_function;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1062,8 +1099,6 @@ static mango_result execute(mango_vm *vm) {
   const uint8_t *ip;
   mango_result result;
 
-  vm->sp_expected = vm->stack_size;
-
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
   UNPACK_STATE(vm->sf);
@@ -1314,6 +1349,8 @@ SYSCALL:
     ip += 4;
     vm->sp_expected = (uint16_t)(
         ((sp - stackval_as_ptr(vm, vm->stack)) + f->arg_count) - f->ret_count);
+    vm->syscall_function = f->function;
+
     RETURN(MANGO_E_SYSCALL);
   } while (0);
 

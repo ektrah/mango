@@ -94,6 +94,8 @@ MANGO_API uint32_t mango_features(void);
 MANGO_API mango_vm *mango_initialize(const void *base, void *address,
                                      uint32_t size, void *context);
 
+MANGO_API void *mango_context(const mango_vm *vm);
+
 MANGO_API void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
                                  uint32_t alignment, uint32_t flags);
 
@@ -119,7 +121,11 @@ MANGO_API mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
 
 MANGO_API const uint8_t *mango_module_missing(const mango_vm *vm);
 
+MANGO_API void *mango_module_context(const mango_vm *vm);
+
 MANGO_API mango_result mango_execute(mango_vm *vm);
+
+MANGO_API uint32_t mango_syscall_function(mango_vm *vm);
 
 ////////////////////////////////////////////////////////////////////////////////
 
