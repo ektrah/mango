@@ -1047,6 +1047,7 @@ uint32_t mango_syscall_function(mango_vm *vm) {
     ((int32_t *)((uintptr_t)obj + offset))[1] = sp[1].i32;                     \
     sp += pop;                                                                 \
     ip += 3;                                                                   \
+    NEXT;                                                                      \
   } while (0)
 
 #define LOAD_ELEMENT(cast, ty)                                                 \
