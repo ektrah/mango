@@ -46,12 +46,12 @@
 
 #define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
                                                                                \
-  static inline Const Type *Type##_as_ptr(const MangoVM *vm, Type##Ref ref) {  \
+  static inline Const Type *Type##_as_ptr(const mango_vm *vm, Type##Ref ref) { \
     (void)vm;                                                                  \
     return (Const Type *)ref.address;                                          \
   }                                                                            \
                                                                                \
-  static inline Type##Ref Type##_as_ref(const MangoVM *vm, Const Type *ptr) {  \
+  static inline Type##Ref Type##_as_ref(const mango_vm *vm, Const Type *ptr) { \
     (void)vm;                                                                  \
     return (Type##Ref){(uint32_t)ptr};                                         \
   }
@@ -64,11 +64,11 @@
 
 #define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
                                                                                \
-  static inline Const Type *Type##_as_ptr(const MangoVM *vm, Type##Ref ref) {  \
+  static inline Const Type *Type##_as_ptr(const mango_vm *vm, Type##Ref ref) { \
     return (Const Type *)(vm->base + ref.address);                             \
   }                                                                            \
                                                                                \
-  static inline Type##Ref Type##_as_ref(const MangoVM *vm, Const Type *ptr) {  \
+  static inline Type##Ref Type##_as_ref(const mango_vm *vm, Const Type *ptr) { \
     return (Type##Ref){(uint32_t)((uintptr_t)ptr - vm->base)};                 \
   }
 
@@ -123,7 +123,7 @@ typedef union Value2 {
 #endif
 } stackval2;
 
-typedef struct MangoVM {
+typedef struct mango_vm {
   union {
     uintptr_t base;
     uint64_t _base;
@@ -152,7 +152,7 @@ typedef struct MangoVM {
   uint16_t sp_expected;
 
   uint32_t _reserved2;
-} MangoVM;
+} mango_vm;
 
 typedef struct Module {
   union {
@@ -205,8 +205,8 @@ _Static_assert(sizeof(stackval) == 4, "Incorrect layout");
 _Static_assert(__alignof(stackval) == 4, "Incorrect layout");
 _Static_assert(sizeof(stackval2) == 8, "Incorrect layout");
 _Static_assert(__alignof(stackval2) == 4, "Incorrect layout");
-_Static_assert(sizeof(MangoVM) == 64, "Incorrect layout");
-_Static_assert(__alignof(MangoVM) == 4, "Incorrect layout");
+_Static_assert(sizeof(mango_vm) == 64, "Incorrect layout");
+_Static_assert(__alignof(mango_vm) == 4, "Incorrect layout");
 _Static_assert(sizeof(Module) == 32, "Incorrect layout");
 _Static_assert(__alignof(Module) == 4, "Incorrect layout");
 _Static_assert(sizeof(packed) == 8, "Incorrect layout");
@@ -215,13 +215,13 @@ _Static_assert(__alignof(packed) == 1, "Incorrect layout");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-uint32_t MangoVersionMajor(void) { return MANGO_VERSION_MAJOR; }
+uint32_t mango_version_major(void) { return MANGO_VERSION_MAJOR; }
 
-uint32_t MangoVersionMinor(void) { return MANGO_VERSION_MINOR; }
+uint32_t mango_version_minor(void) { return MANGO_VERSION_MINOR; }
 
-const char *MangoVersionString(void) { return MANGO_VERSION_STRING; }
+const char *mango_version_string(void) { return MANGO_VERSION_STRING; }
 
-uint32_t MangoQueryFeatures(void) {
+uint32_t mango_features(void) {
   uint32_t features = 0;
 #ifndef MANGO_NO_I64
   features |= MANGO_FEATURE_I64;
@@ -235,8 +235,8 @@ uint32_t MangoQueryFeatures(void) {
   return features;
 }
 
-MangoVM *MangoInitialize(const void *base, void *address, uint32_t size,
-                         void *context) {
+mango_vm *mango_initialize(const void *base, void *address, uint32_t size,
+                           void *context) {
   uintptr_t base_end;
   uintptr_t address_end;
 
@@ -246,10 +246,10 @@ MangoVM *MangoInitialize(const void *base, void *address, uint32_t size,
   if (address < base) {
     return NULL;
   }
-  if ((uintptr_t)address & (__alignof(MangoVM) - 1)) {
+  if ((uintptr_t)address & (__alignof(mango_vm) - 1)) {
     return NULL;
   }
-  if (size < sizeof(MangoVM)) {
+  if (size < sizeof(mango_vm)) {
     return NULL;
   }
   if (__builtin_add_overflow((uintptr_t)base, UINT32_MAX, &base_end)) {
@@ -262,21 +262,21 @@ MangoVM *MangoInitialize(const void *base, void *address, uint32_t size,
     return NULL;
   }
 
-  printf("allocate %u bytes\n", (uint32_t)sizeof(MangoVM));
+  printf("allocate %u bytes\n", (uint32_t)sizeof(mango_vm));
 
-  MangoVM *vm = address;
-  memset(vm, 0, sizeof(MangoVM));
+  mango_vm *vm = address;
+  memset(vm, 0, sizeof(mango_vm));
   vm->base = (uintptr_t)base;
   vm->context = context;
   vm->heap_size = size;
-  vm->heap_used = sizeof(MangoVM);
+  vm->heap_used = sizeof(mango_vm);
   return vm;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
-                     uint32_t alignment, uint32_t flags) {
+void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
+                       uint32_t alignment, uint32_t flags) {
   uint32_t total_size;
   uint32_t offset;
   uint32_t available;
@@ -313,7 +313,7 @@ void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
   return block;
 }
 
-uint32_t MangoHeapSize(const MangoVM *vm) {
+uint32_t mango_heap_size(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
@@ -321,7 +321,7 @@ uint32_t MangoHeapSize(const MangoVM *vm) {
   return vm->heap_size;
 }
 
-uint32_t MangoHeapAvailable(const MangoVM *vm) {
+uint32_t mango_heap_available(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
@@ -331,7 +331,7 @@ uint32_t MangoHeapAvailable(const MangoVM *vm) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
+mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -345,7 +345,7 @@ MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
   uint16_t count = (uint16_t)((size + sizeof(stackval) - 1) / sizeof(stackval));
 
   stackval *stack =
-      MangoHeapAlloc(vm, count, sizeof(stackval), __alignof(stackval), 0);
+      mango_heap_alloc(vm, count, sizeof(stackval), __alignof(stackval), 0);
 
   if (!stack) {
     return MANGO_E_OUT_OF_MEMORY;
@@ -359,7 +359,7 @@ MangoResult MangoStackCreate(MangoVM *vm, uint32_t size) {
   return MANGO_E_SUCCESS;
 }
 
-void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags) {
+void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags) {
   if (!vm) {
     return NULL;
   }
@@ -387,7 +387,7 @@ void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags) {
   return block;
 }
 
-MangoResult MangoStackFree(MangoVM *vm, uint32_t size) {
+mango_result mango_stack_free(mango_vm *vm, uint32_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -408,7 +408,7 @@ MangoResult MangoStackFree(MangoVM *vm, uint32_t size) {
   return MANGO_E_SUCCESS;
 }
 
-void *MangoStackTop(const MangoVM *vm) {
+void *mango_stack_top(const mango_vm *vm) {
   if (!vm) {
     return NULL;
   }
@@ -419,7 +419,7 @@ void *MangoStackTop(const MangoVM *vm) {
   return stackval_as_ptr(vm, vm->stack) + vm->sp;
 }
 
-uint32_t MangoStackSize(const MangoVM *vm) {
+uint32_t mango_stack_size(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
@@ -427,7 +427,7 @@ uint32_t MangoStackSize(const MangoVM *vm) {
   return vm->stack_size;
 }
 
-uint32_t MangoStackAvailable(const MangoVM *vm) {
+uint32_t mango_stack_available(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
@@ -442,7 +442,7 @@ uint32_t MangoStackAvailable(const MangoVM *vm) {
 
 #define INVALID_MODULE 255
 
-static uint8_t GetOrCreateModule(MangoVM *vm, const ModuleName *name) {
+static uint8_t get_or_create_module(mango_vm *vm, const ModuleName *name) {
   Module *modules = Module_as_ptr(vm, vm->modules);
 
   for (uint8_t i = 0; i < vm->modules_created; i++) {
@@ -458,27 +458,27 @@ static uint8_t GetOrCreateModule(MangoVM *vm, const ModuleName *name) {
   return index;
 }
 
-static MangoResult InitializeModule(MangoVM *vm, Module *module) {
+static mango_result initialize_module(mango_vm *vm, Module *module) {
   const ModuleDef *m = (const ModuleDef *)(module->image + MANGO_HEADER_SIZE);
 
   if (m->import_count != 0) {
-    uint8_t *imports = MangoHeapAlloc(vm, m->import_count, sizeof(uint8_t),
-                                      __alignof(uint8_t), 0);
+    uint8_t *imports = mango_heap_alloc(vm, m->import_count, sizeof(uint8_t),
+                                        __alignof(uint8_t), 0);
 
     if (!imports) {
       return MANGO_E_OUT_OF_MEMORY;
     }
 
     for (uint8_t i = 0; i < m->import_count; i++) {
-      imports[i] = GetOrCreateModule(vm, &m->imports[i]);
+      imports[i] = get_or_create_module(vm, &m->imports[i]);
     }
 
     module->imports = uint8_t_as_ref(vm, imports);
   }
 
   if (m->static_size != 0) {
-    void *static_data = MangoHeapAlloc(vm, m->static_size, sizeof(uint8_t),
-                                       __alignof(stackval), 0);
+    void *static_data = mango_heap_alloc(vm, m->static_size, sizeof(uint8_t),
+                                         __alignof(stackval), 0);
 
     if (!static_data) {
       return MANGO_E_OUT_OF_MEMORY;
@@ -490,9 +490,9 @@ static MangoResult InitializeModule(MangoVM *vm, Module *module) {
   return MANGO_E_SUCCESS;
 }
 
-static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
-                                       const uint8_t *image, void *context,
-                                       uint32_t flags) {
+static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
+                                          const uint8_t *image, void *context,
+                                          uint32_t flags) {
   const ModuleDef *m = (const ModuleDef *)(image + MANGO_HEADER_SIZE);
 
   if ((m->flags & MANGO_MF_EXECUTABLE) == 0) {
@@ -503,19 +503,21 @@ static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
       (const StartupDef *)(image + MANGO_HEADER_SIZE + sizeof(ModuleDef) +
                            m->import_count * sizeof(ModuleName));
 
-  if ((s->features & MangoQueryFeatures()) != s->features) {
+  if ((s->features & mango_features()) != s->features) {
     return MANGO_E_NOT_SUPPORTED;
   }
 
   if (!vm->stack.address) {
-    MangoResult result = MangoStackCreate(vm, s->stack_size * sizeof(stackval));
+    mango_result result =
+        mango_stack_create(vm, s->stack_size * sizeof(stackval));
     if (result != MANGO_E_SUCCESS) {
       return result;
     }
   }
 
-  Module *modules = MangoHeapAlloc(vm, s->module_count, sizeof(Module),
-                                   __alignof(Module), MANGO_ALLOC_ZERO_MEMORY);
+  Module *modules =
+      mango_heap_alloc(vm, s->module_count, sizeof(Module), __alignof(Module),
+                       MANGO_ALLOC_ZERO_MEMORY);
 
   if (!modules) {
     return MANGO_E_OUT_OF_MEMORY;
@@ -535,12 +537,12 @@ static MangoResult ImportStartupModule(MangoVM *vm, const uint8_t *name,
   module->init_prev = INVALID_MODULE;
   module->name = ModuleName_as_ref(vm, &vm->startup_module);
 
-  return InitializeModule(vm, module);
+  return initialize_module(vm, module);
 }
 
-static MangoResult ImportMissingModule(MangoVM *vm, const uint8_t *name,
-                                       const uint8_t *image, void *context,
-                                       uint32_t flags) {
+static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
+                                          const uint8_t *image, void *context,
+                                          uint32_t flags) {
   Module *modules = Module_as_ptr(vm, vm->modules);
   Module *module = &modules[vm->modules_imported];
   const ModuleName *n = ModuleName_as_ptr(vm, module->name);
@@ -557,10 +559,10 @@ static MangoResult ImportMissingModule(MangoVM *vm, const uint8_t *name,
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
 
-  return InitializeModule(vm, module);
+  return initialize_module(vm, module);
 }
 
-static MangoResult VerifyModule(const uint8_t *image, uint32_t size) {
+static mango_result verify_module(const uint8_t *image, uint32_t size) {
   (void)image;
   (void)size;
 
@@ -571,9 +573,9 @@ static MangoResult VerifyModule(const uint8_t *image, uint32_t size) {
 #endif
 }
 
-MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
-                              const uint8_t *image, uint32_t size,
-                              void *context, uint32_t flags) {
+mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
+                                 const uint8_t *image, uint32_t size,
+                                 void *context, uint32_t flags) {
   uintptr_t base_end;
 
   if (!vm || !name || !image) {
@@ -593,22 +595,22 @@ MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
   }
 
   if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
-    MangoResult result = VerifyModule(image, size);
+    mango_result result = verify_module(image, size);
     if (result != MANGO_E_SUCCESS) {
       return result;
     }
   }
 
   if (vm->modules_imported == 0) {
-    return ImportStartupModule(vm, name, image, context, flags);
+    return import_startup_module(vm, name, image, context, flags);
   } else if (vm->modules_imported != vm->modules_created) {
-    return ImportMissingModule(vm, name, image, context, flags);
+    return import_missing_module(vm, name, image, context, flags);
   } else {
     return MANGO_E_INVALID_OPERATION;
   }
 }
 
-const uint8_t *MangoModuleMissing(const MangoVM *vm) {
+const uint8_t *mango_module_missing(const mango_vm *vm) {
   if (!vm) {
     return NULL;
   }
@@ -627,9 +629,10 @@ const uint8_t *MangoModuleMissing(const MangoVM *vm) {
 
 #define VISITED 1
 
-static MangoResult Execute(MangoVM *vm);
+static mango_result execute(mango_vm *vm);
 
-static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
+static mango_result set_entry_point(mango_vm *vm, Module *module,
+                                    uint32_t offset) {
   const FuncDef *f = (const FuncDef *)(module->image + offset);
 
   bool in_full_trust = false;
@@ -660,7 +663,7 @@ static MangoResult SetEntryPoint(MangoVM *vm, Module *module, uint32_t offset) {
   return MANGO_E_SUCCESS;
 }
 
-MangoResult MangoExecute(MangoVM *vm) {
+mango_result mango_execute(mango_vm *vm) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -674,7 +677,7 @@ MangoResult MangoExecute(MangoVM *vm) {
     return MANGO_E_STACK_IMBALANCE;
   }
 
-  MangoResult result = Execute(vm);
+  mango_result result = execute(vm);
   if (result != MANGO_E_SUCCESS) {
     return result;
   }
@@ -723,11 +726,11 @@ MangoResult MangoExecute(MangoVM *vm) {
 
       printf("initialize module %u\n", module->index);
       if (m->static_init != 0) {
-        result = SetEntryPoint(vm, module, m->static_init);
+        result = set_entry_point(vm, module, m->static_init);
         if (result != MANGO_E_SUCCESS) {
           return result;
         }
-        result = Execute(vm);
+        result = execute(vm);
         if (result != MANGO_E_SUCCESS) {
           return result;
         }
@@ -1026,7 +1029,7 @@ MangoResult MangoExecute(MangoVM *vm) {
 
 #pragma endregion
 
-static MangoResult Execute(MangoVM *vm) {
+static mango_result execute(mango_vm *vm) {
   static const void *const dispatch_table[] = {
 #define OPCODE(c, s, pop, push, args, i) &&c,
 #include "mango_opcodes.inc"
@@ -1046,7 +1049,7 @@ static MangoResult Execute(MangoVM *vm) {
   uint8_t pop;
   Module *mp;
   const uint8_t *ip;
-  MangoResult result;
+  mango_result result;
 
   vm->sp_expected = vm->stack_size;
 
@@ -2046,7 +2049,7 @@ NEWOBJ:
   do {
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
 
-    void *obj = MangoHeapAlloc(vm, 1, t->size, __alignof(stackval), 0);
+    void *obj = mango_heap_alloc(vm, 1, t->size, __alignof(stackval), 0);
     if (!obj) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
@@ -2068,7 +2071,7 @@ NEWARR:
     const TypeDef *t = (const TypeDef *)(mp->image + FETCH(1, u16));
 
     void *arr =
-        MangoHeapAlloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
+        mango_heap_alloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
 
     if (!arr) {
       RETURN(MANGO_E_OUT_OF_MEMORY);

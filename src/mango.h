@@ -44,7 +44,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum MangoResult {
+typedef enum mango_result {
   MANGO_E_SUCCESS = 0,
   MANGO_E_ARGUMENT = 64,
   MANGO_E_ARGUMENT_NULL = 65,
@@ -64,84 +64,86 @@ typedef enum MangoResult {
   MANGO_E_BREAKPOINT = 110,
   MANGO_E_TIMEOUT = 111,
   MANGO_E_SYSCALL = 112,
-} MangoResult;
+} mango_result;
 
-typedef enum MangoFeatures {
+typedef enum mango_feature_flags {
   MANGO_FEATURE_I64 = 0x1000,
   MANGO_FEATURE_F32 = 0x2000,
   MANGO_FEATURE_F64 = 0x4000,
-} MangoFeatures;
+} mango_feature_flags;
 
-typedef enum MangoAllocFlags {
+typedef enum mango_alloc_flags {
   MANGO_ALLOC_ZERO_MEMORY = 0x8,
-} MangoAllocFlags;
+} mango_alloc_flags;
 
-typedef enum MangoImportFlags {
+typedef enum mango_import_flags {
   // 0x1 is reserved
   MANGO_IMPORT_TRUSTED_MODULE = 0x2,
   MANGO_IMPORT_SKIP_VERIFICATION = 0x100,
-} MangoImportFlags;
+} mango_import_flags;
 
-typedef struct MangoVM MangoVM;
+typedef struct mango_vm mango_vm;
 
-MANGO_API uint32_t MangoVersionMajor(void);
+MANGO_API uint32_t mango_version_major(void);
 
-MANGO_API uint32_t MangoVersionMinor(void);
+MANGO_API uint32_t mango_version_minor(void);
 
-MANGO_API const char *MangoVersionString(void);
+MANGO_API const char *mango_version_string(void);
 
-MANGO_API uint32_t MangoQueryFeatures(void);
+MANGO_API uint32_t mango_features(void);
 
-MANGO_API MangoVM *MangoInitialize(const void *base, void *address,
-                                   uint32_t size, void *context);
+MANGO_API mango_vm *mango_initialize(const void *base, void *address,
+                                     uint32_t size, void *context);
 
-MANGO_API void *MangoHeapAlloc(MangoVM *vm, uint32_t count, uint32_t size,
-                               uint32_t alignment, uint32_t flags);
+MANGO_API void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
+                                 uint32_t alignment, uint32_t flags);
 
-MANGO_API uint32_t MangoHeapSize(const MangoVM *vm);
+MANGO_API uint32_t mango_heap_size(const mango_vm *vm);
 
-MANGO_API uint32_t MangoHeapAvailable(const MangoVM *vm);
+MANGO_API uint32_t mango_heap_available(const mango_vm *vm);
 
-MANGO_API MangoResult MangoStackCreate(MangoVM *vm, uint32_t size);
+MANGO_API mango_result mango_stack_create(mango_vm *vm, uint32_t size);
 
-MANGO_API void *MangoStackAlloc(MangoVM *vm, uint32_t size, uint32_t flags);
+MANGO_API void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags);
 
-MANGO_API MangoResult MangoStackFree(MangoVM *vm, uint32_t size);
+MANGO_API mango_result mango_stack_free(mango_vm *vm, uint32_t size);
 
-MANGO_API void *MangoStackTop(const MangoVM *vm);
+MANGO_API void *mango_stack_top(const mango_vm *vm);
 
-MANGO_API uint32_t MangoStackSize(const MangoVM *vm);
+MANGO_API uint32_t mango_stack_size(const mango_vm *vm);
 
-MANGO_API uint32_t MangoStackAvailable(const MangoVM *vm);
+MANGO_API uint32_t mango_stack_available(const mango_vm *vm);
 
-MANGO_API MangoResult MangoModuleImport(MangoVM *vm, const uint8_t *name,
-                                        const uint8_t *image, uint32_t size,
-                                        void *context, uint32_t flags);
+MANGO_API mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
+                                           const uint8_t *image, uint32_t size,
+                                           void *context, uint32_t flags);
 
-MANGO_API const uint8_t *MangoModuleMissing(const MangoVM *vm);
+MANGO_API const uint8_t *mango_module_missing(const mango_vm *vm);
 
-MANGO_API MangoResult MangoExecute(MangoVM *vm);
+MANGO_API mango_result mango_execute(mango_vm *vm);
 
 ////////////////////////////////////////////////////////////////////////////////
 
 #pragma pack(push, 4)
 
-MANGO_API inline int32_t MangoReadI32(const void *ref, uint32_t offset) {
+MANGO_API inline int32_t mango_read_i32(const void *ref, uint32_t offset) {
   return *(const int32_t *)((uintptr_t)ref + offset);
 }
 
-MANGO_API inline int64_t MangoReadI64(const void *ref, uint32_t offset) {
+MANGO_API inline int64_t mango_read_i64(const void *ref, uint32_t offset) {
   const struct {
     int64_t value;
   } *ptr = (const void *)((uintptr_t)ref + offset);
   return ptr->value;
 }
 
-MANGO_API inline void MangoWriteI32(void *ref, uint32_t offset, int32_t value) {
+MANGO_API inline void mango_write_i32(void *ref, uint32_t offset,
+                                      int32_t value) {
   *(int32_t *)((uintptr_t)ref + offset) = value;
 }
 
-MANGO_API inline void MangoWriteI64(void *ref, uint32_t offset, int64_t value) {
+MANGO_API inline void mango_write_i64(void *ref, uint32_t offset,
+                                      int64_t value) {
   struct {
     int64_t value;
   } *ptr = (void *)((uintptr_t)ref + offset);
