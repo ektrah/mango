@@ -192,6 +192,8 @@ typedef union packed {
   uint32_t u32;
   int64_t i64;
   uint64_t u64;
+  float f32;
+  double f64;
 } packed;
 
 #pragma pack(pop)
@@ -1550,19 +1552,40 @@ LDC_I32_S:
   NEXT;
 
 LDC_I32:
-LDC_F32:
   sp--;
   sp[0].i32 = FETCH(1, i32);
   ip += 5;
   NEXT;
 
 LDC_I64:
-LDC_F64:
 #ifndef MANGO_NO_I64
   do {
     sp -= 2;
     stackval2 *sp2 = (stackval2 *)sp;
     sp2[0].i64 = FETCH(1, i64);
+    ip += 9;
+    NEXT;
+  } while (0);
+#else
+  INVALID;
+#endif
+
+LDC_F32:
+#ifndef MANGO_NO_F32
+  sp--;
+  sp[0].f32 = FETCH(1, f32);
+  ip += 5;
+  NEXT;
+#else
+  INVALID;
+#endif
+
+LDC_F64:
+#ifndef MANGO_NO_F64
+  do {
+    sp -= 2;
+    stackval2 *sp2 = (stackval2 *)sp;
+    sp2[0].f64 = FETCH(1, f64);
     ip += 9;
     NEXT;
   } while (0);
