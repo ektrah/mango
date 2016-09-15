@@ -125,7 +125,7 @@ MANGO_API void *mango_module_context(const mango_vm *vm);
 
 MANGO_API mango_result mango_execute(mango_vm *vm);
 
-MANGO_API uint32_t mango_syscall_function(mango_vm *vm);
+MANGO_API uint32_t mango_syscall_function(const mango_vm *vm);
 
 ////////////////////////////////////////////////////////////////////////////////
 

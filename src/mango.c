@@ -791,7 +791,7 @@ mango_result mango_execute(mango_vm *vm) {
   return MANGO_E_SUCCESS;
 }
 
-uint32_t mango_syscall_function(mango_vm *vm) {
+uint32_t mango_syscall_function(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
