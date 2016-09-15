@@ -58,7 +58,7 @@ OPCODE(RET,             "ret",              0,      0,      0,      0x18)
 OPCODE(RET1,            "ret1",             1,      0,      0,      0x19)
 OPCODE(RET2,            "ret2",             2,      0,      0,      0x1A)
 OPCODE(CALL,            "call",             0,      0,      3,      0x1B)
-OPCODE(SYSCALL,         "syscall",          0,      0,      2,      0x1C)
+OPCODE(SYSCALL,         "syscall",          0,      0,      3,      0x1C)
 
 OPCODE(UNUSED29,        "unused",           0,      0,      0,      0x1D)
 OPCODE(UNUSED30,        "unused",           0,      0,      0,      0x1E)
