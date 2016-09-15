@@ -801,6 +801,17 @@ uint32_t mango_syscall_function(const mango_vm *vm) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+static const mango_module *
+lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
+  if (index == INVALID_MODULE) {
+    return mp;
+  } else {
+    const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+    return &modules[imports[index]];
+  }
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
@@ -1097,7 +1108,7 @@ static mango_result execute(mango_vm *vm) {
   stackval *sp;
   bool in_full_trust;
   uint8_t pop;
-  mango_module *mp;
+  const mango_module *mp;
   const uint8_t *ip;
   mango_result result;
 
@@ -1274,15 +1285,7 @@ RET:
 
 CALL:
   do {
-    uint8_t index = FETCH(1, u8);
-    mango_module *module;
-
-    if (index == INVALID_MODULE) {
-      module = mp;
-    } else {
-      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      module = &mango_module_as_ptr(vm, vm->modules)[imports[index]];
-    }
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
 
     const mango_func_def *f =
         (const mango_func_def *)(module->image + FETCH(2, u16));
@@ -1322,15 +1325,7 @@ CALL:
 
 SYSCALL:
   do {
-    uint8_t index = FETCH(1, u8);
-    mango_module *module;
-
-    if (index == INVALID_MODULE) {
-      module = mp;
-    } else {
-      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      module = &mango_module_as_ptr(vm, vm->modules)[imports[index]];
-    }
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
 
     const mango_syscall_def *f =
         (const mango_syscall_def *)(module->image + FETCH(2, u16));
@@ -2121,8 +2116,10 @@ BRTRUE_S:
 
 NEWOBJ:
   do {
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+
     const mango_type_def *t =
-        (const mango_type_def *)(mp->image + FETCH(1, u16));
+        (const mango_type_def *)(module->image + FETCH(2, u16));
 
     void *obj = mango_heap_alloc(vm, 1, t->size, __alignof(stackval), 0);
     if (!obj) {
@@ -2131,7 +2128,7 @@ NEWOBJ:
 
     sp--;
     sp[0].ref = void_as_ref(vm, obj);
-    ip += 3;
+    ip += 4;
     NEXT;
   } while (0);
 
@@ -2143,8 +2140,10 @@ NEWARR:
       RETURN(MANGO_E_ARGUMENT);
     }
 
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+
     const mango_type_def *t =
-        (const mango_type_def *)(mp->image + FETCH(1, u16));
+        (const mango_type_def *)(module->image + FETCH(2, u16));
 
     void *arr =
         mango_heap_alloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
@@ -2155,7 +2154,7 @@ NEWARR:
 
     sp--;
     sp[0].ref = void_as_ref(vm, arr);
-    ip += 3;
+    ip += 4;
     NEXT;
   } while (0);
 
@@ -2328,13 +2327,15 @@ LDELEMA: // index array length ... -> address ...
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
 
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+
     const mango_type_def *t =
-        (const mango_type_def *)(mp->image + FETCH(1, u16));
+        (const mango_type_def *)(module->image + FETCH(2, u16));
 
     uint32_t address = sp[1].ref.address;
     sp += 2;
     sp[0].ref.address = address + (uint32_t)index * t->size;
-    ip += 3;
+    ip += 4;
     NEXT;
   } while (0);
 
