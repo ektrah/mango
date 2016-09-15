@@ -55,6 +55,11 @@ typedef struct mango_startup_def {
   uint8_t module_count;
 } mango_startup_def;
 
+typedef enum mango_type_flags {
+  MANGO_TF_NONE = 0,
+  MANGO_TF_SEQUENTIAL = 256,
+} mango_type_flags;
+
 typedef struct mango_type_def {
   uint8_t flags;
   uint16_t size;
