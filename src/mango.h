@@ -24,7 +24,12 @@
 
 #pragma once
 
+#ifdef __cplusplus
+#include <cstdint>
+extern "C" {
+#else
 #include <stdint.h>
+#endif
 
 #define MANGO_VERSION_MAJOR 0
 #define MANGO_VERSION_MINOR 32
@@ -173,3 +178,7 @@ MANGO_DEFINE_READ_WRITE(double, f64)
 ////////////////////////////////////////////////////////////////////////////////
 
 #undef MANGO_API
+
+#ifdef __cplusplus
+}
+#endif
