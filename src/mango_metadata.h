@@ -98,10 +98,6 @@ typedef struct mango_syscall_def {
 
 #pragma pack(pop)
 
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-#error Unsupported byte order
-#endif
-
 #ifdef __cplusplus
 }
 #endif

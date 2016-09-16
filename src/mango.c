@@ -80,6 +80,10 @@
 #error Unsupported bitness
 #endif
 
+#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#error Unsupported byte order
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 MANGO_DECLARE_REF_TYPE(void)
