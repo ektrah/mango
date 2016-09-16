@@ -61,7 +61,11 @@ typedef struct mango_startup_def {
 
 typedef enum mango_type_flags {
   MANGO_TF_NONE = 0,
-  MANGO_TF_SEQUENTIAL = 256,
+  MANGO_TF_PUBLIC = 256,
+  MANGO_TF_ENUM = 512,
+  MANGO_TF_FLAGS = 1024,
+  MANGO_TF_SEQUENTIAL_LAYOUT = 2048,
+  MANGO_TF_OBSOLETE = 4096,
 } mango_type_flags;
 
 typedef struct mango_type_def {
