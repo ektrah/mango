@@ -24,11 +24,10 @@
 
 #pragma once
 
-#ifdef __cplusplus
-#include <cstdint>
-extern "C" {
-#else
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #define MANGO_VERSION_MAJOR 0

@@ -26,6 +26,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MANGO_HEADER_MAGIC 255
 #define MANGO_HEADER_SIZE 2
 
@@ -96,4 +100,8 @@ typedef struct mango_syscall_def {
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error Unsupported byte order
+#endif
+
+#ifdef __cplusplus
+}
 #endif
