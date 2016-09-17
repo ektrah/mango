@@ -39,14 +39,14 @@ typedef struct mango_module_name {
   uint8_t bytes[12];
 } mango_module_name;
 
-typedef enum mango_module_flags {
-  MANGO_MF_NONE = 0,
-  MANGO_MF_TINY = 1,
-  MANGO_MF_EXECUTABLE = 2,
-} mango_module_flags;
+typedef enum mango_module_attributes {
+  MANGO_MD_NONE = 0,
+  MANGO_MD_TINY = 1,
+  MANGO_MD_EXECUTABLE = 2,
+} mango_module_attributes;
 
 typedef struct mango_module_def {
-  uint8_t flags;
+  uint8_t attributes;
   uint8_t import_count;
   uint16_t static_size;
   uint16_t static_init;
@@ -59,34 +59,34 @@ typedef struct mango_startup_def {
   uint8_t module_count;
 } mango_startup_def;
 
-typedef enum mango_type_flags {
-  MANGO_TF_NONE = 0,
-  MANGO_TF_PUBLIC = 256,
-  MANGO_TF_ENUM = 512,
-  MANGO_TF_FLAGS = 1024,
-  MANGO_TF_SEQUENTIAL_LAYOUT = 2048,
-  MANGO_TF_OBSOLETE = 4096,
-} mango_type_flags;
+typedef enum mango_type_attributes {
+  MANGO_TD_NONE = 0,
+  MANGO_TD_PUBLIC = 256,
+  MANGO_TD_ENUM = 512,
+  MANGO_TD_FLAGS = 1024,
+  MANGO_TD_SEQUENTIAL_LAYOUT = 2048,
+  MANGO_TD_OBSOLETE = 4096,
+} mango_type_attributes;
 
 typedef struct mango_type_def {
-  uint8_t flags;
+  uint8_t attributes;
   uint16_t size;
 } mango_type_def;
 
 typedef struct mango_const_def {
-  uint8_t flags;
+  uint8_t attributes;
   uint8_t value[];
 } mango_const_def;
 
-typedef enum mango_func_flags {
-  MANGO_FF_NONE = 0,
-  MANGO_FF_NAKED = 1,
-  MANGO_FF_SECURITY_CRITICAL = 2,
-  MANGO_FF_SECURITY_SAFE_CRITICAL = 4,
-} mango_func_flags;
+typedef enum mango_function_attributes {
+  MANGO_FD_NONE = 0,
+  MANGO_FD_NAKED = 1,
+  MANGO_FD_SECURITY_CRITICAL = 2,
+  MANGO_FD_SECURITY_SAFE_CRITICAL = 4,
+} mango_function_attributes;
 
 typedef struct mango_func_def {
-  uint8_t flags;
+  uint8_t attributes;
   uint8_t max_stack;
   uint8_t arg_count;
   uint8_t loc_count;
@@ -94,7 +94,7 @@ typedef struct mango_func_def {
 } mango_func_def;
 
 typedef struct mango_syscall_def {
-  uint8_t flags;
+  uint8_t attributes;
   uint8_t arg_count;
   uint8_t ret_count;
   uint16_t function;

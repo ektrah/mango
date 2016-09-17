@@ -517,7 +517,7 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   const mango_module_def *m =
       (const mango_module_def *)(image + MANGO_HEADER_SIZE);
 
-  if ((m->flags & MANGO_MF_EXECUTABLE) == 0) {
+  if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
 
@@ -676,9 +676,9 @@ static mango_result set_entry_point(mango_vm *vm, mango_module *module,
   const mango_func_def *f = (const mango_func_def *)(module->image + offset);
 
   bool in_full_trust = false;
-  if ((f->flags &
-       (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
-    if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+  if ((f->attributes &
+       (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
+    if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
         (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
       printf("<< SECURITY VIOLATION >>\n");
       return MANGO_E_SECURITY;
@@ -1296,9 +1296,9 @@ CALL:
 
     bool in_full_trust_new = in_full_trust;
     if (!in_full_trust &&
-        (f->flags &
-         (MANGO_FF_SECURITY_CRITICAL | MANGO_FF_SECURITY_SAFE_CRITICAL)) != 0) {
-      if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+        (f->attributes &
+         (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
+      if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
           (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
         printf("<< SECURITY VIOLATION >>\n");
         RETURN(MANGO_E_SECURITY);
@@ -1319,7 +1319,7 @@ CALL:
       rp++;
     }
     in_full_trust = in_full_trust_new;
-    pop = (f->flags & MANGO_FF_NAKED) != 0 ? 0 : f->arg_count + f->loc_count;
+    pop = (f->attributes & MANGO_FD_NAKED) ? 0 : f->arg_count + f->loc_count;
     mp = module;
     ip = f->code;
     sp -= f->loc_count;
@@ -1335,7 +1335,7 @@ SYSCALL:
         (const mango_syscall_def *)(module->image + FETCH(2, u16));
 
     if (!in_full_trust) {
-      if ((f->flags & MANGO_FF_SECURITY_SAFE_CRITICAL) == 0 ||
+      if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
           (mp->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
         printf("<< SECURITY VIOLATION >>\n");
         RETURN(MANGO_E_SECURITY);
