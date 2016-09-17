@@ -41,7 +41,6 @@ typedef struct mango_module_name {
 
 typedef enum mango_module_attributes {
   MANGO_MD_NONE = 0x0,
-  MANGO_MD_TINY = 0x1,
   MANGO_MD_EXECUTABLE = 0x2,
 } mango_module_attributes;
 
