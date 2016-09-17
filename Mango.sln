@@ -17,6 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mango", "Mango.vcxproj", "{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{FF0C02F6-5CD9-4563-9ACD-86A91E171944}"
+	ProjectSection(SolutionItems) = preProject
+		docs\opcodes.md = docs\opcodes.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -36,5 +41,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FF0C02F6-5CD9-4563-9ACD-86A91E171944} = {65A0FFBE-920F-4E0F-AF37-55407AA3513A}
 	EndGlobalSection
 EndGlobal
