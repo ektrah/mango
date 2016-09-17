@@ -1633,12 +1633,14 @@ LDC_F64:
 
 LDCA:
   do {
+    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+
     const mango_const_def *c =
-        (const mango_const_def *)(mp->image + FETCH(1, u16));
+        (const mango_const_def *)(module->image + FETCH(2, u16));
 
     sp--;
     sp[0].ref = void_as_ref(vm, (void *)(uintptr_t)(c->value));
-    ip += 3;
+    ip += 4;
     NEXT;
   } while (0);
 

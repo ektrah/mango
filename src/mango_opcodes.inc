@@ -134,7 +134,7 @@ OPCODE(LDC_I32,         "ldc.i32",          0,      1,      4,      0x5B)
 OPCODE(LDC_I64,         "ldc.i64",          0,      2,      8,      0x5C)
 OPCODE(LDC_F32,         "ldc.f32",          0,      1,      4,      0x5D)
 OPCODE(LDC_F64,         "ldc.f64",          0,      2,      8,      0x5E)
-OPCODE(LDCA,            "ldca",             0,      1,      2,      0x5F)
+OPCODE(LDCA,            "ldca",             0,      1,      3,      0x5F)
 
 OPCODE(CONV_I8_I32,     "conv.i8.i32",      1,      1,      0,      0x60)
 OPCODE(CONV_U8_I32,     "conv.u8.i32",      1,      1,      0,      0x61)
