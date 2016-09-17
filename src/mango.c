@@ -1371,13 +1371,13 @@ MUL_I32:
 DIV_I32:
   BINARY1D(i32, /);
 
-DIV_U32:
+DIV_I32_UN:
   BINARY1D(u32, /);
 
 REM_I32:
   BINARY1D(i32, %);
 
-REM_U32:
+REM_I32_UN:
   BINARY1D(u32, %);
 
 NEG_I32:
@@ -1402,13 +1402,13 @@ MUL_I64:
 DIV_I64:
   BINARY2D(i64, /);
 
-DIV_U64:
+DIV_I64_UN:
   BINARY2D(u64, /);
 
 REM_I64:
   BINARY2D(i64, %);
 
-REM_U64:
+REM_I64_UN:
   BINARY2D(u64, %);
 
 NEG_I64:
@@ -1424,9 +1424,9 @@ ADD_I64:
 SUB_I64:
 MUL_I64:
 DIV_I64:
-DIV_U64:
+DIV_I64_UN:
 REM_I64:
-REM_U64:
+REM_I64_UN:
 NEG_I64:
   INVALID;
 #endif
@@ -1513,7 +1513,7 @@ SHL_I32:
 SHR_I32:
   SHIFT1(i32, >>);
 
-SHR_U32:
+SHR_I32_UN:
   SHIFT1(u32, >>);
 
 AND_I32:
@@ -1539,7 +1539,7 @@ SHL_I64:
 SHR_I64:
   SHIFT2(i64, >>);
 
-SHR_U64:
+SHR_I64_UN:
   SHIFT2(u64, >>);
 
 AND_I64:
@@ -1557,7 +1557,7 @@ NOT_I64:
 #else
 SHL_I64:
 SHR_I64:
-SHR_U64:
+SHR_I64_UN:
 AND_I64:
 OR_I64:
 XOR_I64:
@@ -1825,27 +1825,27 @@ CONV_U64_F64:
 
 #pragma region u32 conversion
 
-CONV_F32_U32:
+CONV_F32_I32_UN:
 #ifndef MANGO_NO_F32
   CONVERT1(float, f32, u32);
 #else
   INVALID;
 #endif
 
-CONV_F64_U32:
+CONV_F64_I32_UN:
 #ifndef MANGO_NO_F64
   CONVERT21(double, f64, u32);
 #else
   INVALID;
 #endif
 
-CONV_U8_U32:
+CONV_U8_I32:
   CONVERT1(uint8_t, u32, u32);
 
-CONV_U16_U32:
+CONV_U16_I32:
   CONVERT1(uint16_t, u32, u32);
 
-CONV_U64_U32:
+CONV_U64_I32:
 #ifndef MANGO_NO_I64
   CONVERT21(uint64_t, u64, u32);
 #else
@@ -1857,69 +1857,69 @@ CONV_U64_U32:
 #pragma region u64 conversion
 #ifndef MANGO_NO_I64
 
-CONV_F32_U64:
+CONV_F32_I64_UN:
 #ifndef MANGO_NO_F32
   CONVERT12(float, f32, u64);
 #else
   INVALID;
 #endif
 
-CONV_F64_U64:
+CONV_F64_I64_UN:
 #ifndef MANGO_NO_F64
   CONVERT2(double, f64, u64);
 #else
   INVALID;
 #endif
 
-CONV_U8_U64:
+CONV_U8_I64:
   CONVERT12(uint8_t, u32, u64);
 
-CONV_U16_U64:
+CONV_U16_I64:
   CONVERT12(uint16_t, u32, u64);
 
-CONV_U32_U64:
+CONV_U32_I64:
   CONVERT12(uint32_t, u32, u64);
 
 #else
-CONV_F32_U64:
-CONV_F64_U64:
-CONV_U8_U64:
-CONV_U16_U64:
-CONV_U32_U64:
+CONV_F32_I64_UN:
+CONV_F64_I64_UN:
+CONV_U8_I64:
+CONV_U16_I64:
+CONV_U32_I64:
   INVALID;
 #endif
 #pragma endregion
 
 #pragma region i32 comparison
 
-CMP_EQ_I32:
+CEQ_I32:
   COMPARE1(i32, ==);
 
-CMP_GT_I32:
+CGT_I32:
   COMPARE1(i32, >);
 
-CMP_GE_I32:
+CGE_I32:
   COMPARE1(i32, >=);
 
-CMP_LT_I32:
+CLT_I32:
   COMPARE1(i32, <);
 
-CMP_LE_I32:
+CLE_I32:
   COMPARE1(i32, <=);
 
-CMP_NE_I32:
+CNE_I32:
   COMPARE1(u32, !=);
 
-CMP_GT_U32:
+CGT_I32_UN:
   COMPARE1(u32, >);
 
-CMP_GE_U32:
+CGE_I32_UN:
   COMPARE1(u32, >=);
 
-CMP_LT_U32:
+CLT_I32_UN:
   COMPARE1(u32, <);
 
-CMP_LE_U32:
+CLE_I32_UN:
   COMPARE1(u32, <=);
 
 #pragma endregion
@@ -1927,47 +1927,47 @@ CMP_LE_U32:
 #pragma region i64 comparison
 #ifndef MANGO_NO_I64
 
-CMP_EQ_I64:
+CEQ_I64:
   COMPARE2(i64, ==);
 
-CMP_GT_I64:
+CGT_I64:
   COMPARE2(i64, >);
 
-CMP_GE_I64:
+CGE_I64:
   COMPARE2(i64, >=);
 
-CMP_LT_I64:
+CLT_I64:
   COMPARE2(i64, <);
 
-CMP_LE_I64:
+CLE_I64:
   COMPARE2(i64, <=);
 
-CMP_NE_I64:
+CNE_I64:
   COMPARE2(u64, !=);
 
-CMP_GT_U64:
+CGT_I64_UN:
   COMPARE2(u64, >);
 
-CMP_GE_U64:
+CGE_I64_UN:
   COMPARE2(u64, >=);
 
-CMP_LT_U64:
+CLT_I64_UN:
   COMPARE2(u64, <);
 
-CMP_LE_U64:
+CLE_I64_UN:
   COMPARE2(u64, <=);
 
 #else
-CMP_EQ_I64:
-CMP_GT_I64:
-CMP_GE_I64:
-CMP_LT_I64:
-CMP_LE_I64:
-CMP_NE_I64:
-CMP_GT_U64:
-CMP_GE_U64:
-CMP_LT_U64:
-CMP_LE_U64:
+CEQ_I64:
+CGT_I64:
+CGE_I64:
+CLT_I64:
+CLE_I64:
+CNE_I64:
+CGT_I64_UN:
+CGE_I64_UN:
+CLT_I64_UN:
+CLE_I64_UN:
   INVALID;
 #endif
 #pragma endregion
@@ -1975,55 +1975,55 @@ CMP_LE_U64:
 #pragma region f32 comparison
 #ifndef MANGO_NO_F32
 
-CMP_OEQ_F32:
+CEQ_F32:
   COMPARE1(f32, ==);
 
-CMP_ONE_F32:
+CNE_F32:
   COMPARE1F(f32, islessgreater);
 
-CMP_OGT_F32:
+CGT_F32:
   COMPARE1F(f32, isgreater);
 
-CMP_OGE_F32:
+CGE_F32:
   COMPARE1F(f32, isgreaterequal);
 
-CMP_OLT_F32:
+CLT_F32:
   COMPARE1F(f32, isless);
 
-CMP_OLE_F32:
+CLE_F32:
   COMPARE1F(f32, islessequal);
 
-CMP_UEQ_F32:
+CEQ_F32_UN:
   COMPARE1F(f32, !islessgreater);
 
-CMP_UNE_F32:
+CNE_F32_UN:
   COMPARE1(f32, !=);
 
-CMP_UGT_F32:
+CGT_F32_UN:
   COMPARE1F(f32, !islessequal);
 
-CMP_UGE_F32:
+CGE_F32_UN:
   COMPARE1F(f32, !isless);
 
-CMP_ULT_F32:
+CLT_F32_UN:
   COMPARE1F(f32, !isgreaterequal);
 
-CMP_ULE_F32:
+CLE_F32_UN:
   COMPARE1F(f32, !isgreater);
 
 #else
-CMP_OEQ_F32:
-CMP_ONE_F32:
-CMP_OGT_F32:
-CMP_OGE_F32:
-CMP_OLT_F32:
-CMP_OLE_F32:
-CMP_UEQ_F32:
-CMP_UNE_F32:
-CMP_UGT_F32:
-CMP_UGE_F32:
-CMP_ULT_F32:
-CMP_ULE_F32:
+CEQ_F32:
+CNE_F32:
+CGT_F32:
+CGE_F32:
+CLT_F32:
+CLE_F32:
+CEQ_F32_UN:
+CNE_F32_UN:
+CGT_F32_UN:
+CGE_F32_UN:
+CLT_F32_UN:
+CLE_F32_UN:
   INVALID;
 #endif
 #pragma endregion
@@ -2031,55 +2031,55 @@ CMP_ULE_F32:
 #pragma region f64 comparison
 #ifndef MANGO_NO_F64
 
-CMP_OEQ_F64:
+CEQ_F64:
   COMPARE2(f64, ==);
 
-CMP_ONE_F64:
+CNE_F64:
   COMPARE2F(f64, islessgreater);
 
-CMP_OGT_F64:
+CGT_F64:
   COMPARE2F(f64, isgreater);
 
-CMP_OGE_F64:
+CGE_F64:
   COMPARE2F(f64, isgreaterequal);
 
-CMP_OLT_F64:
+CLT_F64:
   COMPARE2F(f64, isless);
 
-CMP_OLE_F64:
+CLE_F64:
   COMPARE2F(f64, islessequal);
 
-CMP_UEQ_F64:
+CEQ_F64_UN:
   COMPARE2F(f64, !islessgreater);
 
-CMP_UNE_F64:
+CNE_F64_UN:
   COMPARE2(f64, !=);
 
-CMP_UGT_F64:
+CGT_F64_UN:
   COMPARE2F(f64, !islessequal);
 
-CMP_UGE_F64:
+CGE_F64_UN:
   COMPARE2F(f64, !isless);
 
-CMP_ULT_F64:
+CLT_F64_UN:
   COMPARE2F(f64, !isgreaterequal);
 
-CMP_ULE_F64:
+CLE_F64_UN:
   COMPARE2F(f64, !isgreater);
 
 #else
-CMP_OEQ_F64:
-CMP_ONE_F64:
-CMP_OGT_F64:
-CMP_OGE_F64:
-CMP_OLT_F64:
-CMP_OLE_F64:
-CMP_UEQ_F64:
-CMP_UNE_F64:
-CMP_UGT_F64:
-CMP_UGE_F64:
-CMP_ULT_F64:
-CMP_ULE_F64:
+CEQ_F64:
+CNE_F64:
+CGT_F64:
+CGE_F64:
+CLT_F64:
+CLE_F64:
+CEQ_F64_UN:
+CNE_F64_UN:
+CGT_F64_UN:
+CGE_F64_UN:
+CLT_F64_UN:
+CLE_F64_UN:
   INVALID;
 #endif
 #pragma endregion
