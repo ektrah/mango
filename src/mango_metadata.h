@@ -40,9 +40,9 @@ typedef struct mango_module_name {
 } mango_module_name;
 
 typedef enum mango_module_attributes {
-  MANGO_MD_NONE = 0,
-  MANGO_MD_TINY = 1,
-  MANGO_MD_EXECUTABLE = 2,
+  MANGO_MD_NONE = 0x0,
+  MANGO_MD_TINY = 0x1,
+  MANGO_MD_EXECUTABLE = 0x2,
 } mango_module_attributes;
 
 typedef struct mango_module_def {
@@ -60,12 +60,12 @@ typedef struct mango_startup_def {
 } mango_startup_def;
 
 typedef enum mango_type_attributes {
-  MANGO_TD_NONE = 0,
-  MANGO_TD_PUBLIC = 256,
-  MANGO_TD_ENUM = 512,
-  MANGO_TD_FLAGS = 1024,
-  MANGO_TD_SEQUENTIAL_LAYOUT = 2048,
-  MANGO_TD_OBSOLETE = 4096,
+  MANGO_TD_NONE = 0x0,
+  MANGO_TD_PUBLIC = 0x100,
+  MANGO_TD_ENUM = 0x200,
+  MANGO_TD_FLAGS = 0x400,
+  MANGO_TD_SEQUENTIAL_LAYOUT = 0x800,
+  MANGO_TD_OBSOLETE = 0x1000,
 } mango_type_attributes;
 
 typedef struct mango_type_def {
@@ -79,10 +79,10 @@ typedef struct mango_const_def {
 } mango_const_def;
 
 typedef enum mango_function_attributes {
-  MANGO_FD_NONE = 0,
-  MANGO_FD_NAKED = 1,
-  MANGO_FD_SECURITY_CRITICAL = 2,
-  MANGO_FD_SECURITY_SAFE_CRITICAL = 4,
+  MANGO_FD_NONE = 0x0,
+  MANGO_FD_NAKED = 0x1,
+  MANGO_FD_SECURITY_CRITICAL = 0x2,
+  MANGO_FD_SECURITY_SAFE_CRITICAL = 0x4,
 } mango_function_attributes;
 
 typedef struct mango_func_def {
