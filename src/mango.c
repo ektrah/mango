@@ -1649,12 +1649,25 @@ LDCA:
 CONV_I8_I32:
   CONVERT1(int8_t, i32, i32);
 
+CONV_U8_I32:
+  CONVERT1(uint8_t, u32, u32);
+
 CONV_I16_I32:
   CONVERT1(int16_t, i32, i32);
+
+CONV_U16_I32:
+  CONVERT1(uint16_t, u32, u32);
 
 CONV_I64_I32:
 #ifndef MANGO_NO_I64
   CONVERT21(int64_t, i64, i32);
+#else
+  INVALID;
+#endif
+
+CONV_U64_I32:
+#ifndef MANGO_NO_I64
+  CONVERT21(uint64_t, u64, u32);
 #else
   INVALID;
 #endif
@@ -1666,9 +1679,23 @@ CONV_F32_I32:
   INVALID;
 #endif
 
+CONV_F32_I32_UN:
+#ifndef MANGO_NO_F32
+  CONVERT1(float, f32, u32);
+#else
+  INVALID;
+#endif
+
 CONV_F64_I32:
 #ifndef MANGO_NO_F64
   CONVERT21(double, f64, i32);
+#else
+  INVALID;
+#endif
+
+CONV_F64_I32_UN:
+#ifndef MANGO_NO_F64
+  CONVERT21(double, f64, u32);
 #else
   INVALID;
 #endif
@@ -1681,15 +1708,31 @@ CONV_F64_I32:
 CONV_I8_I64:
   CONVERT12(int8_t, i32, i64);
 
+CONV_U8_I64:
+  CONVERT12(uint8_t, u32, u64);
+
 CONV_I16_I64:
   CONVERT12(int16_t, i32, i64);
+
+CONV_U16_I64:
+  CONVERT12(uint16_t, u32, u64);
 
 CONV_I32_I64:
   CONVERT12(int32_t, i32, i64);
 
+CONV_U32_I64:
+  CONVERT12(uint32_t, u32, u64);
+
 CONV_F32_I64:
 #ifndef MANGO_NO_F32
   CONVERT12(float, f32, i64);
+#else
+  INVALID;
+#endif
+
+CONV_F32_I64_UN:
+#ifndef MANGO_NO_F32
+  CONVERT12(float, f32, u64);
 #else
   INVALID;
 #endif
@@ -1701,12 +1744,24 @@ CONV_F64_I64:
   INVALID;
 #endif
 
+CONV_F64_I64_UN:
+#ifndef MANGO_NO_F64
+  CONVERT2(double, f64, u64);
+#else
+  INVALID;
+#endif
+
 #else
 CONV_I8_I64:
+CONV_U8_I64:
 CONV_I16_I64:
+CONV_U16_I64:
 CONV_I32_I64:
+CONV_U32_I64:
 CONV_F32_I64:
+CONV_F32_I64_UN:
 CONV_F64_I64:
+CONV_F64_I64_UN:
   INVALID;
 #endif
 #pragma endregion
@@ -1717,15 +1772,31 @@ CONV_F64_I64:
 CONV_I8_F32:
   CONVERT1(int8_t, i32, f32);
 
+CONV_U8_F32:
+  CONVERT1(uint8_t, u32, f32);
+
 CONV_I16_F32:
   CONVERT1(int16_t, i32, f32);
+
+CONV_U16_F32:
+  CONVERT1(uint16_t, u32, f32);
 
 CONV_I32_F32:
   CONVERT1(int32_t, i32, f32);
 
+CONV_U32_F32:
+  CONVERT1(uint32_t, u32, f32);
+
 CONV_I64_F32:
 #ifndef MANGO_NO_I64
   CONVERT21(int64_t, i64, f32);
+#else
+  INVALID;
+#endif
+
+CONV_U64_F32:
+#ifndef MANGO_NO_I64
+  CONVERT21(uint64_t, u64, f32);
 #else
   INVALID;
 #endif
@@ -1737,32 +1808,16 @@ CONV_F64_F32:
   INVALID;
 #endif
 
-CONV_U8_F32:
-  CONVERT1(uint8_t, u32, f32);
-
-CONV_U16_F32:
-  CONVERT1(uint16_t, u32, f32);
-
-CONV_U32_F32:
-  CONVERT1(uint32_t, u32, f32);
-
-CONV_U64_F32:
-#ifndef MANGO_NO_I64
-  CONVERT21(uint64_t, u64, f32);
-#else
-  INVALID;
-#endif
-
 #else
 CONV_I8_F32:
-CONV_I16_F32:
-CONV_I32_F32:
-CONV_I64_F32:
-CONV_F64_F32:
 CONV_U8_F32:
+CONV_I16_F32:
 CONV_U16_F32:
+CONV_I32_F32:
 CONV_U32_F32:
+CONV_I64_F32:
 CONV_U64_F32:
+CONV_F64_F32:
   INVALID;
 #endif
 #pragma endregion
@@ -1773,15 +1828,31 @@ CONV_U64_F32:
 CONV_I8_F64:
   CONVERT12(int8_t, i32, f64);
 
+CONV_U8_F64:
+  CONVERT12(uint8_t, u32, f64);
+
 CONV_I16_F64:
   CONVERT12(int16_t, i32, f64);
+
+CONV_U16_F64:
+  CONVERT12(uint16_t, u32, f64);
 
 CONV_I32_F64:
   CONVERT12(int32_t, i32, f64);
 
+CONV_U32_F64:
+  CONVERT12(uint32_t, u32, f64);
+
 CONV_I64_F64:
 #ifndef MANGO_NO_I64
   CONVERT2(int64_t, i64, f64);
+#else
+  INVALID;
+#endif
+
+CONV_U64_F64:
+#ifndef MANGO_NO_I64
+  CONVERT2(uint64_t, u64, f64);
 #else
   INVALID;
 #endif
@@ -1793,99 +1864,16 @@ CONV_F32_F64:
   INVALID;
 #endif
 
-CONV_U8_F64:
-  CONVERT12(uint8_t, u32, f64);
-
-CONV_U16_F64:
-  CONVERT12(uint16_t, u32, f64);
-
-CONV_U32_F64:
-  CONVERT12(uint32_t, u32, f64);
-
-CONV_U64_F64:
-#ifndef MANGO_NO_I64
-  CONVERT2(uint64_t, u64, f64);
-#else
-  INVALID;
-#endif
-
 #else
 CONV_I8_F64:
-CONV_I16_F64:
-CONV_I32_F64:
-CONV_I64_F64:
-CONV_F32_F64:
 CONV_U8_F64:
+CONV_I16_F64:
 CONV_U16_F64:
+CONV_I32_F64:
 CONV_U32_F64:
+CONV_I64_F64:
 CONV_U64_F64:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region u32 conversion
-
-CONV_F32_I32_UN:
-#ifndef MANGO_NO_F32
-  CONVERT1(float, f32, u32);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I32_UN:
-#ifndef MANGO_NO_F64
-  CONVERT21(double, f64, u32);
-#else
-  INVALID;
-#endif
-
-CONV_U8_I32:
-  CONVERT1(uint8_t, u32, u32);
-
-CONV_U16_I32:
-  CONVERT1(uint16_t, u32, u32);
-
-CONV_U64_I32:
-#ifndef MANGO_NO_I64
-  CONVERT21(uint64_t, u64, u32);
-#else
-  INVALID;
-#endif
-
-#pragma endregion
-
-#pragma region u64 conversion
-#ifndef MANGO_NO_I64
-
-CONV_F32_I64_UN:
-#ifndef MANGO_NO_F32
-  CONVERT12(float, f32, u64);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I64_UN:
-#ifndef MANGO_NO_F64
-  CONVERT2(double, f64, u64);
-#else
-  INVALID;
-#endif
-
-CONV_U8_I64:
-  CONVERT12(uint8_t, u32, u64);
-
-CONV_U16_I64:
-  CONVERT12(uint16_t, u32, u64);
-
-CONV_U32_I64:
-  CONVERT12(uint32_t, u32, u64);
-
-#else
-CONV_F32_I64_UN:
-CONV_F64_I64_UN:
-CONV_U8_I64:
-CONV_U16_I64:
-CONV_U32_I64:
+CONV_F32_F64:
   INVALID;
 #endif
 #pragma endregion
@@ -1895,29 +1883,29 @@ CONV_U32_I64:
 CEQ_I32:
   COMPARE1(i32, ==);
 
-CGT_I32:
-  COMPARE1(i32, >);
-
-CGE_I32:
-  COMPARE1(i32, >=);
-
-CLT_I32:
-  COMPARE1(i32, <);
-
-CLE_I32:
-  COMPARE1(i32, <=);
-
 CNE_I32:
   COMPARE1(u32, !=);
+
+CGT_I32:
+  COMPARE1(i32, >);
 
 CGT_I32_UN:
   COMPARE1(u32, >);
 
+CGE_I32:
+  COMPARE1(i32, >=);
+
 CGE_I32_UN:
   COMPARE1(u32, >=);
 
+CLT_I32:
+  COMPARE1(i32, <);
+
 CLT_I32_UN:
   COMPARE1(u32, <);
+
+CLE_I32:
+  COMPARE1(i32, <=);
 
 CLE_I32_UN:
   COMPARE1(u32, <=);
@@ -1930,43 +1918,43 @@ CLE_I32_UN:
 CEQ_I64:
   COMPARE2(i64, ==);
 
-CGT_I64:
-  COMPARE2(i64, >);
-
-CGE_I64:
-  COMPARE2(i64, >=);
-
-CLT_I64:
-  COMPARE2(i64, <);
-
-CLE_I64:
-  COMPARE2(i64, <=);
-
 CNE_I64:
   COMPARE2(u64, !=);
+
+CGT_I64:
+  COMPARE2(i64, >);
 
 CGT_I64_UN:
   COMPARE2(u64, >);
 
+CGE_I64:
+  COMPARE2(i64, >=);
+
 CGE_I64_UN:
   COMPARE2(u64, >=);
 
+CLT_I64:
+  COMPARE2(i64, <);
+
 CLT_I64_UN:
   COMPARE2(u64, <);
+
+CLE_I64:
+  COMPARE2(i64, <=);
 
 CLE_I64_UN:
   COMPARE2(u64, <=);
 
 #else
 CEQ_I64:
-CGT_I64:
-CGE_I64:
-CLT_I64:
-CLE_I64:
 CNE_I64:
+CGT_I64:
 CGT_I64_UN:
+CGE_I64:
 CGE_I64_UN:
+CLT_I64:
 CLT_I64_UN:
+CLE_I64:
 CLE_I64_UN:
   INVALID;
 #endif
@@ -1978,51 +1966,51 @@ CLE_I64_UN:
 CEQ_F32:
   COMPARE1(f32, ==);
 
-CNE_F32:
-  COMPARE1F(f32, islessgreater);
-
-CGT_F32:
-  COMPARE1F(f32, isgreater);
-
-CGE_F32:
-  COMPARE1F(f32, isgreaterequal);
-
-CLT_F32:
-  COMPARE1F(f32, isless);
-
-CLE_F32:
-  COMPARE1F(f32, islessequal);
-
 CEQ_F32_UN:
   COMPARE1F(f32, !islessgreater);
+
+CNE_F32:
+  COMPARE1F(f32, islessgreater);
 
 CNE_F32_UN:
   COMPARE1(f32, !=);
 
+CGT_F32:
+  COMPARE1F(f32, isgreater);
+
 CGT_F32_UN:
   COMPARE1F(f32, !islessequal);
+
+CGE_F32:
+  COMPARE1F(f32, isgreaterequal);
 
 CGE_F32_UN:
   COMPARE1F(f32, !isless);
 
+CLT_F32:
+  COMPARE1F(f32, isless);
+
 CLT_F32_UN:
   COMPARE1F(f32, !isgreaterequal);
+
+CLE_F32:
+  COMPARE1F(f32, islessequal);
 
 CLE_F32_UN:
   COMPARE1F(f32, !isgreater);
 
 #else
 CEQ_F32:
-CNE_F32:
-CGT_F32:
-CGE_F32:
-CLT_F32:
-CLE_F32:
 CEQ_F32_UN:
+CNE_F32:
 CNE_F32_UN:
+CGT_F32:
 CGT_F32_UN:
+CGE_F32:
 CGE_F32_UN:
+CLT_F32:
 CLT_F32_UN:
+CLE_F32:
 CLE_F32_UN:
   INVALID;
 #endif
@@ -2034,35 +2022,35 @@ CLE_F32_UN:
 CEQ_F64:
   COMPARE2(f64, ==);
 
-CNE_F64:
-  COMPARE2F(f64, islessgreater);
-
-CGT_F64:
-  COMPARE2F(f64, isgreater);
-
-CGE_F64:
-  COMPARE2F(f64, isgreaterequal);
-
-CLT_F64:
-  COMPARE2F(f64, isless);
-
-CLE_F64:
-  COMPARE2F(f64, islessequal);
-
 CEQ_F64_UN:
   COMPARE2F(f64, !islessgreater);
+
+CNE_F64:
+  COMPARE2F(f64, islessgreater);
 
 CNE_F64_UN:
   COMPARE2(f64, !=);
 
+CGT_F64:
+  COMPARE2F(f64, isgreater);
+
 CGT_F64_UN:
   COMPARE2F(f64, !islessequal);
+
+CGE_F64:
+  COMPARE2F(f64, isgreaterequal);
 
 CGE_F64_UN:
   COMPARE2F(f64, !isless);
 
+CLT_F64:
+  COMPARE2F(f64, isless);
+
 CLT_F64_UN:
   COMPARE2F(f64, !isgreaterequal);
+
+CLE_F64:
+  COMPARE2F(f64, islessequal);
 
 CLE_F64_UN:
   COMPARE2F(f64, !isgreater);
@@ -2205,8 +2193,14 @@ LDLEN:
 LDFLD_I8: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int8_t, i32, 0);
 
+LDFLD_U8: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, uint8_t, u32, 0);
+
 LDFLD_I16: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int16_t, i32, 0);
+
+LDFLD_U16: // address ... -> value ...
+  LOAD_FIELD(sp[0].ref, uint16_t, u32, 0);
 
 LDFLD_X32: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int32_t, i32, 0);
@@ -2218,12 +2212,6 @@ LDFLDA: // address ... -> address ...
   sp[0].ref.address += FETCH(1, u16);
   ip += 3;
   NEXT;
-
-LDFLD_U8: // address ... -> value ...
-  LOAD_FIELD(sp[0].ref, uint8_t, u32, 0);
-
-LDFLD_U16: // address ... -> value ...
-  LOAD_FIELD(sp[0].ref, uint16_t, u32, 0);
 
 STFLD_I8: // value address ... -> ...
   STORE_FIELD(sp[1].ref, int8_t, i32, 2);
@@ -2240,8 +2228,14 @@ STFLD_X64: // value1 value2 address -> ...
 LDSFLD_I8: // ... -> value ...
   LOAD_FIELD(mp->static_data, int8_t, i32, 1);
 
+LDSFLD_U8: // ... -> value ...
+  LOAD_FIELD(mp->static_data, uint8_t, u32, 1);
+
 LDSFLD_I16: // ... -> value ...
   LOAD_FIELD(mp->static_data, int16_t, i32, 1);
+
+LDSFLD_U16: // ... -> value ...
+  LOAD_FIELD(mp->static_data, uint16_t, u32, 1);
 
 LDSFLD_X32: // ... -> value ...
   LOAD_FIELD(mp->static_data, int32_t, i32, 1);
@@ -2254,12 +2248,6 @@ LDSFLDA: // ... -> address ...
   sp[0].ref.address = mp->static_data.address + FETCH(1, u16);
   ip += 3;
   NEXT;
-
-LDSFLD_U8: // ... -> value ...
-  LOAD_FIELD(mp->static_data, uint8_t, u32, 1);
-
-LDSFLD_U16: // ... -> value ...
-  LOAD_FIELD(mp->static_data, uint16_t, u32, 1);
 
 STSFLD_I8: // value ... -> ...
   STORE_FIELD(mp->static_data, int8_t, i32, 1);
@@ -2276,8 +2264,14 @@ STSFLD_X64: // value1 value2 ... -> ...
 LDELEM_I8: // index array length ... -> value ...
   LOAD_ELEMENT(int8_t, i32);
 
+LDELEM_U8: // index array length ... -> value ...
+  LOAD_ELEMENT(uint8_t, u32);
+
 LDELEM_I16: // index array length ... -> value ...
   LOAD_ELEMENT(int16_t, i32);
+
+LDELEM_U16: // index array length ... -> value ...
+  LOAD_ELEMENT(uint16_t, u32);
 
 LDELEM_X32: // index array length ... -> value ...
   LOAD_ELEMENT(int32_t, i32);
@@ -2299,30 +2293,6 @@ LDELEM_X64: // index array length ... -> value1 value2 ...
     NEXT;
   } while (0);
 
-LDELEM_U8: // index array length ... -> value ...
-  LOAD_ELEMENT(uint8_t, u32);
-
-LDELEM_U16: // index array length ... -> value ...
-  LOAD_ELEMENT(uint16_t, u32);
-
-LDELEMA_X8:
-LDELEMA_X16:
-LDELEMA_X32:
-LDELEMA_X64: // index array length ... -> address ...
-  do {
-    int32_t index = sp[0].i32;
-
-    if (index < 0 || index >= sp[2].i32) {
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
-
-    uint32_t address = sp[1].ref.address;
-    sp += 2;
-    sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA_X8));
-    ip++;
-    NEXT;
-  } while (0);
-
 LDELEMA: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
@@ -2340,6 +2310,24 @@ LDELEMA: // index array length ... -> address ...
     sp += 2;
     sp[0].ref.address = address + (uint32_t)index * t->size;
     ip += 4;
+    NEXT;
+  } while (0);
+
+LDELEMA_X8:
+LDELEMA_X16:
+LDELEMA_X32:
+LDELEMA_X64: // index array length ... -> address ...
+  do {
+    int32_t index = sp[0].i32;
+
+    if (index < 0 || index >= sp[2].i32) {
+      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
+    }
+
+    uint32_t address = sp[1].ref.address;
+    sp += 2;
+    sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA_X8));
+    ip++;
     NEXT;
   } while (0);
 
