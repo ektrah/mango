@@ -830,7 +830,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
   do {                                                                         \
     printf("* %s\n", opcodes[*ip]);                                            \
     goto *dispatch_table[*ip];                                                 \
-  } while (0)
+  } while (false)
 #elif defined(_MSC_VER)
 #error Unsupported compiler
 #define NEXT
@@ -847,7 +847,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     ip = mp->image + sf_.ip;                                                   \
     pop = sf_.pop;                                                             \
     in_full_trust = sf_.in_full_trust;                                         \
-  } while (0)
+  } while (false)
 
 #define PACK_STATE()                                                           \
   ((stack_frame){in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image)})
@@ -856,12 +856,12 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
   do {                                                                         \
     result = Result;                                                           \
     goto done;                                                                 \
-  } while (0)
+  } while (false)
 
 #define INVALID                                                                \
   do {                                                                         \
     goto invalid;                                                              \
-  } while (0)
+  } while (false)
 
 #define BINARY1(ty, op)                                                        \
   do {                                                                         \
@@ -869,7 +869,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define BINARY1F(ty, op)                                                       \
   do {                                                                         \
@@ -877,7 +877,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define BINARY1D(ty, op)                                                       \
   do {                                                                         \
@@ -888,7 +888,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define BINARY2(ty, op)                                                        \
   do {                                                                         \
@@ -897,7 +897,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define BINARY2F(ty, op)                                                       \
   do {                                                                         \
@@ -906,7 +906,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define BINARY2D(ty, op)                                                       \
   do {                                                                         \
@@ -918,14 +918,14 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define UNARY1(ty, op)                                                         \
   do {                                                                         \
     sp[0].ty = op(sp[0].ty);                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define UNARY2(ty, op)                                                         \
   do {                                                                         \
@@ -933,7 +933,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp2[0].ty = op(sp2[0].ty);                                                 \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define SHIFT1(ty, op)                                                         \
   do {                                                                         \
@@ -941,7 +941,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define SHIFT2(ty, op)                                                         \
   do {                                                                         \
@@ -950,14 +950,14 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define CONVERT1(cast, dest, src)                                              \
   do {                                                                         \
     sp[0].dest = (cast)sp[0].src;                                              \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define CONVERT21(cast, dest, src)                                             \
   do {                                                                         \
@@ -967,7 +967,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp2[0].dest = tmp;                                                         \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define CONVERT12(cast, dest, src)                                             \
   do {                                                                         \
@@ -977,7 +977,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[0].dest = tmp;                                                          \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define CONVERT2(cast, dest, src)                                              \
   do {                                                                         \
@@ -985,7 +985,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp2[0].dest = (cast)sp2[0].src;                                            \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define COMPARE1(mem, op)                                                      \
   do {                                                                         \
@@ -993,7 +993,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define COMPARE1F(mem, op)                                                     \
   do {                                                                         \
@@ -1001,7 +1001,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define COMPARE2(mem, op)                                                      \
   do {                                                                         \
@@ -1011,7 +1011,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define COMPARE2F(mem, op)                                                     \
   do {                                                                         \
@@ -1021,7 +1021,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define LOAD_FIELD(ref, cast, ty, push)                                        \
   do {                                                                         \
@@ -1031,7 +1031,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[0].ty = ((cast *)((uintptr_t)obj + offset))[0];                         \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (0)
+  } while (false)
 
 #define LOAD_FIELD2(ref, push)                                                 \
   do {                                                                         \
@@ -1042,7 +1042,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[1].i32 = ((int32_t *)((uintptr_t)obj + offset))[1];                     \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (0)
+  } while (false)
 
 #define STORE_FIELD(ref, cast, ty, pop)                                        \
   do {                                                                         \
@@ -1052,7 +1052,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp += pop;                                                                 \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (0)
+  } while (false)
 
 #define STORE_FIELD2(ref, pop)                                                 \
   do {                                                                         \
@@ -1063,7 +1063,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp += pop;                                                                 \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (0)
+  } while (false)
 
 #define LOAD_ELEMENT(cast, ty)                                                 \
   do {                                                                         \
@@ -1076,7 +1076,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     sp[0].ty = ((cast *)arr)[index];                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #define STORE_ELEMENT(cast)                                                    \
   do {                                                                         \
@@ -1090,7 +1090,7 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     ((cast *)arr)[index] = (cast)value;                                        \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (false);
 
 #pragma endregion
 
@@ -1168,7 +1168,7 @@ SWAP_X32:
     sp[1].i32 = tmp;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 SWAP_X64:
   do {
@@ -1180,7 +1180,7 @@ SWAP_X64:
     sp[3].i32 = tmp1;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 OVER_X32:
   sp--;
@@ -1196,7 +1196,7 @@ ROT_X32:
     sp[2].i32 = tmp;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 NIP_X32:
   sp[1].i32 = sp[0].i32;
@@ -1223,7 +1223,7 @@ LDLOC_X32:
     sp[0].i32 = sp[1 + index].i32;
     ip += 2;
     NEXT;
-  } while (0);
+  } while (false);
 
 LDLOC_X64:
   do {
@@ -1233,7 +1233,7 @@ LDLOC_X64:
     sp[1].i32 = sp[2 + index + 1].i32;
     ip += 2;
     NEXT;
-  } while (0);
+  } while (false);
 
 LDLOCA:
   do {
@@ -1242,7 +1242,7 @@ LDLOCA:
     sp[0].ref = void_as_ref(vm, &sp[1 + index]);
     ip += 2;
     NEXT;
-  } while (0);
+  } while (false);
 
 STLOC_X32:
   do {
@@ -1251,7 +1251,7 @@ STLOC_X32:
     sp++;
     ip += 2;
     NEXT;
-  } while (0);
+  } while (false);
 
 STLOC_X64:
   do {
@@ -1261,7 +1261,7 @@ STLOC_X64:
     sp += 2;
     ip += 2;
     NEXT;
-  } while (0);
+  } while (false);
 
 #pragma endregion
 
@@ -1325,7 +1325,7 @@ CALL:
     sp -= f->loc_count;
 
     NEXT;
-  } while (0);
+  } while (false);
 
 SYSCALL:
   do {
@@ -1353,7 +1353,7 @@ SYSCALL:
     vm->syscall_function = f->function;
 
     RETURN(MANGO_E_SYSCALL);
-  } while (0);
+  } while (false);
 
 #pragma endregion
 
@@ -1417,7 +1417,7 @@ NEG_I64:
     __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 #else
 ADD_I64:
@@ -1489,7 +1489,7 @@ REM_F64:
     sp += 2;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 NEG_F64:
   UNARY2(f64, -);
@@ -1603,7 +1603,7 @@ LDC_I64:
     sp2[0].i64 = FETCH(1, i64);
     ip += 9;
     NEXT;
-  } while (0);
+  } while (false);
 #else
   INVALID;
 #endif
@@ -1626,7 +1626,7 @@ LDC_F64:
     sp2[0].f64 = FETCH(1, f64);
     ip += 9;
     NEXT;
-  } while (0);
+  } while (false);
 #else
   INVALID;
 #endif
@@ -1642,7 +1642,7 @@ LDCA:
     sp[0].ref = void_as_ref(vm, (void *)(uintptr_t)(c->value));
     ip += 4;
     NEXT;
-  } while (0);
+  } while (false);
 
 #pragma endregion
 
@@ -2124,7 +2124,7 @@ NEWOBJ:
     sp[0].ref = void_as_ref(vm, obj);
     ip += 4;
     NEXT;
-  } while (0);
+  } while (false);
 
 NEWARR:
   do {
@@ -2150,7 +2150,7 @@ NEWARR:
     sp[0].ref = void_as_ref(vm, arr);
     ip += 4;
     NEXT;
-  } while (0);
+  } while (false);
 
 MKSLICE:
   goto NOP;
@@ -2168,7 +2168,7 @@ SLICE:
     sp[1].i32 -= start;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 SLICE2:
   do {
@@ -2187,7 +2187,7 @@ SLICE2:
     sp[1].i32 = length;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 LDLEN:
   goto POP_X32;
@@ -2293,7 +2293,7 @@ LDELEM_X64: // index array length ... -> value1 value2 ...
     sp[1].i32 = ((int32_t *)arr)[2 * index + 1];
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 LDELEMA: // index array length ... -> address ...
   do {
@@ -2313,7 +2313,7 @@ LDELEMA: // index array length ... -> address ...
     sp[0].ref.address = address + (uint32_t)index * t->size;
     ip += 4;
     NEXT;
-  } while (0);
+  } while (false);
 
 LDELEMA_X8:
 LDELEMA_X16:
@@ -2331,7 +2331,7 @@ LDELEMA_X64: // index array length ... -> address ...
     sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA_X8));
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 STELEM_I8: // value index array length ... -> ...
   STORE_ELEMENT(int8_t);
@@ -2359,7 +2359,7 @@ STELEM_X64: // value1 value2 index array length ... -> ...
     ((int32_t *)arr)[2 * index + 1] = value2;
     ip++;
     NEXT;
-  } while (0);
+  } while (false);
 
 #pragma endregion
 
