@@ -1138,30 +1138,30 @@ BREAK:
   vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
   RETURN(MANGO_E_BREAKPOINT);
 
-POP:
+POP_X32:
   sp++;
   ip++;
   NEXT;
 
-POP2:
+POP_X64:
   sp += 2;
   ip++;
   NEXT;
 
-DUP:
+DUP_X32:
   sp--;
   sp[0].i32 = sp[1].i32;
   ip++;
   NEXT;
 
-DUP2:
+DUP_X64:
   sp -= 2;
   sp[0].i32 = sp[2].i32;
   sp[1].i32 = sp[3].i32;
   ip++;
   NEXT;
 
-SWAP:
+SWAP_X32:
   do {
     int32_t tmp = sp[0].i32;
     sp[0].i32 = sp[1].i32;
@@ -1170,7 +1170,7 @@ SWAP:
     NEXT;
   } while (0);
 
-SWAP2:
+SWAP_X64:
   do {
     int32_t tmp0 = sp[0].i32;
     int32_t tmp1 = sp[1].i32;
@@ -1182,13 +1182,13 @@ SWAP2:
     NEXT;
   } while (0);
 
-OVER:
+OVER_X32:
   sp--;
   sp[0].i32 = sp[2].i32;
   ip++;
   NEXT;
 
-ROT:
+ROT_X32:
   do {
     int32_t tmp = sp[0].i32;
     sp[0].i32 = sp[1].i32;
@@ -1198,13 +1198,13 @@ ROT:
     NEXT;
   } while (0);
 
-NIP:
+NIP_X32:
   sp[1].i32 = sp[0].i32;
   sp++;
   ip++;
   NEXT;
 
-TUCK:
+TUCK_X32:
   sp--;
   sp[0].i32 = sp[1].i32;
   sp[1].i32 = sp[2].i32;
@@ -1216,7 +1216,7 @@ TUCK:
 
 #pragma region locals
 
-LDLOC:
+LDLOC_X32:
   do {
     uint8_t index = FETCH(1, u8);
     sp--;
@@ -1225,7 +1225,7 @@ LDLOC:
     NEXT;
   } while (0);
 
-LDLOC2:
+LDLOC_X64:
   do {
     uint8_t index = FETCH(1, u8);
     sp -= 2;
@@ -1244,7 +1244,7 @@ LDLOCA:
     NEXT;
   } while (0);
 
-STLOC:
+STLOC_X32:
   do {
     uint8_t index = FETCH(1, u8);
     sp[index].i32 = sp[0].i32;
@@ -1253,7 +1253,7 @@ STLOC:
     NEXT;
   } while (0);
 
-STLOC2:
+STLOC_X64:
   do {
     uint8_t index = FETCH(1, u8);
     sp[index + 0].i32 = sp[0].i32;
@@ -1267,10 +1267,10 @@ STLOC2:
 
 #pragma region calls
 
-RET2:
+RET_X64:
   sp[pop + 1].i32 = sp[1].i32;
 
-RET1:
+RET_X32:
   sp[pop + 0].i32 = sp[0].i32;
 
 RET:
@@ -2200,7 +2200,7 @@ SLICE2:
   } while (0);
 
 LDLEN:
-  goto POP;
+  goto POP_X32;
 
 LDFLD_I8: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int8_t, i32, 0);
@@ -2208,10 +2208,10 @@ LDFLD_I8: // address ... -> value ...
 LDFLD_I16: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int16_t, i32, 0);
 
-LDFLD: // address ... -> value ...
+LDFLD_X32: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int32_t, i32, 0);
 
-LDFLD2: // address ... -> value1 value2 ...
+LDFLD_X64: // address ... -> value1 value2 ...
   LOAD_FIELD2(sp[0].ref, 1);
 
 LDFLDA: // address ... -> address ...
@@ -2231,10 +2231,10 @@ STFLD_I8: // value address ... -> ...
 STFLD_I16: // value address ... -> ...
   STORE_FIELD(sp[1].ref, int16_t, i32, 2);
 
-STFLD: // value address ... -> ...
+STFLD_X32: // value address ... -> ...
   STORE_FIELD(sp[1].ref, int32_t, i32, 2);
 
-STFLD2: // value1 value2 address -> ...
+STFLD_X64: // value1 value2 address -> ...
   STORE_FIELD2(sp[2].ref, 3);
 
 LDSFLD_I8: // ... -> value ...
@@ -2243,10 +2243,10 @@ LDSFLD_I8: // ... -> value ...
 LDSFLD_I16: // ... -> value ...
   LOAD_FIELD(mp->static_data, int16_t, i32, 1);
 
-LDSFLD: // ... -> value ...
+LDSFLD_X32: // ... -> value ...
   LOAD_FIELD(mp->static_data, int32_t, i32, 1);
 
-LDSFLD2: // ... -> value1 value2 ...
+LDSFLD_X64: // ... -> value1 value2 ...
   LOAD_FIELD2(mp->static_data, 2);
 
 LDSFLDA: // ... -> address ...
@@ -2267,10 +2267,10 @@ STSFLD_I8: // value ... -> ...
 STSFLD_I16: // value ... -> ...
   STORE_FIELD(mp->static_data, int16_t, i32, 1);
 
-STSFLD: // value ... -> ...
+STSFLD_X32: // value ... -> ...
   STORE_FIELD(mp->static_data, int32_t, i32, 1);
 
-STSFLD2: // value1 value2 ... -> ...
+STSFLD_X64: // value1 value2 ... -> ...
   STORE_FIELD2(mp->static_data, 2);
 
 LDELEM_I8: // index array length ... -> value ...
@@ -2279,10 +2279,10 @@ LDELEM_I8: // index array length ... -> value ...
 LDELEM_I16: // index array length ... -> value ...
   LOAD_ELEMENT(int16_t, i32);
 
-LDELEM: // index array length ... -> value ...
+LDELEM_X32: // index array length ... -> value ...
   LOAD_ELEMENT(int32_t, i32);
 
-LDELEM2: // index array length ... -> value1 value2 ...
+LDELEM_X64: // index array length ... -> value1 value2 ...
   do {
     int32_t index = sp[0].i32;
 
@@ -2305,10 +2305,10 @@ LDELEM_U8: // index array length ... -> value ...
 LDELEM_U16: // index array length ... -> value ...
   LOAD_ELEMENT(uint16_t, u32);
 
-LDELEMA1:
-LDELEMA2:
-LDELEMA4:
-LDELEMA8: // index array length ... -> address ...
+LDELEMA_X8:
+LDELEMA_X16:
+LDELEMA_X32:
+LDELEMA_X64: // index array length ... -> address ...
   do {
     int32_t index = sp[0].i32;
 
@@ -2318,7 +2318,7 @@ LDELEMA8: // index array length ... -> address ...
 
     uint32_t address = sp[1].ref.address;
     sp += 2;
-    sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA1));
+    sp[0].ref.address = address + (uint32_t)index * (1U << (*ip - LDELEMA_X8));
     ip++;
     NEXT;
   } while (0);
@@ -2349,10 +2349,10 @@ STELEM_I8: // value index array length ... -> ...
 STELEM_I16: // value index array length ... -> ...
   STORE_ELEMENT(int16_t);
 
-STELEM: // value index array length ... -> ...
+STELEM_X32: // value index array length ... -> ...
   STORE_ELEMENT(int32_t);
 
-STELEM2: // value1 value2 index array length ... -> ...
+STELEM_X64: // value1 value2 index array length ... -> ...
   do {
     int32_t value1 = sp[0].i32;
     int32_t value2 = sp[1].i32;
