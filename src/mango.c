@@ -68,12 +68,12 @@
                                                                                \
   static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
                                           Type##_ref ref) {                    \
-    return (Const Type *)(vm->base + ref.address);                             \
+    return (Const Type *)((uintptr_t)vm + ref.address);                        \
   }                                                                            \
                                                                                \
   static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
                                          Const Type *ptr) {                    \
-    return (Type##_ref){(uint32_t)((uintptr_t)ptr - vm->base)};                \
+    return (Type##_ref){(uint32_t)((uintptr_t)ptr - (uintptr_t)vm)};           \
   }
 
 #else
@@ -132,10 +132,6 @@ typedef union stackval2 {
 
 typedef struct mango_vm {
   union {
-    uintptr_t base;
-    uint64_t _base;
-  };
-  union {
     void *context;
     uint64_t _context;
   };
@@ -160,6 +156,8 @@ typedef struct mango_vm {
 
   uint16_t syscall_function;
   uint16_t _reserved2;
+  uint32_t _reserved3;
+  uint32_t _reserved4;
 } mango_vm;
 
 typedef struct mango_module {
@@ -248,15 +246,10 @@ uint32_t mango_features(void) {
   return features;
 }
 
-mango_vm *mango_initialize(const void *base, void *address, uint32_t size,
-                           void *context) {
-  uintptr_t base_end;
+mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   uintptr_t address_end;
 
   if (!address) {
-    return NULL;
-  }
-  if (address < base) {
     return NULL;
   }
   if ((uintptr_t)address & (__alignof(mango_vm) - 1)) {
@@ -265,13 +258,10 @@ mango_vm *mango_initialize(const void *base, void *address, uint32_t size,
   if (size < sizeof(mango_vm)) {
     return NULL;
   }
-  if (__builtin_add_overflow((uintptr_t)base, UINT32_MAX, &base_end)) {
-    base_end = UINTPTR_MAX;
-  }
   if (__builtin_add_overflow((uintptr_t)address, size - 1, &address_end)) {
     return NULL;
   }
-  if (address_end > base_end) {
+  if (address_end > UINTPTR_MAX) {
     return NULL;
   }
 
@@ -279,7 +269,6 @@ mango_vm *mango_initialize(const void *base, void *address, uint32_t size,
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
-  vm->base = (uintptr_t)base;
   vm->context = context;
   vm->heap_size = size;
   vm->heap_used = sizeof(mango_vm);
@@ -616,18 +605,10 @@ static mango_result verify_module(const uint8_t *image, uint32_t size) {
 mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
                                  const uint8_t *image, uint32_t size,
                                  void *context, uint32_t flags) {
-  uintptr_t base_end;
-
   if (!vm || !name || !image) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (__builtin_add_overflow(vm->base, UINT32_MAX, &base_end)) {
-    base_end = UINTPTR_MAX;
-  }
-  if ((uintptr_t)image < vm->base || (uintptr_t)image > base_end) {
-    return MANGO_E_ARGUMENT;
-  }
-  if (size < 2 || size > UINT16_MAX || size - 1 > base_end - (uintptr_t)image) {
+  if (size < 2 || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
   if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {

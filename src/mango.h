@@ -95,8 +95,8 @@ MANGO_API const char *mango_version_string(void);
 
 MANGO_API uint32_t mango_features(void);
 
-MANGO_API mango_vm *mango_initialize(const void *base, void *address,
-                                     uint32_t size, void *context);
+MANGO_API mango_vm *mango_initialize(void *address, uint32_t size,
+                                     void *context);
 
 MANGO_API void *mango_context(const mango_vm *vm);
 
