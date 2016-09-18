@@ -90,7 +90,6 @@ MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
 MANGO_DECLARE_REF_TYPE(mango_module)
-MANGO_DECLARE_REF_TYPE(mango_module_name)
 
 #pragma pack(push, 4)
 
@@ -178,7 +177,11 @@ typedef struct mango_module {
   uint8_t init_next;
   uint8_t init_prev;
 
-  mango_module_name_ref name;
+  struct {
+    uint8_t module;
+    uint8_t index;
+  } name;
+  uint16_t _reserved;
 
   uint8_t_ref imports;
   void_ref static_data;
@@ -207,7 +210,6 @@ MANGO_DEFINE_REF_TYPE(void, )
 MANGO_DEFINE_REF_TYPE(uint8_t, const)
 MANGO_DEFINE_REF_TYPE(stackval, )
 MANGO_DEFINE_REF_TYPE(mango_module, )
-MANGO_DEFINE_REF_TYPE(mango_module_name, const)
 
 #if defined(__clang__) || defined(__GNUC__)
 _Static_assert(sizeof(stack_frame) == 4, "Incorrect layout");
@@ -461,12 +463,25 @@ uint32_t mango_stack_available(const mango_vm *vm) {
 
 #define INVALID_MODULE 255
 
-static uint8_t get_or_create_module(mango_vm *vm,
-                                    const mango_module_name *name) {
+static inline const mango_module_name *
+get_module_name(const mango_module *modules, const mango_module *module) {
+  const mango_module_def *m =
+      (const mango_module_def *)(modules[module->name.module].image +
+                                 MANGO_HEADER_SIZE);
+
+  return &m->imports[module->name.index];
+}
+
+static uint8_t get_or_create_module(mango_vm *vm, const mango_module_name *name,
+                                    uint8_t name_module, uint8_t name_index) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
 
-  for (uint8_t i = 0; i < vm->modules_created; i++) {
-    const mango_module_name *n = mango_module_name_as_ptr(vm, modules[i].name);
+  if (memcmp(name, &vm->startup_module, sizeof(mango_module_name)) == 0) {
+    return 0;
+  }
+
+  for (uint8_t i = 1; i < vm->modules_created; i++) {
+    const mango_module_name *n = get_module_name(modules, &modules[i]);
     if (memcmp(name, n, sizeof(mango_module_name)) == 0) {
       return i;
     }
@@ -474,7 +489,8 @@ static uint8_t get_or_create_module(mango_vm *vm,
 
   uint8_t index = vm->modules_created++;
   modules[index].index = index;
-  modules[index].name = mango_module_name_as_ref(vm, name);
+  modules[index].name.module = name_module;
+  modules[index].name.index = name_index;
   return index;
 }
 
@@ -491,7 +507,7 @@ static mango_result initialize_module(mango_vm *vm, mango_module *module) {
     }
 
     for (uint8_t i = 0; i < m->import_count; i++) {
-      imports[i] = get_or_create_module(vm, &m->imports[i]);
+      imports[i] = get_or_create_module(vm, &m->imports[i], module->index, i);
     }
 
     module->imports = uint8_t_as_ref(vm, imports);
@@ -558,7 +574,8 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
-  module->name = mango_module_name_as_ref(vm, &vm->startup_module);
+  module->name.module = INVALID_MODULE;
+  module->name.index = INVALID_MODULE;
 
   return initialize_module(vm, module);
 }
@@ -568,7 +585,7 @@ static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
                                           uint32_t flags) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
-  const mango_module_name *n = mango_module_name_as_ptr(vm, module->name);
+  const mango_module_name *n = get_module_name(modules, module);
 
   if (memcmp(name, n, sizeof(mango_module_name)) != 0) {
     return MANGO_E_INVALID_OPERATION;
@@ -643,7 +660,7 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
 
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
-  const mango_module_name *n = mango_module_name_as_ptr(vm, module->name);
+  const mango_module_name *n = get_module_name(modules, module);
 
   return (const uint8_t *)n;
 }
