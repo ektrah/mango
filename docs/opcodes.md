@@ -121,7 +121,6 @@
 | 0x50   | ldc.i32.m1       | ... &rarr; value ...                                                    |  
 | 0x5A   | ldc.i32.s        | ... &rarr; value ...                                                    |  
 | 0x5C   | ldc.i64          | ... &rarr; value ...                                                    |  
-| 0x5F   | ldca             | ... &rarr; address ...                                                  |  
 | 0xE0   | ldelem.i16       | index array length ... &rarr; value ...                                 |  
 | 0xDE   | ldelem.i8        | index array length ... &rarr; value ...                                 |  
 | 0xE1   | ldelem.u16       | index array length ... &rarr; value ...                                 |  

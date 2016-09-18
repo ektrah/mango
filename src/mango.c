@@ -1631,19 +1631,6 @@ LDC_F64: // ... -> value ...
   INVALID;
 #endif
 
-LDCA: // ... -> address ...
-  do {
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
-
-    const mango_const_def *c =
-        (const mango_const_def *)(module->image + FETCH(2, u16));
-
-    sp--;
-    sp[0].ref = void_as_ref(vm, (void *)(uintptr_t)(c->value));
-    ip += 4;
-    NEXT;
-  } while (false);
-
 #pragma endregion
 
 #pragma region i32 conversion
@@ -2384,6 +2371,7 @@ UNUSED76:
 UNUSED77:
 UNUSED78:
 UNUSED79:
+UNUSED95:
 UNUSED134:
 UNUSED135:
 UNUSED180:
