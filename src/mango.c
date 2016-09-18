@@ -243,6 +243,9 @@ uint32_t mango_features(void) {
 #ifndef MANGO_NO_F64
   features |= MANGO_FEATURE_F64;
 #endif
+#ifndef MANGO_NO_OBJECTS
+  features |= MANGO_FEATURE_OBJECTS;
+#endif
   return features;
 }
 
@@ -2092,6 +2095,7 @@ BRTRUE_S: // value ... -> ...
 #pragma endregion
 
 #pragma region object model
+#ifndef MANGO_NO_OBJECTS
 
 NEWOBJ: // ... -> address ...
   do {
@@ -2349,6 +2353,53 @@ STELEM_X64: // value index array length ... -> ...
     NEXT;
   } while (false);
 
+#else
+NEWOBJ:
+NEWARR:
+MKSLICE:
+SLICE:
+SLICE2:
+LDLEN:
+LDFLD_I8:
+LDFLD_U8:
+LDFLD_I16:
+LDFLD_U16:
+LDFLD_X32:
+LDFLD_X64:
+LDFLDA:
+STFLD_I8:
+STFLD_I16:
+STFLD_X32:
+STFLD_X64:
+LDSFLD_I8:
+LDSFLD_U8:
+LDSFLD_I16:
+LDSFLD_U16:
+LDSFLD_X32:
+LDSFLD_X64:
+LDSFLDA:
+STSFLD_I8:
+STSFLD_I16:
+STSFLD_X32:
+STSFLD_X64:
+LDELEM_I8:
+LDELEM_U8:
+LDELEM_I16:
+LDELEM_U16:
+LDELEM_X32:
+LDELEM_X64:
+LDELEMA:
+LDELEMA_X8:
+LDELEMA_X16:
+LDELEMA_X32:
+LDELEMA_X64:
+STELEM_I8:
+STELEM_I16:
+STELEM_X32:
+STELEM_X64:
+  (void)void_as_ptr;
+  INVALID;
+#endif
 #pragma endregion
 
 #pragma region unused
