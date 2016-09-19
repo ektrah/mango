@@ -1,4 +1,5 @@
-This software contains code derived from the .NET Core Runtime (CoreCLR).
+This software contains code derived from the .NET Core Runtime (CoreCLR),
+which is available under the MIT license.
 
 Copyright (c) .NET Foundation and Contributors
 
