@@ -72,11 +72,6 @@ typedef struct mango_type_def {
   uint16_t size;
 } mango_type_def;
 
-typedef struct mango_const_def {
-  uint8_t attributes;
-  uint8_t value[];
-} mango_const_def;
-
 typedef enum mango_func_attributes {
   MANGO_FD_NONE = 0x0,
   MANGO_FD_NAKED = 0x1,
