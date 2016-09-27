@@ -141,7 +141,7 @@ typedef struct mango_vm {
   uint32_t heap_size;
   uint32_t heap_used;
 
-  mango_module_name startup_module;
+  mango_module_name app_name;
 
   mango_module_ref modules;
   uint8_t modules_created;
@@ -470,7 +470,7 @@ static uint8_t get_or_create_module(mango_vm *vm, const mango_module_name *name,
                                     uint8_t name_module, uint8_t name_index) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
 
-  if (memcmp(name, &vm->startup_module, sizeof(mango_module_name)) == 0) {
+  if (memcmp(name, &vm->app_name, sizeof(mango_module_name)) == 0) {
     return 0;
   }
 
@@ -531,32 +531,32 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
 
-  const mango_startup_def *s =
-      (const mango_startup_def *)(image + MANGO_HEADER_SIZE +
-                                  sizeof(mango_module_def) +
-                                  m->import_count * sizeof(mango_module_name));
+  const mango_app_info *app =
+      (const mango_app_info *)(image + MANGO_HEADER_SIZE +
+                               sizeof(mango_module_def) +
+                               m->import_count * sizeof(mango_module_name));
 
-  if ((s->features & mango_features()) != s->features) {
+  if ((app->features & mango_features()) != app->features) {
     return MANGO_E_NOT_SUPPORTED;
   }
 
   if (!vm->stack.address) {
     mango_result result =
-        mango_stack_create(vm, s->stack_size * sizeof(stackval));
+        mango_stack_create(vm, app->stack_size * sizeof(stackval));
     if (result != MANGO_E_SUCCESS) {
       return result;
     }
   }
 
   mango_module *modules =
-      mango_heap_alloc(vm, s->module_count, sizeof(mango_module),
+      mango_heap_alloc(vm, app->module_count, sizeof(mango_module),
                        __alignof(mango_module), MANGO_ALLOC_ZERO_MEMORY);
 
   if (!modules) {
     return MANGO_E_OUT_OF_MEMORY;
   }
 
-  memcpy(&vm->startup_module, name, sizeof(mango_module_name));
+  memcpy(&vm->app_name, name, sizeof(mango_module_name));
   vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;

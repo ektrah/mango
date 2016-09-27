@@ -52,11 +52,11 @@ typedef struct mango_module_def {
   mango_module_name imports[];
 } mango_module_def;
 
-typedef struct mango_startup_def {
+typedef struct mango_app_info {
   uint16_t features;
   uint16_t stack_size;
   uint8_t module_count;
-} mango_startup_def;
+} mango_app_info;
 
 typedef enum mango_type_attributes {
   MANGO_TD_NONE = 0x0,
