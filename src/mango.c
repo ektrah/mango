@@ -113,7 +113,9 @@ typedef union stackval {
 #ifndef MANGO_NO_F32
   float f32;
 #endif
+#ifndef MANGO_NO_REFS
   void_ref ref;
+#endif
 } stackval;
 
 typedef union stackval2 {
@@ -243,8 +245,8 @@ uint32_t mango_features(void) {
 #ifndef MANGO_NO_F64
   features |= MANGO_FEATURE_F64;
 #endif
-#ifndef MANGO_NO_OBJECTS
-  features |= MANGO_FEATURE_OBJECTS;
+#ifndef MANGO_NO_REFS
+  features |= MANGO_FEATURE_REFS;
 #endif
   return features;
 }
@@ -1237,6 +1239,7 @@ LDLOC_X64: // ... -> value ...
   } while (false);
 
 LDLOCA: // ... -> address ...
+#ifndef MANGO_NO_REFS
   do {
     uint8_t index = FETCH(1, u8);
     sp--;
@@ -1244,6 +1247,9 @@ LDLOCA: // ... -> address ...
     ip += 2;
     NEXT;
   } while (false);
+#else
+  INVALID;
+#endif
 
 STLOC_X32: // value ... -> ...
   do {
@@ -2095,7 +2101,7 @@ BRTRUE_S: // value ... -> ...
 #pragma endregion
 
 #pragma region object model
-#ifndef MANGO_NO_OBJECTS
+#ifndef MANGO_NO_REFS
 
 NEWOBJ: // ... -> address ...
   do {
