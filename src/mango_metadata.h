@@ -4,9 +4,9 @@
  * | | | |     | | | |  |  |  |  |
  * |_|_|_|__|__|_|___|_____|_____|
  *
- * Mango Virtual Machine 0.32-dev
+ * Mango Virtual Machine 0.33-dev
  *
- * Copyright (c) 2016 Klaus Hartke
+ * Copyright (c) 2017 Klaus Hartke
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
