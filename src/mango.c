@@ -358,18 +358,20 @@ mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
   if (size > UINT16_MAX * sizeof(stackval)) {
     return MANGO_E_ARGUMENT;
   }
+  if ((size & (sizeof(stackval) - 1)) != 0) {
+    return MANGO_E_ARGUMENT;
+  }
   if (vm->stack.address) {
     return MANGO_E_INVALID_OPERATION;
   }
 
-  uint16_t count = (uint16_t)((size + sizeof(stackval) - 1) / sizeof(stackval));
-
-  stackval *stack =
-      mango_heap_alloc(vm, count, sizeof(stackval), __alignof(stackval), 0);
+  stackval *stack = mango_heap_alloc(vm, 1, size, __alignof(stackval), 0);
 
   if (!stack) {
     return MANGO_E_OUT_OF_MEMORY;
   }
+
+  uint16_t count = (uint16_t)(size / sizeof(stackval));
 
   vm->stack = stackval_as_ref(vm, stack);
   vm->stack_size = count;
