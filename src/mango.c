@@ -601,17 +601,6 @@ static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
   return initialize_module(vm, module);
 }
 
-static mango_result verify_module(const uint8_t *image, uint32_t size) {
-  (void)image;
-  (void)size;
-
-#ifndef MANGO_NO_VERIFICATION
-  return MANGO_E_NOT_IMPLEMENTED;
-#else
-  return MANGO_E_NOT_SUPPORTED;
-#endif
-}
-
 mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
                                  const uint8_t *image, uint32_t size,
                                  void *context, uint32_t flags) {
@@ -624,12 +613,8 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
-
   if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
-    mango_result result = verify_module(image, size);
-    if (result != MANGO_E_SUCCESS) {
-      return result;
-    }
+    return MANGO_E_VERIFICATION;
   }
 
   if (vm->modules_imported == 0) {
