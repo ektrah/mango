@@ -2097,19 +2097,16 @@ BRTRUE_S: // value ... -> ...
 
 NEWOBJ: // ... -> address ...
   do {
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+    uint32_t size = FETCH(1, u16);
 
-    const mango_type_def *t =
-        (const mango_type_def *)(module->image + FETCH(2, u16));
-
-    void *obj = mango_heap_alloc(vm, 1, t->size, __alignof(stackval), 0);
+    void *obj = mango_heap_alloc(vm, 1, size, __alignof(stackval), 0);
     if (!obj) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
     }
 
     sp--;
     sp[0].ref = void_as_ref(vm, obj);
-    ip += 4;
+    ip += 3;
     NEXT;
   } while (false);
 
@@ -2121,13 +2118,10 @@ NEWARR: // length ... -> array length ...
       RETURN(MANGO_E_ARGUMENT);
     }
 
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
-
-    const mango_type_def *t =
-        (const mango_type_def *)(module->image + FETCH(2, u16));
+    uint32_t size = FETCH(1, u16);
 
     void *arr =
-        mango_heap_alloc(vm, (uint32_t)count, t->size, __alignof(stackval), 0);
+        mango_heap_alloc(vm, (uint32_t)count, size, __alignof(stackval), 0);
 
     if (!arr) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
@@ -2135,7 +2129,7 @@ NEWARR: // length ... -> array length ...
 
     sp--;
     sp[0].ref = void_as_ref(vm, arr);
-    ip += 4;
+    ip += 3;
     NEXT;
   } while (false);
 
@@ -2293,15 +2287,12 @@ LDELEMA: // index array length ... -> address ...
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
 
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
-
-    const mango_type_def *t =
-        (const mango_type_def *)(module->image + FETCH(2, u16));
+    uint32_t size = FETCH(1, u16);
 
     uint32_t address = sp[1].ref.address;
     sp += 2;
-    sp[0].ref.address = address + (uint32_t)index * t->size;
-    ip += 4;
+    sp[0].ref.address = address + (uint32_t)index * size;
+    ip += 3;
     NEXT;
   } while (false);
 

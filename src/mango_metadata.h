@@ -63,15 +63,6 @@ typedef struct mango_app_info {
   uint8_t module_count;
 } mango_app_info;
 
-typedef enum mango_type_attributes {
-  MANGO_TD_NONE = 0x0,
-} mango_type_attributes;
-
-typedef struct mango_type_def {
-  uint8_t attributes;
-  uint16_t size;
-} mango_type_def;
-
 typedef enum mango_func_attributes {
   MANGO_FD_NONE = 0x0,
   MANGO_FD_NAKED = 0x1,
