@@ -78,13 +78,6 @@ typedef struct mango_func_def {
   uint8_t code[];
 } mango_func_def;
 
-typedef struct mango_syscall_def {
-  uint8_t attributes;
-  uint8_t arg_count;
-  uint8_t ret_count;
-  uint16_t function;
-} mango_syscall_def;
-
 #pragma pack(pop)
 
 #ifdef __cplusplus

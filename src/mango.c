@@ -712,9 +712,6 @@ mango_result mango_execute(mango_vm *vm) {
     return MANGO_E_STACK_IMBALANCE;
   }
 
-  vm->sp_expected = vm->stack_size;
-  vm->syscall_function = 0;
-
   mango_result result = execute(vm);
   if (result != MANGO_E_SUCCESS) {
     return result;
@@ -846,6 +843,12 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
 
 #define PACK_STATE()                                                           \
   ((stack_frame){in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image)})
+
+#define YIELD(Result)                                                          \
+  do {                                                                         \
+    result = Result;                                                           \
+    goto yield;                                                                \
+  } while (false)
 
 #define RETURN(Result)                                                         \
   do {                                                                         \
@@ -1130,7 +1133,6 @@ NOP: // ... -> ...
 
 BREAK: // ... -> ...
   ++ip;
-  vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
   RETURN(MANGO_E_BREAKPOINT);
 
 POP: // value ... -> ...
@@ -1328,30 +1330,20 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
 
 SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
-
-    const mango_syscall_def *f =
-        (const mango_syscall_def *)(module->image + FETCH(2, u16));
-
     if (!in_full_trust) {
-      if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
-          (mp->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
-        printf("<< SECURITY VIOLATION >>\n");
-        RETURN(MANGO_E_SECURITY);
-      }
+      printf("<< SECURITY VIOLATION >>\n");
+      RETURN(MANGO_E_SECURITY);
     }
 
-    if ((sp - rp) + f->arg_count < f->ret_count) {
-      printf("<< STACK OVERFLOW >>\n");
-      RETURN(MANGO_E_STACK_OVERFLOW);
-    }
+    int32_t adjustment = FETCH(1, i8);
+    uint16_t function = FETCH(2, u16);
 
     ip += 4;
-    vm->sp_expected = (uint16_t)(
-        ((sp - stackval_as_ptr(vm, vm->stack)) + f->arg_count) - f->ret_count);
-    vm->syscall_function = f->function;
+    vm->sp_expected =
+        (uint16_t)((sp - stackval_as_ptr(vm, vm->stack)) + adjustment);
+    vm->syscall_function = function;
 
-    RETURN(MANGO_E_SYSCALL);
+    YIELD(MANGO_E_SYSCALL);
   } while (false);
 
 #pragma endregion
@@ -2447,6 +2439,10 @@ invalid:
   result = MANGO_E_INVALID_PROGRAM;
 
 done:
+  vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
+  vm->syscall_function = 0;
+
+yield:
   vm->sf = PACK_STATE();
   vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
   vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
