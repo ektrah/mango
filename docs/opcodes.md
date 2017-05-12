@@ -104,8 +104,8 @@
 | 0x24   | div.i32.un       | value2 value1 ... &rarr; result ...                                     |  
 | 0x2B   | div.i64          | value2 value1 ... &rarr; result ...                                     |  
 | 0x2C   | div.i64.un       | value2 value1 ... &rarr; result ...                                     |  
-| 0x06   | dup              | value ... &rarr; value value ...                                        |  
-| 0x07   | dup2             | value1 value2 ... &rarr; value1 value2 value1 value2 ...                |  
+| 0x06   | dup.x32          | value ... &rarr; value value ...                                        |  
+| 0x07   | dup.x64          | value ... &rarr; value value ...                                        |  
 | 0x5D   | ldc.f32          | ... &rarr; value ...                                                    |  
 | 0x5E   | ldc.f64          | ... &rarr; value ...                                                    |  
 | 0x5B   | ldc.i32          | ... &rarr; value ...                                                    |  
@@ -168,8 +168,8 @@
 | 0x40   | or.i32           | value2 value1 ... &rarr; result ...                                     |  
 | 0x47   | or.i64           | value2 value1 ... &rarr; result ...                                     |  
 | 0x0A   | over             | value1 value2 ... &rarr; value2 value1 value2 ...                       |  
-| 0x04   | pop              | value ... &rarr; ...                                                    |  
-| 0x05   | pop2             | value1 value2 ... &rarr; ...                                            |  
+| 0x04   | pop.x32          | value ... &rarr; ...                                                    |  
+| 0x05   | pop.x64          | value ... &rarr; ...                                                    |  
 | 0x34   | rem.f32          | value2 value1 ... &rarr; result ...                                     |  
 | 0x3A   | rem.f64          | value2 value1 ... &rarr; result ...                                     |  
 | 0x25   | rem.i32          | value2 value1 ... &rarr; result ...                                     |  
@@ -206,8 +206,8 @@
 | 0x37   | sub.f64          | value2 value1 ... &rarr; result ...                                     |  
 | 0x21   | sub.i32          | value2 value1 ... &rarr; result ...                                     |  
 | 0x29   | sub.i64          | value2 value1 ... &rarr; result ...                                     |  
-| 0x08   | swap             | value1 value2 ... &rarr; value2 value1 ...                              |  
-| 0x09   | swap2            | value1 value2 value3 value4  ... &rarr; value3 value4 value1 value2 ... |  
+| 0x08   | swap.x32         | value1 value2 ... &rarr; value2 value1 ...                              |  
+| 0x09   | swap.x64         | value1 value2 ... &rarr; value2 value1 ...                              |  
 | 0x1C   | syscall          | argumentN ... argument1 argument0 ... &rarr; result ...                 |  
 | 0x0D   | tuck             | value1 value2 ... &rarr; value1 value2 value1 ...                       |  
 | 0x41   | xor.i32          | value2 value1 ... &rarr; result ...                                     |  
