@@ -437,6 +437,9 @@ void *mango_stack_top(const mango_vm *vm) {
   if (!vm->stack.address) {
     return NULL;
   }
+  if (vm->sp == vm->stack_size) {
+    return NULL;
+  }
 
   return stackval_as_ptr(vm, vm->stack) + vm->sp;
 }
