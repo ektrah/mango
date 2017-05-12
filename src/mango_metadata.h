@@ -65,11 +65,6 @@ typedef struct mango_app_info {
 
 typedef enum mango_type_attributes {
   MANGO_TD_NONE = 0x0,
-  MANGO_TD_PUBLIC = 0x100,
-  MANGO_TD_ENUM = 0x200,
-  MANGO_TD_FLAGS = 0x400,
-  MANGO_TD_SEQUENTIAL_LAYOUT = 0x800,
-  MANGO_TD_OBSOLETE = 0x1000,
 } mango_type_attributes;
 
 typedef struct mango_type_def {
@@ -82,8 +77,6 @@ typedef enum mango_func_attributes {
   MANGO_FD_NAKED = 0x1,
   MANGO_FD_SECURITY_CRITICAL = 0x2,
   MANGO_FD_SECURITY_SAFE_CRITICAL = 0x4,
-  MANGO_FD_PUBLIC = 0x100,
-  MANGO_FD_OBSOLETE = 0x1000,
 } mango_function_attributes;
 
 typedef struct mango_func_def {
