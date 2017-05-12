@@ -161,7 +161,7 @@ typedef struct mango_vm {
   uint16_t sp;
   uint16_t sp_expected;
 
-  uint16_t syscall_function;
+  uint16_t syscall;
   uint16_t _reserved2;
   uint32_t _reserved3;
   uint32_t _reserved4;
@@ -787,12 +787,12 @@ mango_result mango_execute(mango_vm *vm) {
   return MANGO_E_SUCCESS;
 }
 
-uint32_t mango_syscall_function(const mango_vm *vm) {
+uint32_t mango_syscall(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
 
-  return vm->syscall_function;
+  return vm->syscall;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1336,12 +1336,12 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     }
 
     int32_t adjustment = FETCH(1, i8);
-    uint16_t function = FETCH(2, u16);
+    uint16_t syscall = FETCH(2, u16);
 
     ip += 4;
     vm->sp_expected =
         (uint16_t)((sp - stackval_as_ptr(vm, vm->stack)) + adjustment);
-    vm->syscall_function = function;
+    vm->syscall = syscall;
 
     YIELD(MANGO_E_SYSCALL);
   } while (false);
@@ -2440,7 +2440,7 @@ invalid:
 
 done:
   vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
-  vm->syscall_function = 0;
+  vm->syscall = 0;
 
 yield:
   vm->sf = PACK_STATE();
