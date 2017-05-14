@@ -63,10 +63,10 @@ OPCODE(RET,             "ret",              0,      0,      0,      0x18)
 OPCODE(RET_X32,         "ret.x32",          1,      0,      0,      0x19)
 OPCODE(RET_X64,         "ret.x64",          2,      0,      0,      0x1A)
 OPCODE(CALL,            "call",             0,      0,      3,      0x1B)
-OPCODE(SYSCALL,         "syscall",          0,      0,      3,      0x1C)
+OPCODE(CALLI,           "calli",            1,      0,      0,      0x1C)
+OPCODE(SYSCALL,         "syscall",          0,      0,      3,      0x1D)
+OPCODE(LDFTN,           "ldftn",            0,      1,      3,      0x1E)
 
-OPCODE(UNUSED29,        "unused",           0,      0,      0,      0x1D)
-OPCODE(UNUSED30,        "unused",           0,      0,      0,      0x1E)
 OPCODE(UNUSED31,        "unused",           0,      0,      0,      0x1F)
 
 OPCODE(ADD_I32,         "add.i32",          2,      1,      0,      0x20)

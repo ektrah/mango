@@ -16,6 +16,7 @@
 | 0xBC   | brtrue           | value ... &rarr; ...                                                    |  
 | 0xBD   | brtrue.s         | value ... &rarr; ...                                                    |  
 | 0x1B   | call             | argumentN ... argument1 argument0 ... &rarr; result ...                 |  
+| 0x1C   | calli            | ftn argumentN ... argument1 argument0 ... &rarr; result ...             |  
 | 0x9C   | ceq.f32          | value2 value1 ... &rarr; result ...                                     |  
 | 0x9D   | ceq.f32.un       | value2 value1 ... &rarr; result ...                                     |  
 | 0xA8   | ceq.f64          | value2 value1 ... &rarr; result ...                                     |  
@@ -139,6 +140,7 @@
 | 0xCC   | ldfld.x32        | address ... &rarr; value ...                                            |  
 | 0xCD   | ldfld.x64        | address ... &rarr; value ...                                            |  
 | 0xCE   | ldflda           | address ... &rarr; address ...                                          |  
+| 0x1E   | ldftn            | ... &rarr; ftn ...                                                      |  
 | 0xC5   | ldlen            | array length ... &rarr; length ...                                      |  
 | 0x10   | ldloc.x32        | ... &rarr; value ...                                                    |  
 | 0x11   | ldloc.x64        | ... &rarr; value ...                                                    |  
@@ -208,7 +210,7 @@
 | 0x29   | sub.i64          | value2 value1 ... &rarr; result ...                                     |  
 | 0x08   | swap.x32         | value1 value2 ... &rarr; value2 value1 ...                              |  
 | 0x09   | swap.x64         | value1 value2 ... &rarr; value2 value1 ...                              |  
-| 0x1C   | syscall          | argumentN ... argument1 argument0 ... &rarr; result ...                 |  
+| 0x1D   | syscall          | argumentN ... argument1 argument0 ... &rarr; result ...                 |  
 | 0x0D   | tuck             | value1 value2 ... &rarr; value1 value2 value1 ...                       |  
 | 0x41   | xor.i32          | value2 value1 ... &rarr; result ...                                     |  
 | 0x48   | xor.i64          | value2 value1 ... &rarr; result ...                                     |  

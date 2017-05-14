@@ -111,8 +111,15 @@ typedef struct stack_frame {
   uint16_t ip;
 } stack_frame;
 
+typedef struct func_token {
+  uint8_t _reserved;
+  uint8_t module;
+  uint16_t ip;
+} func_token;
+
 typedef union stackval {
   stack_frame sf;
+  func_token ftn;
   int32_t i32;
   uint32_t u32;
 #ifndef MANGO_NO_F32
@@ -1291,12 +1298,20 @@ RET: // ... -> ...
   UNPACK_STATE(rp->sf);
   NEXT;
 
-CALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
-    const mango_module *module = lookup_module(vm, mp, FETCH(1, u8));
+    func_token ftn;
 
-    const mango_func_def *f =
-        (const mango_func_def *)(module->image + FETCH(2, u16));
+  CALL: // argumentN ... argument1 argument0 ... -> result ...
+    ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
+    goto call;
+
+  CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
+    ftn = sp[0].ftn;
+    goto call;
+
+  call:;
+    const mango_module *module = lookup_module(vm, mp, ftn.module);
+    const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
     bool in_full_trust_new = in_full_trust;
     if (!in_full_trust &&
@@ -1317,7 +1332,8 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    ip += 4;
+    sp += (*ip == CALLI);
+    ip += (*ip == CALLI ? 1 : 4);
     if (!(pop == 0 && *ip == RET)) {
       rp->sf = PACK_STATE();
       rp++;
@@ -1348,6 +1364,13 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
 
     YIELD(MANGO_E_SYSCALL);
   } while (false);
+
+LDFTN: // ... -> ftn ...
+  sp--;
+  sp[0].ftn.module = FETCH(1, u8);
+  sp[0].ftn.ip = FETCH(2, u16);
+  ip += 4;
+  NEXT;
 
 #pragma endregion
 
@@ -2395,8 +2418,6 @@ UNUSED15:
 UNUSED21:
 UNUSED22:
 UNUSED23:
-UNUSED29:
-UNUSED30:
 UNUSED31:
 UNUSED74:
 UNUSED75:
