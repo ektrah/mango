@@ -164,8 +164,8 @@ OPCODE(LDFLD_X64,       "ldfld.x64",        1,      2,      2,      0x6D)
 
 OPCODE(LDFLDA,          "ldflda",           1,      1,      2,      0x6E)
 
-OPCODE(STFLD_I8,        "stfld.i8",         2,      0,      2,      0x6F)
-OPCODE(STFLD_I16,       "stfld.i16",        2,      0,      2,      0x70)
+OPCODE(STFLD_X8,        "stfld.x8",         2,      0,      2,      0x6F)
+OPCODE(STFLD_X16,       "stfld.x16",        2,      0,      2,      0x70)
 OPCODE(STFLD_X32,       "stfld.x32",        2,      0,      2,      0x71)
 OPCODE(STFLD_X64,       "stfld.x64",        3,      0,      2,      0x72)
 
@@ -178,8 +178,8 @@ OPCODE(LDSFLD_X64,      "ldsfld.x64",       0,      2,      2,      0x78)
 
 OPCODE(LDSFLDA,         "ldsflda",          0,      1,      2,      0x79)
 
-OPCODE(STSFLD_I8,       "stsfld.i8",        1,      0,      2,      0x7A)
-OPCODE(STSFLD_I16,      "stsfld.i16",       1,      0,      2,      0x7B)
+OPCODE(STSFLD_X8,       "stsfld.x8",        1,      0,      2,      0x7A)
+OPCODE(STSFLD_X16,      "stsfld.x16",       1,      0,      2,      0x7B)
 OPCODE(STSFLD_X32,      "stsfld.x32",       1,      0,      2,      0x7C)
 OPCODE(STSFLD_X64,      "stsfld.x64",       2,      0,      2,      0x7D)
 
@@ -196,8 +196,8 @@ OPCODE(LDELEMA_X16,     "ldelema.x16",      3,      1,      0,      0x86)
 OPCODE(LDELEMA_X32,     "ldelema.x32",      3,      1,      0,      0x87)
 OPCODE(LDELEMA_X64,     "ldelema.x64",      3,      1,      0,      0x88)
 
-OPCODE(STELEM_I8,       "stelem.i8",        4,      0,      0,      0x89)
-OPCODE(STELEM_I16,      "stelem.i16",       4,      0,      0,      0x8A)
+OPCODE(STELEM_X8,       "stelem.x8",        4,      0,      0,      0x89)
+OPCODE(STELEM_X16,      "stelem.x16",       4,      0,      0,      0x8A)
 OPCODE(STELEM_X32,      "stelem.x32",       4,      0,      0,      0x8B)
 OPCODE(STELEM_X64,      "stelem.x64",       5,      0,      0,      0x8C)
 
