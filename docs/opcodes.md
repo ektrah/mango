@@ -188,18 +188,18 @@
 | 0x9A   | shr.i64.un       | amount value ... &rarr; result ...                          |
 | 0x63   | slice            | start array length ... &rarr; array length ...              |
 | 0x64   | slice2           | length' start array length ... &rarr; array length' ...     |
-| 0x8A   | stelem.i16       | value index array length ... &rarr; ...                     |
-| 0x89   | stelem.i8        | value index array length ... &rarr; ...                     |
+| 0x8A   | stelem.x16       | value index array length ... &rarr; ...                     |
+| 0x89   | stelem.x8        | value index array length ... &rarr; ...                     |
 | 0x8B   | stelem.x32       | value index array length ... &rarr; ...                     |
 | 0x8C   | stelem.x64       | value index array length ... &rarr; ...                     |
-| 0x70   | stfld.i16        | value address ... &rarr; ...                                |
-| 0x6F   | stfld.i8         | value address ... &rarr; ...                                |
+| 0x70   | stfld.x16        | value address ... &rarr; ...                                |
+| 0x6F   | stfld.x8         | value address ... &rarr; ...                                |
 | 0x71   | stfld.x32        | value address ... &rarr; ...                                |
 | 0x72   | stfld.x64        | value address ... &rarr; ...                                |
 | 0x13   | stloc.x32        | value ... &rarr; ...                                        |
 | 0x14   | stloc.x64        | value ... &rarr; ...                                        |
-| 0x7B   | stsfld.i16       | value ... &rarr; ...                                        |
-| 0x7A   | stsfld.i8        | value ... &rarr; ...                                        |
+| 0x7B   | stsfld.x16       | value ... &rarr; ...                                        |
+| 0x7A   | stsfld.x8        | value ... &rarr; ...                                        |
 | 0x7C   | stsfld.x32       | value ... &rarr; ...                                        |
 | 0x7D   | stsfld.x64       | value ... &rarr; ...                                        |
 | 0xC1   | sub.f32          | value2 value1 ... &rarr; result ...                         |
