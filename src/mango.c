@@ -556,6 +556,9 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   if ((app->features & mango_features()) != app->features) {
     return MANGO_E_NOT_SUPPORTED;
   }
+  if (app->halt != HALT) {
+    return MANGO_E_BAD_IMAGE_FORMAT;
+  }
 
   if (!vm->stack.address) {
     mango_result result =
@@ -577,6 +580,7 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
+  vm->sf = (stack_frame){false, 0, 0, (uint16_t)(&app->halt - image)};
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -693,14 +697,14 @@ static mango_result set_entry_point(mango_vm *vm, mango_module *module,
     in_full_trust = true;
   }
 
-  if (vm->stack_size < 1 + f->loc_count + f->max_stack) {
+  if (vm->sp - vm->rp < 1 + f->loc_count + f->max_stack) {
     printf("<< STACK OVERFLOW >>\n");
     return MANGO_E_STACK_OVERFLOW;
   }
 
   stackval *rp = stackval_as_ptr(vm, vm->stack);
-  rp->sf = (stack_frame){false, 0, 0, 0};
-  vm->rp = 1;
+  rp->sf = vm->sf;
+  vm->rp++;
 
   uint16_t ip = (uint16_t)(f->code - module->image);
   vm->sf = (stack_frame){in_full_trust, f->loc_count, module->index, ip};

@@ -61,6 +61,7 @@ typedef struct mango_app_info {
   uint16_t features;
   uint16_t stack_size;
   uint8_t module_count;
+  uint8_t halt;
 } mango_app_info;
 
 typedef enum mango_func_attributes {
