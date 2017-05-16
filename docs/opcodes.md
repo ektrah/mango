@@ -139,7 +139,6 @@
 | 0x6D   | ldfld.x64        | address ... &rarr; value ...                                |
 | 0x6E   | ldflda           | address ... &rarr; address ...                              |
 | 0x35   | ldftn            | ... &rarr; ftn ...                                          |
-| 0x65   | ldlen            | array length ... &rarr; length ...                          |
 | 0x10   | ldloc.x32        | ... &rarr; value ...                                        |
 | 0x11   | ldloc.x64        | ... &rarr; value ...                                        |
 | 0x12   | ldloca           | ... &rarr; address ...                                      |
@@ -150,7 +149,6 @@
 | 0x77   | ldsfld.x32       | ... &rarr; value ...                                        |
 | 0x78   | ldsfld.x64       | ... &rarr; value ...                                        |
 | 0x79   | ldsflda          | ... &rarr; address ...                                      |
-| 0x62   | mkslice          | address length ... &rarr; array length ...                  |
 | 0xC2   | mul.f32          | value2 value1 ... &rarr; result ...                         |
 | 0xE2   | mul.f64          | value2 value1 ... &rarr; result ...                         |
 | 0x42   | mul.i32          | value2 value1 ... &rarr; result ...                         |
@@ -186,8 +184,8 @@
 | 0x4A   | shr.i32.un       | amount value ... &rarr; result ...                          |
 | 0x99   | shr.i64          | amount value ... &rarr; result ...                          |
 | 0x9A   | shr.i64.un       | amount value ... &rarr; result ...                          |
-| 0x63   | slice            | start array length ... &rarr; array length ...              |
-| 0x64   | slice2           | length' start array length ... &rarr; array length' ...     |
+| 0x62   | slice            | start array length ... &rarr; array length ...              |
+| 0x63   | slice2           | length' start array length ... &rarr; array length' ...     |
 | 0x8A   | stelem.x16       | value index array length ... &rarr; ...                     |
 | 0x89   | stelem.x8        | value index array length ... &rarr; ...                     |
 | 0x8B   | stelem.x32       | value index array length ... &rarr; ...                     |

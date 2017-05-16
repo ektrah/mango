@@ -1633,10 +1633,6 @@ NEWARR: // length ... -> array length ...
     NEXT;
   } while (false);
 
-MKSLICE: // address length ... -> array length ...
-  ip++;
-  NEXT;
-
 SLICE: // start array length ... -> array length ...
   do {
     int32_t start = sp[0].i32;
@@ -1671,11 +1667,8 @@ SLICE2: // length' start array length ... -> array length' ...
     NEXT;
   } while (false);
 
-LDLEN: // array length ... -> length ...
-  sp++;
-  ip++;
-  NEXT;
-
+UNUSED100:
+UNUSED101:
 UNUSED102:
 UNUSED103:
   INVALID;

@@ -147,11 +147,11 @@ OPCODE(UNUSED95,        "unused",           0,      0,      0,      0x5F)
 
 OPCODE(NEWOBJ,          "newobj",           0,      1,      2,      0x60)
 OPCODE(NEWARR,          "newarr",           1,      2,      2,      0x61)
-OPCODE(MKSLICE,         "mkslice",          2,      2,      0,      0x62)
-OPCODE(SLICE,           "slice",            3,      2,      0,      0x63)
-OPCODE(SLICE2,          "slice2",           4,      2,      0,      0x64)
-OPCODE(LDLEN,           "ldlen",            2,      1,      0,      0x65)
+OPCODE(SLICE,           "slice",            3,      2,      0,      0x62)
+OPCODE(SLICE2,          "slice2",           4,      2,      0,      0x63)
 
+OPCODE(UNUSED100,       "unused",           0,      0,      0,      0x64)
+OPCODE(UNUSED101,       "unused",           0,      0,      0,      0x65)
 OPCODE(UNUSED102,       "unused",           0,      0,      0,      0x66)
 OPCODE(UNUSED103,       "unused",           0,      0,      0,      0x67)
 
