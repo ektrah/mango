@@ -1149,6 +1149,9 @@ BREAK: // ... -> ...
   ++ip;
   RETURN(MANGO_E_BREAKPOINT);
 
+UNUSED3:
+  INVALID;
+
 POP_X32: // value ... -> ...
   sp++;
   ip++;
@@ -1223,6 +1226,10 @@ TUCK: // value1 value2 ... -> value1 value2 value1 ...
   ip++;
   NEXT;
 
+UNUSED14:
+UNUSED15:
+  INVALID;
+
 #pragma endregion
 
 #pragma region locals
@@ -1277,6 +1284,11 @@ STLOC_X64: // value ... -> ...
     ip += 2;
     NEXT;
   } while (false);
+
+UNUSED21:
+UNUSED22:
+UNUSED23:
+  INVALID;
 
 #pragma endregion
 
@@ -1369,12 +1381,103 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     YIELD(MANGO_E_SYSCALL);
   } while (false);
 
+UNUSED30:
+UNUSED31:
+  INVALID;
+
+#pragma endregion
+
+#pragma region branches
+
+BR_S: // ... -> ...
+  ip += 2 + FETCH(1, i8);
+  NEXT;
+
+BRFALSE_S: // value ... -> ...
+  ip += 2 + (sp[0].i32 == 0 ? FETCH(1, i8) : 0);
+  sp++;
+  NEXT;
+
+BRTRUE_S: // value ... -> ...
+  ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
+  sp++;
+  NEXT;
+
+BR: // ... -> ...
+  ip += 3 + FETCH(1, i16);
+  NEXT;
+
+BRFALSE: // value ... -> ...
+  ip += 3 + (sp[0].i32 == 0 ? FETCH(1, i16) : 0);
+  sp++;
+  NEXT;
+
+BRTRUE: // value ... -> ...
+  ip += 3 + (sp[0].i32 != 0 ? FETCH(1, i16) : 0);
+  sp++;
+  NEXT;
+
+UNUSED38:
+UNUSED39:
+  INVALID;
+
+#pragma endregion
+
+#pragma region constants
+
+LDC_I32_M1:
+LDC_I32_0:
+LDC_I32_1:
+LDC_I32_2:
+LDC_I32_3:
+LDC_I32_4:
+LDC_I32_5:
+LDC_I32_6:
+LDC_I32_7:
+LDC_I32_8: // ... -> value ...
+  sp--;
+  sp[0].i32 = *ip - LDC_I32_0;
+  ip++;
+  NEXT;
+
+LDC_I32_S: // ... -> value ...
+  sp--;
+  sp[0].i32 = FETCH(1, i8);
+  ip += 2;
+  NEXT;
+
+LDC_X32: // ... -> value ...
+  sp--;
+  sp[0].i32 = FETCH(1, i32);
+  ip += 5;
+  NEXT;
+
+LDC_X64: // ... -> value ...
+  sp -= 2;
+  sp[0].i32 = FETCH(1, i32);
+  sp[1].i32 = FETCH(5, i32);
+  ip += 9;
+  NEXT;
+
 LDFTN: // ... -> ftn ...
   sp--;
-  sp[0].ftn.module = FETCH(1, u8);
-  sp[0].ftn.ip = FETCH(2, u16);
+  sp[0].ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
   ip += 4;
   NEXT;
+
+UNUSED54:
+UNUSED55:
+  INVALID;
+
+UNUSED56:
+UNUSED57:
+UNUSED58:
+UNUSED59:
+UNUSED60:
+UNUSED61:
+UNUSED62:
+UNUSED63:
+  INVALID;
 
 #pragma endregion
 
@@ -1408,124 +1511,6 @@ NEG_I32: // value ... -> result ...
 
 #pragma endregion
 
-#pragma region i64 arithmetic
-#ifndef MANGO_NO_I64
-
-ADD_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_add_overflow);
-
-SUB_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_sub_overflow);
-
-MUL_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_mul_overflow);
-
-DIV_I64: // value2 value1 ... -> result ...
-  BINARY2D(i64, /);
-
-DIV_I64_UN: // value2 value1 ... -> result ...
-  BINARY2D(u64, /);
-
-REM_I64: // value2 value1 ... -> result ...
-  BINARY2D(i64, %);
-
-REM_I64_UN: // value2 value1 ... -> result ...
-  BINARY2D(u64, %);
-
-NEG_I64: // value ... -> result ...
-  do {
-    stackval2 *sp2 = (stackval2 *)sp;
-    __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
-    ip++;
-    NEXT;
-  } while (false);
-
-#else
-ADD_I64:
-SUB_I64:
-MUL_I64:
-DIV_I64:
-DIV_I64_UN:
-REM_I64:
-REM_I64_UN:
-NEG_I64:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region f32 arithmetic
-#ifndef MANGO_NO_F32
-
-ADD_F32: // value2 value1 ... -> result ...
-  BINARY1(f32, +);
-
-SUB_F32: // value2 value1 ... -> result ...
-  BINARY1(f32, -);
-
-MUL_F32: // value2 value1 ... -> result ...
-  BINARY1(f32, *);
-
-DIV_F32: // value2 value1 ... -> result ...
-  BINARY1(f32, /);
-
-REM_F32: // value2 value1 ... -> result ...
-  sp[1].f32 = fmodf(sp[1].f32, sp[0].f32);
-  sp++;
-  ip++;
-  NEXT;
-
-NEG_F32: // value ... -> result ...
-  UNARY1(f32, -);
-
-#else
-ADD_F32:
-SUB_F32:
-MUL_F32:
-DIV_F32:
-REM_F32:
-NEG_F32:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region f64 arithmetic
-#ifndef MANGO_NO_F64
-
-ADD_F64: // value2 value1 ... -> result ...
-  BINARY2(f64, +);
-
-SUB_F64: // value2 value1 ... -> result ...
-  BINARY2(f64, -);
-
-MUL_F64: // value2 value1 ... -> result ...
-  BINARY2(f64, *);
-
-DIV_F64: // value2 value1 ... -> result ...
-  BINARY2(f64, /);
-
-REM_F64: // value2 value1 ... -> result ...
-  do {
-    stackval2 *sp2 = (stackval2 *)sp;
-    sp2[1].f64 = fmod(sp2[1].f64, sp2[0].f64);
-    sp += 2;
-    ip++;
-    NEXT;
-  } while (false);
-
-NEG_F64: // value ... -> result ...
-  UNARY2(f64, -);
-
-#else
-ADD_F64:
-SUB_F64:
-MUL_F64:
-DIV_F64:
-REM_F64:
-NEG_F64:
-  INVALID;
-#endif
-#pragma endregion
-
 #pragma region i32 bitwise
 
 SHL_I32: // amount value ... -> result ...
@@ -1549,343 +1534,6 @@ XOR_I32: // value2 value1 ... -> result ...
 NOT_I32: // value ... -> result ...
   UNARY1(u32, ~);
 
-#pragma endregion
-
-#pragma region i64 bitwise
-#ifndef MANGO_NO_I64
-
-SHL_I64: // amount value ... -> result ...
-  SHIFT2(u64, <<);
-
-SHR_I64: // amount value ... -> result ...
-  SHIFT2(i64, >>);
-
-SHR_I64_UN: // amount value ... -> result ...
-  SHIFT2(u64, >>);
-
-AND_I64: // value2 value1 ... -> result ...
-  BINARY2(u64, &);
-
-OR_I64: // value2 value1 ... -> result ...
-  BINARY2(u64, |);
-
-XOR_I64: // value2 value1 ... -> result ...
-  BINARY2(u64, ^);
-
-NOT_I64: // value ... -> result ...
-  UNARY2(u64, ~);
-
-#else
-SHL_I64:
-SHR_I64:
-SHR_I64_UN:
-AND_I64:
-OR_I64:
-XOR_I64:
-NOT_I64:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region constants
-
-LDC_I32_M1:
-LDC_I32_0:
-LDC_I32_1:
-LDC_I32_2:
-LDC_I32_3:
-LDC_I32_4:
-LDC_I32_5:
-LDC_I32_6:
-LDC_I32_7:
-LDC_I32_8: // ... -> value ...
-  sp--;
-  sp[0].i32 = *ip - LDC_I32_0;
-  ip++;
-  NEXT;
-
-LDC_I32_S: // ... -> value ...
-  sp--;
-  sp[0].i32 = FETCH(1, i8);
-  ip += 2;
-  NEXT;
-
-LDC_I32: // ... -> value ...
-  sp--;
-  sp[0].i32 = FETCH(1, i32);
-  ip += 5;
-  NEXT;
-
-LDC_I64: // ... -> value ...
-#ifndef MANGO_NO_I64
-  do {
-    sp -= 2;
-    stackval2 *sp2 = (stackval2 *)sp;
-    sp2[0].i64 = FETCH(1, i64);
-    ip += 9;
-    NEXT;
-  } while (false);
-#else
-  INVALID;
-#endif
-
-LDC_F32: // ... -> value ...
-#ifndef MANGO_NO_F32
-  sp--;
-  sp[0].f32 = FETCH(1, f32);
-  ip += 5;
-  NEXT;
-#else
-  INVALID;
-#endif
-
-LDC_F64: // ... -> value ...
-#ifndef MANGO_NO_F64
-  do {
-    sp -= 2;
-    stackval2 *sp2 = (stackval2 *)sp;
-    sp2[0].f64 = FETCH(1, f64);
-    ip += 9;
-    NEXT;
-  } while (false);
-#else
-  INVALID;
-#endif
-
-#pragma endregion
-
-#pragma region i32 conversion
-
-CONV_I8_I32: // value ... -> result ...
-  CONVERT1(int8_t, i32, i32);
-
-CONV_U8_I32: // value ... -> result ...
-  CONVERT1(uint8_t, u32, u32);
-
-CONV_I16_I32: // value ... -> result ...
-  CONVERT1(int16_t, i32, i32);
-
-CONV_U16_I32: // value ... -> result ...
-  CONVERT1(uint16_t, u32, u32);
-
-CONV_I64_I32: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT21(int64_t, i64, i32);
-#else
-  INVALID;
-#endif
-
-CONV_U64_I32: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT21(uint64_t, u64, u32);
-#else
-  INVALID;
-#endif
-
-CONV_F32_I32: // value ... -> result ...
-#ifndef MANGO_NO_F32
-  CONVERT1(float, f32, i32);
-#else
-  INVALID;
-#endif
-
-CONV_F32_I32_UN: // value ... -> result ...
-#ifndef MANGO_NO_F32
-  CONVERT1(float, f32, u32);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I32: // value ... -> result ...
-#ifndef MANGO_NO_F64
-  CONVERT21(double, f64, i32);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I32_UN: // value ... -> result ...
-#ifndef MANGO_NO_F64
-  CONVERT21(double, f64, u32);
-#else
-  INVALID;
-#endif
-
-#pragma endregion
-
-#pragma region i64 conversion
-#ifndef MANGO_NO_I64
-
-CONV_I8_I64: // value ... -> result ...
-  CONVERT12(int8_t, i32, i64);
-
-CONV_U8_I64: // value ... -> result ...
-  CONVERT12(uint8_t, u32, u64);
-
-CONV_I16_I64: // value ... -> result ...
-  CONVERT12(int16_t, i32, i64);
-
-CONV_U16_I64: // value ... -> result ...
-  CONVERT12(uint16_t, u32, u64);
-
-CONV_I32_I64: // value ... -> result ...
-  CONVERT12(int32_t, i32, i64);
-
-CONV_U32_I64: // value ... -> result ...
-  CONVERT12(uint32_t, u32, u64);
-
-CONV_F32_I64: // value ... -> result ...
-#ifndef MANGO_NO_F32
-  CONVERT12(float, f32, i64);
-#else
-  INVALID;
-#endif
-
-CONV_F32_I64_UN: // value ... -> result ...
-#ifndef MANGO_NO_F32
-  CONVERT12(float, f32, u64);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I64: // value ... -> result ...
-#ifndef MANGO_NO_F64
-  CONVERT2(double, f64, i64);
-#else
-  INVALID;
-#endif
-
-CONV_F64_I64_UN: // value ... -> result ...
-#ifndef MANGO_NO_F64
-  CONVERT2(double, f64, u64);
-#else
-  INVALID;
-#endif
-
-#else
-CONV_I8_I64:
-CONV_U8_I64:
-CONV_I16_I64:
-CONV_U16_I64:
-CONV_I32_I64:
-CONV_U32_I64:
-CONV_F32_I64:
-CONV_F32_I64_UN:
-CONV_F64_I64:
-CONV_F64_I64_UN:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region f32 conversion
-#ifndef MANGO_NO_F32
-
-CONV_I8_F32: // value ... -> result ...
-  CONVERT1(int8_t, i32, f32);
-
-CONV_U8_F32: // value ... -> result ...
-  CONVERT1(uint8_t, u32, f32);
-
-CONV_I16_F32: // value ... -> result ...
-  CONVERT1(int16_t, i32, f32);
-
-CONV_U16_F32: // value ... -> result ...
-  CONVERT1(uint16_t, u32, f32);
-
-CONV_I32_F32: // value ... -> result ...
-  CONVERT1(int32_t, i32, f32);
-
-CONV_U32_F32: // value ... -> result ...
-  CONVERT1(uint32_t, u32, f32);
-
-CONV_I64_F32: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT21(int64_t, i64, f32);
-#else
-  INVALID;
-#endif
-
-CONV_U64_F32: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT21(uint64_t, u64, f32);
-#else
-  INVALID;
-#endif
-
-CONV_F64_F32: // value ... -> result ...
-#ifndef MANGO_NO_F64
-  CONVERT21(double, f64, f32);
-#else
-  INVALID;
-#endif
-
-#else
-CONV_I8_F32:
-CONV_U8_F32:
-CONV_I16_F32:
-CONV_U16_F32:
-CONV_I32_F32:
-CONV_U32_F32:
-CONV_I64_F32:
-CONV_U64_F32:
-CONV_F64_F32:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region f64 conversion
-#ifndef MANGO_NO_F64
-
-CONV_I8_F64: // value ... -> result ...
-  CONVERT12(int8_t, i32, f64);
-
-CONV_U8_F64: // value ... -> result ...
-  CONVERT12(uint8_t, u32, f64);
-
-CONV_I16_F64: // value ... -> result ...
-  CONVERT12(int16_t, i32, f64);
-
-CONV_U16_F64: // value ... -> result ...
-  CONVERT12(uint16_t, u32, f64);
-
-CONV_I32_F64: // value ... -> result ...
-  CONVERT12(int32_t, i32, f64);
-
-CONV_U32_F64: // value ... -> result ...
-  CONVERT12(uint32_t, u32, f64);
-
-CONV_I64_F64: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT2(int64_t, i64, f64);
-#else
-  INVALID;
-#endif
-
-CONV_U64_F64: // value ... -> result ...
-#ifndef MANGO_NO_I64
-  CONVERT2(uint64_t, u64, f64);
-#else
-  INVALID;
-#endif
-
-CONV_F32_F64: // value ... -> result ...
-#ifndef MANGO_NO_F32
-  CONVERT12(float, f32, f64);
-#else
-  INVALID;
-#endif
-
-#else
-CONV_I8_F64:
-CONV_U8_F64:
-CONV_I16_F64:
-CONV_U16_F64:
-CONV_I32_F64:
-CONV_U32_F64:
-CONV_I64_F64:
-CONV_U64_F64:
-CONV_F32_F64:
-  INVALID;
-#endif
 #pragma endregion
 
 #pragma region i32 comparison
@@ -1922,200 +1570,30 @@ CLE_I32_UN: // value2 value1 ... -> result ...
 
 #pragma endregion
 
-#pragma region i64 comparison
-#ifndef MANGO_NO_I64
+#pragma region i32 conversion
 
-CEQ_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, ==);
+CONV_I8_I32: // value ... -> result ...
+  CONVERT1(int8_t, i32, i32);
 
-CNE_I64: // value2 value1 ... -> result ...
-  COMPARE2(u64, !=);
+CONV_U8_I32: // value ... -> result ...
+  CONVERT1(uint8_t, u32, u32);
 
-CGT_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, >);
+CONV_I16_I32: // value ... -> result ...
+  CONVERT1(int16_t, i32, i32);
 
-CGT_I64_UN: // value2 value1 ... -> result ...
-  COMPARE2(u64, >);
+CONV_U16_I32: // value ... -> result ...
+  CONVERT1(uint16_t, u32, u32);
 
-CGE_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, >=);
-
-CGE_I64_UN: // value2 value1 ... -> result ...
-  COMPARE2(u64, >=);
-
-CLT_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, <);
-
-CLT_I64_UN: // value2 value1 ... -> result ...
-  COMPARE2(u64, <);
-
-CLE_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, <=);
-
-CLE_I64_UN: // value2 value1 ... -> result ...
-  COMPARE2(u64, <=);
-
-#else
-CEQ_I64:
-CNE_I64:
-CGT_I64:
-CGT_I64_UN:
-CGE_I64:
-CGE_I64_UN:
-CLT_I64:
-CLT_I64_UN:
-CLE_I64:
-CLE_I64_UN:
+UNUSED93:
+UNUSED94:
+UNUSED95:
   INVALID;
-#endif
-#pragma endregion
-
-#pragma region f32 comparison
-#ifndef MANGO_NO_F32
-
-CEQ_F32: // value2 value1 ... -> result ...
-  COMPARE1(f32, ==);
-
-CEQ_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1F(f32, !islessgreater);
-
-CNE_F32: // value2 value1 ... -> result ...
-  COMPARE1F(f32, islessgreater);
-
-CNE_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1(f32, !=);
-
-CGT_F32: // value2 value1 ... -> result ...
-  COMPARE1F(f32, isgreater);
-
-CGT_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1F(f32, !islessequal);
-
-CGE_F32: // value2 value1 ... -> result ...
-  COMPARE1F(f32, isgreaterequal);
-
-CGE_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1F(f32, !isless);
-
-CLT_F32: // value2 value1 ... -> result ...
-  COMPARE1F(f32, isless);
-
-CLT_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1F(f32, !isgreaterequal);
-
-CLE_F32: // value2 value1 ... -> result ...
-  COMPARE1F(f32, islessequal);
-
-CLE_F32_UN: // value2 value1 ... -> result ...
-  COMPARE1F(f32, !isgreater);
-
-#else
-CEQ_F32:
-CEQ_F32_UN:
-CNE_F32:
-CNE_F32_UN:
-CGT_F32:
-CGT_F32_UN:
-CGE_F32:
-CGE_F32_UN:
-CLT_F32:
-CLT_F32_UN:
-CLE_F32:
-CLE_F32_UN:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region f64 comparison
-#ifndef MANGO_NO_F64
-
-CEQ_F64: // value2 value1 ... -> result ...
-  COMPARE2(f64, ==);
-
-CEQ_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2F(f64, !islessgreater);
-
-CNE_F64: // value2 value1 ... -> result ...
-  COMPARE2F(f64, islessgreater);
-
-CNE_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2(f64, !=);
-
-CGT_F64: // value2 value1 ... -> result ...
-  COMPARE2F(f64, isgreater);
-
-CGT_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2F(f64, !islessequal);
-
-CGE_F64: // value2 value1 ... -> result ...
-  COMPARE2F(f64, isgreaterequal);
-
-CGE_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2F(f64, !isless);
-
-CLT_F64: // value2 value1 ... -> result ...
-  COMPARE2F(f64, isless);
-
-CLT_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2F(f64, !isgreaterequal);
-
-CLE_F64: // value2 value1 ... -> result ...
-  COMPARE2F(f64, islessequal);
-
-CLE_F64_UN: // value2 value1 ... -> result ...
-  COMPARE2F(f64, !isgreater);
-
-#else
-CEQ_F64:
-CNE_F64:
-CGT_F64:
-CGE_F64:
-CLT_F64:
-CLE_F64:
-CEQ_F64_UN:
-CNE_F64_UN:
-CGT_F64_UN:
-CGE_F64_UN:
-CLT_F64_UN:
-CLE_F64_UN:
-  INVALID;
-#endif
-#pragma endregion
-
-#pragma region branches
-
-BR: // ... -> ...
-  ip += 3 + FETCH(1, i16);
-  NEXT;
-
-BR_S: // ... -> ...
-  ip += 2 + FETCH(1, i8);
-  NEXT;
-
-BRFALSE: // value ... -> ...
-  ip += 3 + (sp[0].i32 == 0 ? FETCH(1, i16) : 0);
-  sp++;
-  NEXT;
-
-BRFALSE_S: // value ... -> ...
-  ip += 2 + (sp[0].i32 == 0 ? FETCH(1, i8) : 0);
-  sp++;
-  NEXT;
-
-BRTRUE: // value ... -> ...
-  ip += 3 + (sp[0].i32 != 0 ? FETCH(1, i16) : 0);
-  sp++;
-  NEXT;
-
-BRTRUE_S: // value ... -> ...
-  ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
-  sp++;
-  NEXT;
 
 #pragma endregion
+
+#if !defined(MANGO_NO_REFS)
 
 #pragma region object model
-#ifndef MANGO_NO_REFS
 
 NEWOBJ: // ... -> address ...
   do {
@@ -2197,6 +1675,10 @@ LDLEN: // array length ... -> length ...
   sp++;
   ip++;
   NEXT;
+
+UNUSED102:
+UNUSED103:
+  INVALID;
 
 LDFLD_I8: // address ... -> value ...
   LOAD_FIELD(sp[0].ref, int8_t, i32, 0);
@@ -2364,13 +1846,21 @@ STELEM_X64: // value index array length ... -> ...
     NEXT;
   } while (false);
 
-#else
+UNUSED141:
+UNUSED142:
+UNUSED143:
+  INVALID;
+
+#elif !defined(MANGO_NO_I64) || !defined(MANGO_NO_F32) || !defined(MANGO_NO_F64)
+
 NEWOBJ:
 NEWARR:
 MKSLICE:
 SLICE:
 SLICE2:
 LDLEN:
+UNUSED102:
+UNUSED103:
 LDFLD_I8:
 LDFLD_U8:
 LDFLD_I16:
@@ -2408,59 +1898,542 @@ STELEM_I8:
 STELEM_I16:
 STELEM_X32:
 STELEM_X64:
-  (void)void_as_ptr;
+UNUSED141:
+UNUSED142:
+UNUSED143:
   INVALID;
-#endif
+
 #pragma endregion
 
-#pragma region unused
+#else
 
-UNUSED2:
-UNUSED3:
-UNUSED14:
-UNUSED15:
-UNUSED21:
-UNUSED22:
-UNUSED23:
-UNUSED31:
-UNUSED74:
-UNUSED75:
-UNUSED76:
-UNUSED77:
-UNUSED78:
-UNUSED79:
-UNUSED95:
-UNUSED134:
-UNUSED135:
-UNUSED180:
+  (void)void_as_ptr;
+
+#endif
+
+#if !defined(MANGO_NO_I64)
+
+#pragma region i64 arithmetic
+
+ADD_I64: // value2 value1 ... -> result ...
+  BINARY2F(u64, __builtin_add_overflow);
+
+SUB_I64: // value2 value1 ... -> result ...
+  BINARY2F(u64, __builtin_sub_overflow);
+
+MUL_I64: // value2 value1 ... -> result ...
+  BINARY2F(u64, __builtin_mul_overflow);
+
+DIV_I64: // value2 value1 ... -> result ...
+  BINARY2D(i64, /);
+
+DIV_I64_UN: // value2 value1 ... -> result ...
+  BINARY2D(u64, /);
+
+REM_I64: // value2 value1 ... -> result ...
+  BINARY2D(i64, %);
+
+REM_I64_UN: // value2 value1 ... -> result ...
+  BINARY2D(u64, %);
+
+NEG_I64: // value ... -> result ...
+  do {
+    stackval2 *sp2 = (stackval2 *)sp;
+    __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
+    ip++;
+    NEXT;
+  } while (false);
+
+#pragma endregion
+
+#pragma region i64 bitwise
+
+SHL_I64: // amount value ... -> result ...
+  SHIFT2(u64, <<);
+
+SHR_I64: // amount value ... -> result ...
+  SHIFT2(i64, >>);
+
+SHR_I64_UN: // amount value ... -> result ...
+  SHIFT2(u64, >>);
+
+AND_I64: // value2 value1 ... -> result ...
+  BINARY2(u64, &);
+
+OR_I64: // value2 value1 ... -> result ...
+  BINARY2(u64, |);
+
+XOR_I64: // value2 value1 ... -> result ...
+  BINARY2(u64, ^);
+
+NOT_I64: // value ... -> result ...
+  UNARY2(u64, ~);
+
+#pragma endregion
+
+#pragma region i64 comparison
+
+CEQ_I64: // value2 value1 ... -> result ...
+  COMPARE2(i64, ==);
+
+CNE_I64: // value2 value1 ... -> result ...
+  COMPARE2(u64, !=);
+
+CGT_I64: // value2 value1 ... -> result ...
+  COMPARE2(i64, >);
+
+CGT_I64_UN: // value2 value1 ... -> result ...
+  COMPARE2(u64, >);
+
+CGE_I64: // value2 value1 ... -> result ...
+  COMPARE2(i64, >=);
+
+CGE_I64_UN: // value2 value1 ... -> result ...
+  COMPARE2(u64, >=);
+
+CLT_I64: // value2 value1 ... -> result ...
+  COMPARE2(i64, <);
+
+CLT_I64_UN: // value2 value1 ... -> result ...
+  COMPARE2(u64, <);
+
+CLE_I64: // value2 value1 ... -> result ...
+  COMPARE2(i64, <=);
+
+CLE_I64_UN: // value2 value1 ... -> result ...
+  COMPARE2(u64, <=);
+
+#pragma endregion
+
+#pragma region i64 conversion
+
+CONV_I8_I64: // value ... -> result ...
+  CONVERT12(int8_t, i32, i64);
+
+CONV_U8_I64: // value ... -> result ...
+  CONVERT12(uint8_t, u32, u64);
+
+CONV_I16_I64: // value ... -> result ...
+  CONVERT12(int16_t, i32, i64);
+
+CONV_U16_I64: // value ... -> result ...
+  CONVERT12(uint16_t, u32, u64);
+
+CONV_I32_I64: // value ... -> result ...
+  CONVERT12(int32_t, i32, i64);
+
+CONV_U32_I64: // value ... -> result ...
+  CONVERT12(uint32_t, u32, u64);
+
+CONV_I64_I32: // value ... -> result ...
+  CONVERT21(int64_t, i64, i32);
+
+CONV_U64_I32: // value ... -> result ...
+  CONVERT21(uint64_t, u64, u32);
+
+CONV_I64_F32: // value ... -> result ...
+#if !defined(MANGO_NO_F32)
+  CONVERT21(int64_t, i64, f32);
+#else
+  INVALID;
+#endif
+
+CONV_U64_F32: // value ... -> result ...
+#if !defined(MANGO_NO_F32)
+  CONVERT21(uint64_t, u64, f32);
+#else
+  INVALID;
+#endif
+
+CONV_I64_F64: // value ... -> result ...
+#if !defined(MANGO_NO_F64)
+  CONVERT2(int64_t, i64, f64);
+#else
+  INVALID;
+#endif
+
+CONV_U64_F64: // value ... -> result ...
+#if !defined(MANGO_NO_F64)
+  CONVERT2(uint64_t, u64, f64);
+#else
+  INVALID;
+#endif
+
 UNUSED181:
 UNUSED182:
 UNUSED183:
+  INVALID;
+
+UNUSED184:
+UNUSED185:
+UNUSED186:
+UNUSED187:
+UNUSED188:
+UNUSED189:
 UNUSED190:
 UNUSED191:
-UNUSED198:
-UNUSED199:
-UNUSED237:
-UNUSED238:
-UNUSED239:
-UNUSED240:
-UNUSED241:
-UNUSED242:
-UNUSED243:
-UNUSED244:
-UNUSED245:
-UNUSED246:
-UNUSED247:
-UNUSED248:
-UNUSED249:
-UNUSED250:
-UNUSED251:
-UNUSED252:
-UNUSED253:
-UNUSED254:
   INVALID;
 
 #pragma endregion
+
+#elif !defined(MANGO_NO_F32) || !defined(MANGO_NO_F64)
+
+ADD_I64:
+SUB_I64:
+MUL_I64:
+DIV_I64:
+DIV_I64_UN:
+REM_I64:
+REM_I64_UN:
+NEG_I64:
+  INVALID;
+
+SHL_I64:
+SHR_I64:
+SHR_I64_UN:
+AND_I64:
+OR_I64:
+XOR_I64:
+NOT_I64:
+  INVALID;
+
+CEQ_I64:
+CNE_I64:
+CGT_I64:
+CGT_I64_UN:
+CGE_I64:
+CGE_I64_UN:
+CLT_I64:
+CLT_I64_UN:
+CLE_I64:
+CLE_I64_UN:
+  INVALID;
+
+CONV_I8_I64:
+CONV_U8_I64:
+CONV_I16_I64:
+CONV_U16_I64:
+CONV_I32_I64:
+CONV_U32_I64:
+  INVALID;
+
+CONV_I64_I32:
+CONV_U64_I32:
+CONV_I64_F32:
+CONV_U64_F32:
+CONV_I64_F64:
+CONV_U64_F64:
+  INVALID;
+
+UNUSED181:
+UNUSED182:
+UNUSED183:
+  INVALID;
+
+UNUSED184:
+UNUSED185:
+UNUSED186:
+UNUSED187:
+UNUSED188:
+UNUSED189:
+UNUSED190:
+UNUSED191:
+  INVALID;
+
+#endif
+
+#if !defined(MANGO_NO_F32)
+
+#pragma region f32 arithmetic
+
+ADD_F32: // value2 value1 ... -> result ...
+  BINARY1(f32, +);
+
+SUB_F32: // value2 value1 ... -> result ...
+  BINARY1(f32, -);
+
+MUL_F32: // value2 value1 ... -> result ...
+  BINARY1(f32, *);
+
+DIV_F32: // value2 value1 ... -> result ...
+  BINARY1(f32, /);
+
+REM_F32: // value2 value1 ... -> result ...
+  sp[1].f32 = fmodf(sp[1].f32, sp[0].f32);
+  sp++;
+  ip++;
+  NEXT;
+
+NEG_F32: // value ... -> result ...
+  UNARY1(f32, -);
+
+#pragma endregion
+
+#pragma region f32 comparison
+
+CEQ_F32: // value2 value1 ... -> result ...
+  COMPARE1(f32, ==);
+
+CEQ_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1F(f32, !islessgreater);
+
+CNE_F32: // value2 value1 ... -> result ...
+  COMPARE1F(f32, islessgreater);
+
+CNE_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1(f32, !=);
+
+CGT_F32: // value2 value1 ... -> result ...
+  COMPARE1F(f32, isgreater);
+
+CGT_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1F(f32, !islessequal);
+
+CGE_F32: // value2 value1 ... -> result ...
+  COMPARE1F(f32, isgreaterequal);
+
+CGE_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1F(f32, !isless);
+
+CLT_F32: // value2 value1 ... -> result ...
+  COMPARE1F(f32, isless);
+
+CLT_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1F(f32, !isgreaterequal);
+
+CLE_F32: // value2 value1 ... -> result ...
+  COMPARE1F(f32, islessequal);
+
+CLE_F32_UN: // value2 value1 ... -> result ...
+  COMPARE1F(f32, !isgreater);
+
+#pragma endregion
+
+#pragma region f32 conversion
+
+CONV_I8_F32: // value ... -> result ...
+  CONVERT1(int8_t, i32, f32);
+
+CONV_U8_F32: // value ... -> result ...
+  CONVERT1(uint8_t, u32, f32);
+
+CONV_I16_F32: // value ... -> result ...
+  CONVERT1(int16_t, i32, f32);
+
+CONV_U16_F32: // value ... -> result ...
+  CONVERT1(uint16_t, u32, f32);
+
+CONV_I32_F32: // value ... -> result ...
+  CONVERT1(int32_t, i32, f32);
+
+CONV_U32_F32: // value ... -> result ...
+  CONVERT1(uint32_t, u32, f32);
+
+CONV_F32_I32: // value ... -> result ...
+  CONVERT1(float, f32, i32);
+
+CONV_F32_I32_UN: // value ... -> result ...
+  CONVERT1(float, f32, u32);
+
+CONV_F32_I64: // value ... -> result ...
+#if !defined(MANGO_NO_I64)
+  CONVERT12(float, f32, i64);
+#else
+  INVALID;
+#endif
+
+CONV_F32_I64_UN: // value ... -> result ...
+#if !defined(MANGO_NO_I64)
+  CONVERT12(float, f32, u64);
+#else
+  INVALID;
+#endif
+
+CONV_F32_F64: // value ... -> result ...
+#if !defined(MANGO_NO_F64)
+  CONVERT12(float, f32, f64);
+#else
+  INVALID;
+#endif
+
+UNUSED221:
+UNUSED222:
+UNUSED223:
+  INVALID;
+
+#pragma endregion
+
+#elif !defined(MANGO_NO_F64)
+
+ADD_F32:
+SUB_F32:
+MUL_F32:
+DIV_F32:
+REM_F32:
+NEG_F32:
+  INVALID;
+
+CEQ_F32:
+CEQ_F32_UN:
+CNE_F32:
+CNE_F32_UN:
+CGT_F32:
+CGT_F32_UN:
+CGE_F32:
+CGE_F32_UN:
+CLT_F32:
+CLT_F32_UN:
+CLE_F32:
+CLE_F32_UN:
+  INVALID;
+
+CONV_I8_F32:
+CONV_U8_F32:
+CONV_I16_F32:
+CONV_U16_F32:
+CONV_I32_F32:
+CONV_U32_F32:
+  INVALID;
+
+CONV_F32_I32:
+CONV_F32_I32_UN:
+CONV_F32_I64:
+CONV_F32_I64_UN:
+CONV_F32_F64:
+  INVALID;
+
+UNUSED221:
+UNUSED222:
+UNUSED223:
+  INVALID;
+
+#endif
+
+#if !defined(MANGO_NO_F64)
+
+#pragma region f64 arithmetic
+
+ADD_F64: // value2 value1 ... -> result ...
+  BINARY2(f64, +);
+
+SUB_F64: // value2 value1 ... -> result ...
+  BINARY2(f64, -);
+
+MUL_F64: // value2 value1 ... -> result ...
+  BINARY2(f64, *);
+
+DIV_F64: // value2 value1 ... -> result ...
+  BINARY2(f64, /);
+
+REM_F64: // value2 value1 ... -> result ...
+  do {
+    stackval2 *sp2 = (stackval2 *)sp;
+    sp2[1].f64 = fmod(sp2[1].f64, sp2[0].f64);
+    sp += 2;
+    ip++;
+    NEXT;
+  } while (false);
+
+NEG_F64: // value ... -> result ...
+  UNARY2(f64, -);
+
+#pragma endregion
+
+#pragma region f64 comparison
+
+CEQ_F64: // value2 value1 ... -> result ...
+  COMPARE2(f64, ==);
+
+CEQ_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2F(f64, !islessgreater);
+
+CNE_F64: // value2 value1 ... -> result ...
+  COMPARE2F(f64, islessgreater);
+
+CNE_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2(f64, !=);
+
+CGT_F64: // value2 value1 ... -> result ...
+  COMPARE2F(f64, isgreater);
+
+CGT_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2F(f64, !islessequal);
+
+CGE_F64: // value2 value1 ... -> result ...
+  COMPARE2F(f64, isgreaterequal);
+
+CGE_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2F(f64, !isless);
+
+CLT_F64: // value2 value1 ... -> result ...
+  COMPARE2F(f64, isless);
+
+CLT_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2F(f64, !isgreaterequal);
+
+CLE_F64: // value2 value1 ... -> result ...
+  COMPARE2F(f64, islessequal);
+
+CLE_F64_UN: // value2 value1 ... -> result ...
+  COMPARE2F(f64, !isgreater);
+
+#pragma endregion
+
+#pragma region f64 conversion
+
+CONV_I8_F64: // value ... -> result ...
+  CONVERT12(int8_t, i32, f64);
+
+CONV_U8_F64: // value ... -> result ...
+  CONVERT12(uint8_t, u32, f64);
+
+CONV_I16_F64: // value ... -> result ...
+  CONVERT12(int16_t, i32, f64);
+
+CONV_U16_F64: // value ... -> result ...
+  CONVERT12(uint16_t, u32, f64);
+
+CONV_I32_F64: // value ... -> result ...
+  CONVERT12(int32_t, i32, f64);
+
+CONV_U32_F64: // value ... -> result ...
+  CONVERT12(uint32_t, u32, f64);
+
+CONV_F64_I32: // value ... -> result ...
+  CONVERT21(double, f64, i32);
+
+CONV_F64_I32_UN: // value ... -> result ...
+  CONVERT21(double, f64, u32);
+
+CONV_F64_I64: // value ... -> result ...
+#if !defined(MANGO_NO_I64)
+  CONVERT2(double, f64, i64);
+#else
+  INVALID;
+#endif
+
+CONV_F64_I64_UN: // value ... -> result ...
+#if !defined(MANGO_NO_I64)
+  CONVERT2(double, f64, u64);
+#else
+  INVALID;
+#endif
+
+CONV_F64_F32: // value ... -> result ...
+#if !defined(MANGO_NO_F32)
+  CONVERT21(double, f64, f32);
+#else
+  INVALID;
+#endif
+
+UNUSED253:
+UNUSED254:
+UNUSED255:
+  INVALID;
+
+#pragma endregion
+
+#endif
 
 invalid:
   printf("<< INVALID PROGRAM >>\n");
