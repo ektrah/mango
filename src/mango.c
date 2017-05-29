@@ -161,7 +161,7 @@ typedef struct mango_vm {
   uint8_t modules_created;
   uint8_t modules_imported;
   uint8_t module_init_head;
-  uint8_t _reserved1;
+  uint8_t flags;
 
   stackval_ref stack;
   uint16_t stack_size;
@@ -271,7 +271,8 @@ uint32_t mango_features(void) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
+mango_vm *mango_initialize(void *address, uint32_t size, void *context,
+                           uint32_t flags) {
   uintptr_t address_end;
 
   if (!address) {
@@ -298,6 +299,7 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   vm->version = MANGO_VERSION_MAJOR;
   vm->heap_size = size;
   vm->heap_used = sizeof(mango_vm);
+  vm->flags = (uint8_t)flags;
   vm->context = context;
   return vm;
 }
