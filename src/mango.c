@@ -547,8 +547,8 @@ static mango_result initialize_module(mango_vm *vm, mango_module *module) {
 }
 
 static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
-                                          const uint8_t *image, void *context,
-                                          uint32_t flags) {
+                                          const uint8_t *image, uint32_t size,
+                                          void *context, uint32_t flags) {
   const mango_module_def *m = (const mango_module_def *)image;
 
   if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
@@ -556,8 +556,7 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   }
 
   const mango_app_info *app =
-      (const mango_app_info *)(image + sizeof(mango_module_def) +
-                               m->import_count * sizeof(mango_module_name));
+      (const mango_app_info *)(image + (size - sizeof(mango_app_info)));
 
   if ((app->features & mango_features()) != app->features) {
     return MANGO_E_NOT_SUPPORTED;
@@ -640,7 +639,7 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   }
 
   if (vm->modules_imported == 0) {
-    return import_startup_module(vm, name, image, context, flags);
+    return import_startup_module(vm, name, image, size, context, flags);
   } else if (vm->modules_imported != vm->modules_created) {
     return import_missing_module(vm, name, image, context, flags);
   } else {
