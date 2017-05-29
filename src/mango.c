@@ -157,11 +157,11 @@ typedef struct mango_vm {
 
   mango_module_name app_name;
 
-  mango_module_ref modules;
+  uint8_t flags;
   uint8_t modules_created;
   uint8_t modules_imported;
   uint8_t module_init_head;
-  uint8_t flags;
+  mango_module_ref modules;
 
   stackval_ref stack;
   uint16_t stack_size;
@@ -584,9 +584,9 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   }
 
   memcpy(&vm->app_name, name, sizeof(mango_module_name));
-  vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
+  vm->modules = mango_module_as_ref(vm, modules);
   vm->sf = (stack_frame){false, 0, 0, (uint16_t)(&app->halt - image)};
 
   mango_module *module = &modules[0];
