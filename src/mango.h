@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 #define MANGO_VERSION_MAJOR 0
-#define MANGO_VERSION_MINOR 32
+#define MANGO_VERSION_MINOR 33
 
 #define MANGO_VERSION_STRING "0.33-dev"
 
