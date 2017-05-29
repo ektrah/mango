@@ -632,7 +632,7 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
-  if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
+  if (image[0] != MANGO_IMAGE_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
   if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {

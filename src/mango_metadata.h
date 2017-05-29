@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-#define MANGO_HEADER_MAGIC 255
+#define MANGO_IMAGE_MAGIC 255
 
 #pragma pack(push, 1)
 
