@@ -145,10 +145,10 @@ typedef union stackval2 {
 } stackval2;
 
 typedef struct mango_vm {
-  union {
-    void *context;
-    uint64_t _context;
-  };
+  uint8_t magic;
+  uint8_t version;
+
+  uint16_t syscall;
 
   uint32_t heap_size;
   uint32_t heap_used;
@@ -161,27 +161,26 @@ typedef struct mango_vm {
   uint8_t module_init_head;
   uint8_t _reserved1;
 
-  stack_frame sf;
   stackval_ref stack;
   uint16_t stack_size;
   uint16_t rp;
   uint16_t sp;
   uint16_t sp_expected;
+  stack_frame sf;
 
-  uint16_t syscall;
-  uint16_t _reserved2;
+  uint32_t _reserved2;
   uint32_t _reserved3;
-  uint32_t _reserved4;
+
+  union {
+    void *context;
+    uint64_t _context;
+  };
 } mango_vm;
 
 typedef struct mango_module {
   union {
     const uint8_t *image;
     uint64_t _image;
-  };
-  union {
-    void *context;
-    uint64_t _context;
   };
 
   uint8_t index;
@@ -197,6 +196,11 @@ typedef struct mango_module {
 
   uint8_t_ref imports;
   void_ref static_data;
+
+  union {
+    void *context;
+    uint64_t _context;
+  };
 } mango_module;
 
 #pragma pack(pop)
@@ -263,6 +267,10 @@ uint32_t mango_features(void) {
   return features;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+#define MANGO_MEMORY_MAGIC 127
+
 mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   uintptr_t address_end;
 
@@ -286,9 +294,11 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
-  vm->context = context;
+  vm->magic = MANGO_MEMORY_MAGIC;
+  vm->version = MANGO_VERSION_MAJOR;
   vm->heap_size = size;
   vm->heap_used = sizeof(mango_vm);
+  vm->context = context;
   return vm;
 }
 
@@ -584,13 +594,13 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
 
   mango_module *module = &modules[0];
   module->image = image;
-  module->context = context;
   module->index = 0;
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
   module->name.module = INVALID_MODULE;
   module->name.index = INVALID_MODULE;
+  module->context = context;
 
   return initialize_module(vm, module);
 }
@@ -609,10 +619,10 @@ static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
   vm->modules_imported++;
 
   module->image = image;
-  module->context = context;
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
+  module->context = context;
 
   return initialize_module(vm, module);
 }
