@@ -794,6 +794,24 @@ mango_result mango_execute(mango_vm *vm) {
     }
   }
 
+  if ((vm->flags & VISITED) == 0) {
+    vm->flags |= VISITED;
+
+    mango_module *module = &modules[0];
+    const mango_app_info *app =
+        (const mango_app_info *)(module->image +
+                                 (module->image_size - sizeof(mango_app_info)));
+
+    printf("execute main\n");
+    if (app->main != 0) {
+      result = set_entry_point(vm, module, app->main);
+      if (result != MANGO_E_SUCCESS) {
+        return result;
+      }
+      return execute(vm);
+    }
+  }
+
 #ifdef _DEBUG
   printf("\n  stack\n  -----\n");
   for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
