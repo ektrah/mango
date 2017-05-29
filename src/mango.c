@@ -190,10 +190,8 @@ typedef struct mango_module {
   uint8_t init_next;
   uint8_t init_prev;
 
-  struct {
-    uint8_t module;
-    uint8_t index;
-  } name;
+  uint8_t name_module;
+  uint8_t name_index;
   uint16_t _reserved;
 
   uint8_t_ref imports;
@@ -489,9 +487,9 @@ uint32_t mango_stack_available(const mango_vm *vm) {
 static inline const mango_module_name *
 get_module_name(const mango_module *modules, const mango_module *module) {
   const mango_module_def *m =
-      (const mango_module_def *)(modules[module->name.module].image);
+      (const mango_module_def *)(modules[module->name_module].image);
 
-  return &m->imports[module->name.index];
+  return &m->imports[module->name_index];
 }
 
 static uint8_t get_or_create_module(mango_vm *vm, const mango_module_name *name,
@@ -511,8 +509,8 @@ static uint8_t get_or_create_module(mango_vm *vm, const mango_module_name *name,
 
   uint8_t index = vm->modules_created++;
   modules[index].index = index;
-  modules[index].name.module = name_module;
-  modules[index].name.index = name_index;
+  modules[index].name_module = name_module;
+  modules[index].name_index = name_index;
   return index;
 }
 
@@ -595,8 +593,8 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
-  module->name.module = INVALID_MODULE;
-  module->name.index = INVALID_MODULE;
+  module->name_module = INVALID_MODULE;
+  module->name_index = INVALID_MODULE;
   module->context = context;
 
   return initialize_module(vm, module);
