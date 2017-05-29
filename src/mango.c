@@ -487,8 +487,7 @@ uint32_t mango_stack_available(const mango_vm *vm) {
 static inline const mango_module_name *
 get_module_name(const mango_module *modules, const mango_module *module) {
   const mango_module_def *m =
-      (const mango_module_def *)(modules[module->name.module].image +
-                                 MANGO_HEADER_SIZE);
+      (const mango_module_def *)(modules[module->name.module].image);
 
   return &m->imports[module->name.index];
 }
@@ -516,8 +515,7 @@ static uint8_t get_or_create_module(mango_vm *vm, const mango_module_name *name,
 }
 
 static mango_result initialize_module(mango_vm *vm, mango_module *module) {
-  const mango_module_def *m =
-      (const mango_module_def *)(module->image + MANGO_HEADER_SIZE);
+  const mango_module_def *m = (const mango_module_def *)(module->image);
 
   if (m->import_count != 0) {
     uint8_t *imports = mango_heap_alloc(vm, m->import_count, sizeof(uint8_t),
@@ -551,16 +549,14 @@ static mango_result initialize_module(mango_vm *vm, mango_module *module) {
 static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
                                           const uint8_t *image, void *context,
                                           uint32_t flags) {
-  const mango_module_def *m =
-      (const mango_module_def *)(image + MANGO_HEADER_SIZE);
+  const mango_module_def *m = (const mango_module_def *)image;
 
   if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
 
   const mango_app_info *app =
-      (const mango_app_info *)(image + MANGO_HEADER_SIZE +
-                               sizeof(mango_module_def) +
+      (const mango_app_info *)(image + sizeof(mango_module_def) +
                                m->import_count * sizeof(mango_module_name));
 
   if ((app->features & mango_features()) != app->features) {
@@ -633,7 +629,7 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (!vm || !name || !image) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (size < 2 || size > UINT16_MAX) {
+  if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
   if (image[0] != MANGO_HEADER_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
@@ -746,8 +742,7 @@ mango_result mango_execute(mango_vm *vm) {
 
   while (head != INVALID_MODULE) {
     mango_module *module = &modules[head];
-    const mango_module_def *m =
-        (const mango_module_def *)(module->image + MANGO_HEADER_SIZE);
+    const mango_module_def *m = (const mango_module_def *)(module->image);
 
     if ((module->flags & VISITED) == 0) {
       module->flags |= VISITED;

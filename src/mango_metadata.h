@@ -36,7 +36,6 @@ extern "C" {
 #endif
 
 #define MANGO_HEADER_MAGIC 255
-#define MANGO_HEADER_SIZE 2
 
 #pragma pack(push, 1)
 
@@ -50,6 +49,8 @@ typedef enum mango_module_attributes {
 } mango_module_attributes;
 
 typedef struct mango_module_def {
+  uint8_t magic;
+  uint8_t version;
   uint8_t attributes;
   uint8_t import_count;
   uint16_t static_size;
