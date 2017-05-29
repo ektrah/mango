@@ -185,14 +185,14 @@ typedef struct mango_module {
     uint64_t _image;
   };
 
+  uint16_t image_size;
   uint8_t index;
   uint8_t flags;
+
   uint8_t init_next;
   uint8_t init_prev;
-
   uint8_t name_module;
   uint8_t name_index;
-  uint16_t _reserved;
 
   uint8_t_ref imports;
   void_ref static_data;
@@ -589,6 +589,7 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
 
   mango_module *module = &modules[0];
   module->image = image;
+  module->image_size = (uint16_t)size;
   module->index = 0;
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
@@ -601,8 +602,8 @@ static mango_result import_startup_module(mango_vm *vm, const uint8_t *name,
 }
 
 static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
-                                          const uint8_t *image, void *context,
-                                          uint32_t flags) {
+                                          const uint8_t *image, uint32_t size,
+                                          void *context, uint32_t flags) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
   const mango_module_name *n = get_module_name(modules, module);
@@ -614,6 +615,7 @@ static mango_result import_missing_module(mango_vm *vm, const uint8_t *name,
   vm->modules_imported++;
 
   module->image = image;
+  module->image_size = (uint16_t)size;
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
@@ -641,7 +643,7 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (vm->modules_imported == 0) {
     return import_startup_module(vm, name, image, size, context, flags);
   } else if (vm->modules_imported != vm->modules_created) {
-    return import_missing_module(vm, name, image, context, flags);
+    return import_missing_module(vm, name, image, size, context, flags);
   } else {
     return MANGO_E_INVALID_OPERATION;
   }
