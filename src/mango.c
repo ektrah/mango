@@ -91,6 +91,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define MANGO_MEMORY_MAGIC 127
+
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
@@ -268,8 +270,6 @@ uint32_t mango_features(void) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-
-#define MANGO_MEMORY_MAGIC 127
 
 mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   uintptr_t address_end;
