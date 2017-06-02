@@ -876,12 +876,11 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
     stack_frame sf_ = (sf);                                                    \
     mp = &mango_module_as_ptr(vm, vm->modules)[sf_.module];                    \
     ip = mp->image + sf_.ip;                                                   \
-    pop = sf_.pop;                                                             \
-    in_full_trust = sf_.in_full_trust;                                         \
   } while (false)
 
 #define PACK_STATE()                                                           \
-  ((stack_frame){in_full_trust, pop, mp->index, (uint16_t)(ip - mp->image)})
+  ((stack_frame){vm->sf.in_full_trust, vm->sf.pop, mp->index,                  \
+                 (uint16_t)(ip - mp->image)})
 
 #define YIELD(Result)                                                          \
   do {                                                                         \
@@ -1147,8 +1146,6 @@ static mango_result execute(mango_vm *vm) {
 
   stackval *rp;
   stackval *sp;
-  bool in_full_trust;
-  uint8_t pop;
   const mango_module *mp;
   const uint8_t *ip;
   mango_result result;
@@ -1320,17 +1317,17 @@ UNUSED23:
 #pragma region calls
 
 RET_X64: // value ... -> ...
-  sp[pop + 1].i32 = sp[1].i32;
+  sp[vm->sf.pop + 1].i32 = sp[1].i32;
 
 RET_X32: // value ... -> ...
-  sp[pop + 0].i32 = sp[0].i32;
+  sp[vm->sf.pop + 0].i32 = sp[0].i32;
 
 RET: // ... -> ...
-  sp += pop;
+  sp += vm->sf.pop;
   --rp;
 
 #ifdef _DEBUG
-  if (in_full_trust && !rp->sf.in_full_trust) {
+  if (vm->sf.in_full_trust && !rp->sf.in_full_trust) {
     printf("------------------------------ LEAVE FULL TRUST "
            "------------------------------\n");
   }
@@ -1354,7 +1351,7 @@ RET: // ... -> ...
     const mango_module *module = lookup_module(vm, mp, ftn.module);
     const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
-    bool in_full_trust_new = in_full_trust;
+    bool in_full_trust = vm->sf.in_full_trust;
     if (!in_full_trust &&
         (f->attributes &
          (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
@@ -1365,7 +1362,7 @@ RET: // ... -> ...
       }
       printf("------------------------------ ENTER FULL TRUST "
              "------------------------------\n");
-      in_full_trust_new = true;
+      in_full_trust = true;
     }
 
     if (sp - rp < 1 + f->loc_count + f->max_stack) {
@@ -1373,14 +1370,15 @@ RET: // ... -> ...
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += (*ip == CALLI);
+    sp += (*ip == CALLI ? 1 : 0);
     ip += (*ip == CALLI ? 1 : 4);
-    if (!(pop == 0 && *ip == RET)) {
+    if (!(vm->sf.pop == 0 && *ip == RET)) {
       rp->sf = PACK_STATE();
       rp++;
     }
-    in_full_trust = in_full_trust_new;
-    pop = (f->attributes & MANGO_FD_NAKED) ? 0 : f->arg_count + f->loc_count;
+    vm->sf.in_full_trust = in_full_trust;
+    vm->sf.pop =
+        (f->attributes & MANGO_FD_NAKED) ? 0 : f->arg_count + f->loc_count;
     mp = module;
     ip = f->code;
     sp -= f->loc_count;
@@ -1390,7 +1388,7 @@ RET: // ... -> ...
 
 SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
-    if (!in_full_trust) {
+    if (!vm->sf.in_full_trust) {
       printf("<< SECURITY VIOLATION >>\n");
       RETURN(MANGO_E_SECURITY);
     }
