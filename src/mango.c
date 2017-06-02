@@ -691,8 +691,9 @@ static mango_result set_entry_point(mango_vm *vm, mango_module *module,
                                     uint32_t offset) {
   const mango_func_def *f = (const mango_func_def *)(module->image + offset);
 
-  bool in_full_trust = false;
-  if ((f->attributes &
+  bool in_full_trust = vm->sf.in_full_trust;
+  if (!in_full_trust &&
+      (f->attributes &
        (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
     if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
         (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
@@ -709,7 +710,7 @@ static mango_result set_entry_point(mango_vm *vm, mango_module *module,
     return MANGO_E_STACK_OVERFLOW;
   }
 
-  stackval *rp = stackval_as_ptr(vm, vm->stack);
+  stackval *rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   rp->sf = vm->sf;
   vm->rp++;
 
