@@ -1377,8 +1377,7 @@ RET: // ... -> ...
       rp++;
     }
     vm->sf.in_full_trust = in_full_trust;
-    vm->sf.pop =
-        (f->attributes & MANGO_FD_NAKED) ? 0 : f->arg_count + f->loc_count;
+    vm->sf.pop = f->arg_count + f->loc_count;
     mp = module;
     ip = f->code;
     sp -= f->loc_count;
