@@ -16,7 +16,7 @@ Mango is a tiny, yet powerful virtual machine designed to run in very constraine
   * i8, i16, i32, i64, u8, u16, u32, u64, f32, f64
   * Algebraic data types (structs and tagged unions)
   * Arrays and slices
-  * Non-nullable references
+  * References
 * A module system
 * Code access security (security critical and security safe-critical code)
 * Memory safety and type safety
