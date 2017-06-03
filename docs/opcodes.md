@@ -142,13 +142,6 @@
 | 0x10   | ldloc.x32        | ... &rarr; value ...                                        |
 | 0x11   | ldloc.x64        | ... &rarr; value ...                                        |
 | 0x12   | ldloca           | ... &rarr; address ...                                      |
-| 0x75   | ldsfld.i16       | ... &rarr; value ...                                        |
-| 0x73   | ldsfld.i8        | ... &rarr; value ...                                        |
-| 0x76   | ldsfld.u16       | ... &rarr; value ...                                        |
-| 0x74   | ldsfld.u8        | ... &rarr; value ...                                        |
-| 0x77   | ldsfld.x32       | ... &rarr; value ...                                        |
-| 0x78   | ldsfld.x64       | ... &rarr; value ...                                        |
-| 0x79   | ldsflda          | ... &rarr; address ...                                      |
 | 0xC2   | mul.f32          | value2 value1 ... &rarr; result ...                         |
 | 0xE2   | mul.f64          | value2 value1 ... &rarr; result ...                         |
 | 0x42   | mul.i32          | value2 value1 ... &rarr; result ...                         |
@@ -196,10 +189,6 @@
 | 0x72   | stfld.x64        | value address ... &rarr; ...                                |
 | 0x13   | stloc.x32        | value ... &rarr; ...                                        |
 | 0x14   | stloc.x64        | value ... &rarr; ...                                        |
-| 0x7B   | stsfld.x16       | value ... &rarr; ...                                        |
-| 0x7A   | stsfld.x8        | value ... &rarr; ...                                        |
-| 0x7C   | stsfld.x32       | value ... &rarr; ...                                        |
-| 0x7D   | stsfld.x64       | value ... &rarr; ...                                        |
 | 0xC1   | sub.f32          | value2 value1 ... &rarr; result ...                         |
 | 0xE1   | sub.f64          | value2 value1 ... &rarr; result ...                         |
 | 0x41   | sub.i32          | value2 value1 ... &rarr; result ...                         |

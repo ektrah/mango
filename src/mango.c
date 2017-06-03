@@ -1731,41 +1731,18 @@ STFLD_X32: // value address ... -> ...
 STFLD_X64: // value address -> ...
   STORE_FIELD2(sp[2].ref, 3);
 
-LDSFLD_I8: // ... -> value ...
-  LOAD_FIELD(mp->static_data, int8_t, i32, 1);
-
-LDSFLD_U8: // ... -> value ...
-  LOAD_FIELD(mp->static_data, uint8_t, u32, 1);
-
-LDSFLD_I16: // ... -> value ...
-  LOAD_FIELD(mp->static_data, int16_t, i32, 1);
-
-LDSFLD_U16: // ... -> value ...
-  LOAD_FIELD(mp->static_data, uint16_t, u32, 1);
-
-LDSFLD_X32: // ... -> value ...
-  LOAD_FIELD(mp->static_data, int32_t, i32, 1);
-
-LDSFLD_X64: // ... -> value ...
-  LOAD_FIELD2(mp->static_data, 2);
-
-LDSFLDA: // ... -> address ...
-  sp--;
-  sp[0].ref.address = mp->static_data.address + FETCH(1, u16);
-  ip += 3;
-  NEXT;
-
-STSFLD_X8: // value ... -> ...
-  STORE_FIELD(mp->static_data, int8_t, i32, 1);
-
-STSFLD_X16: // value ... -> ...
-  STORE_FIELD(mp->static_data, int16_t, i32, 1);
-
-STSFLD_X32: // value ... -> ...
-  STORE_FIELD(mp->static_data, int32_t, i32, 1);
-
-STSFLD_X64: // value ... -> ...
-  STORE_FIELD2(mp->static_data, 2);
+UNUSED115:
+UNUSED116:
+UNUSED117:
+UNUSED118:
+UNUSED119:
+UNUSED120:
+UNUSED121:
+UNUSED122:
+UNUSED123:
+UNUSED124:
+UNUSED125:
+  INVALID;
 
 LDELEM_I8: // index array length ... -> value ...
   LOAD_ELEMENT(int8_t, i32);
@@ -1890,17 +1867,17 @@ STFLD_X8:
 STFLD_X16:
 STFLD_X32:
 STFLD_X64:
-LDSFLD_I8:
-LDSFLD_U8:
-LDSFLD_I16:
-LDSFLD_U16:
-LDSFLD_X32:
-LDSFLD_X64:
-LDSFLDA:
-STSFLD_X8:
-STSFLD_X16:
-STSFLD_X32:
-STSFLD_X64:
+UNUSED115:
+UNUSED116:
+UNUSED117:
+UNUSED118:
+UNUSED119:
+UNUSED120:
+UNUSED121:
+UNUSED122:
+UNUSED123:
+UNUSED124:
+UNUSED125:
 LDELEM_I8:
 LDELEM_U8:
 LDELEM_I16:
