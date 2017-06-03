@@ -871,11 +871,12 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
 
-#define UNPACK_STATE(sf)                                                       \
+#define UNPACK_STATE(state)                                                    \
   do {                                                                         \
-    stack_frame sf_ = (sf);                                                    \
+    stack_frame sf_ = (state);                                                 \
     mp = &mango_module_as_ptr(vm, vm->modules)[sf_.module];                    \
     ip = mp->image + sf_.ip;                                                   \
+    vm->sf = sf_;                                                              \
   } while (false)
 
 #define PACK_STATE()                                                           \
