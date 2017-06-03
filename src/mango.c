@@ -714,8 +714,8 @@ static mango_result set_entry_point(mango_vm *vm, mango_module *module,
   rp->sf = vm->sf;
   vm->rp++;
 
-  uint16_t ip = (uint16_t)(f->code - module->image);
-  vm->sf = (stack_frame){in_full_trust, f->loc_count, module->index, ip};
+  vm->sf = (stack_frame){in_full_trust, f->arg_count + f->loc_count,
+                         module->index, (uint16_t)(f->code - module->image)};
   vm->sp -= f->loc_count;
   return MANGO_E_SUCCESS;
 }
