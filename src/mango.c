@@ -536,18 +536,6 @@ static mango_result initialize_module(mango_vm *vm, mango_module *module) {
     module->imports = uint8_t_as_ref(vm, imports);
   }
 
-  if (m->static_size != 0) {
-    void *static_data =
-        mango_heap_alloc(vm, m->static_size, sizeof(uint8_t),
-                         __alignof(stackval), MANGO_ALLOC_ZERO_MEMORY);
-
-    if (!static_data) {
-      return MANGO_E_OUT_OF_MEMORY;
-    }
-
-    module->static_data = void_as_ref(vm, static_data);
-  }
-
   return MANGO_E_SUCCESS;
 }
 
