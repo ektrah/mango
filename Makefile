@@ -21,7 +21,7 @@ all: $(LIBMANGO)
 
 bin/libmango.so: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
 	mkdir -p bin
-	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -fPIC -o $@ $<
+	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -fPIC -Wl,--no-undefined -o $@ $< -lm
 
 bin/libmango.dylib: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
 	mkdir -p bin
