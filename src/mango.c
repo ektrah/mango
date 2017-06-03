@@ -836,17 +836,6 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-static const mango_module *
-lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
-  if (index == INVALID_MODULE) {
-    return mp;
-  } else {
-    const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    return &modules[imports[index]];
-  }
-}
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
@@ -870,18 +859,6 @@ lookup_module(const mango_vm *vm, const mango_module *mp, uint32_t index) {
 #endif
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
-
-#define UNPACK_STATE(state)                                                    \
-  do {                                                                         \
-    stack_frame sf_ = (state);                                                 \
-    mp = &mango_module_as_ptr(vm, vm->modules)[sf_.module];                    \
-    ip = mp->image + sf_.ip;                                                   \
-    vm->sf = sf_;                                                              \
-  } while (false)
-
-#define PACK_STATE()                                                           \
-  ((stack_frame){vm->sf.in_full_trust, vm->sf.pop, mp->index,                  \
-                 (uint16_t)(ip - mp->image)})
 
 #define YIELD(Result)                                                          \
   do {                                                                         \
@@ -1147,13 +1124,15 @@ static mango_result execute(mango_vm *vm) {
 
   stackval *rp;
   stackval *sp;
-  const mango_module *mp;
+  stack_frame sf;
   const uint8_t *ip;
   mango_result result;
 
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
-  UNPACK_STATE(vm->sf);
+  sf = vm->sf;
+  ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
+
   NEXT;
 
 #pragma region basic
@@ -1317,27 +1296,28 @@ UNUSED23:
 
 #pragma region calls
 
-RET_X64: // value ... -> ...
-  sp[vm->sf.pop + 1].i32 = sp[1].i32;
+  {
+  RET_X64: // value ... -> ...
+    sp[sf.pop + 1].i32 = sp[1].i32;
 
-RET_X32: // value ... -> ...
-  sp[vm->sf.pop + 0].i32 = sp[0].i32;
+  RET_X32: // value ... -> ...
+    sp[sf.pop + 0].i32 = sp[0].i32;
 
-RET: // ... -> ...
-  sp += vm->sf.pop;
-  --rp;
+  RET: // ... -> ...
+    sp += sf.pop;
+    --rp;
 
-#ifdef _DEBUG
-  if (vm->sf.in_full_trust && !rp->sf.in_full_trust) {
-    printf("------------------------------ LEAVE FULL TRUST "
-           "------------------------------\n");
+    if (sf.in_full_trust && !rp->sf.in_full_trust) {
+      printf("------------------------------ LEAVE FULL TRUST "
+             "------------------------------\n");
+    }
+
+    sf = rp->sf;
+    ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
+    NEXT;
   }
-#endif
 
-  UNPACK_STATE(rp->sf);
-  NEXT;
-
-  do {
+  {
     func_token ftn;
 
   CALL: // argumentN ... argument1 argument0 ... -> result ...
@@ -1349,10 +1329,18 @@ RET: // ... -> ...
     goto call;
 
   call:;
-    const mango_module *module = lookup_module(vm, mp, ftn.module);
+    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+    const mango_module *mp = &modules[sf.module];
+    const mango_module *module;
+    if (ftn.module == INVALID_MODULE) {
+      module = mp;
+    } else {
+      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+      module = &modules[imports[ftn.module]];
+    }
     const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
-    bool in_full_trust = vm->sf.in_full_trust;
+    bool in_full_trust = sf.in_full_trust;
     if (!in_full_trust &&
         (f->attributes &
          (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
@@ -1373,22 +1361,25 @@ RET: // ... -> ...
 
     sp += (*ip == CALLI ? 1 : 0);
     ip += (*ip == CALLI ? 1 : 4);
-    if (!(vm->sf.pop == 0 && *ip == RET)) {
-      rp->sf = PACK_STATE();
+
+    if (!(sf.pop == 0 && *ip == RET)) {
+      sf.ip = (uint16_t)(ip - mp->image);
+      rp->sf = sf;
       rp++;
     }
-    vm->sf.in_full_trust = in_full_trust;
-    vm->sf.pop = f->arg_count + f->loc_count;
-    mp = module;
+
+    sf.in_full_trust = in_full_trust;
+    sf.pop = f->arg_count + f->loc_count;
+    sf.module = module->index;
     ip = f->code;
     sp -= f->loc_count;
 
     NEXT;
-  } while (false);
+  }
 
-SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
-  do {
-    if (!vm->sf.in_full_trust) {
+  {
+  SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
+    if (!sf.in_full_trust) {
       printf("<< SECURITY VIOLATION >>\n");
       RETURN(MANGO_E_SECURITY);
     }
@@ -1402,7 +1393,7 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     vm->syscall = syscall;
 
     YIELD(MANGO_E_SYSCALL);
-  } while (false);
+  }
 
 UNUSED30:
 UNUSED31:
@@ -2410,19 +2401,24 @@ UNUSED255:
 
 #endif
 
-invalid:
-  printf("<< INVALID PROGRAM >>\n");
-  result = MANGO_E_INVALID_PROGRAM;
+  {
+  invalid:
+    printf("<< INVALID PROGRAM >>\n");
+    result = MANGO_E_INVALID_PROGRAM;
 
-done:
-  vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
-  vm->syscall = 0;
+  done:
+    vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
+    vm->syscall = 0;
 
-yield:
-  vm->sf = PACK_STATE();
-  vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
-  vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
-  return result;
+  yield:;
+    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+    const mango_module *mp = &modules[sf.module];
+    sf.ip = (uint16_t)(ip - mp->image);
+    vm->sf = sf;
+    vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
+    vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
+    return result;
+  }
 }
 
 #pragma clang diagnostic pop
