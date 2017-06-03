@@ -1900,11 +1900,13 @@ UNUSED143:
   INVALID;
 
   (void)void_as_ptr;
+  (void)void_as_ref;
   (void)void_is_null;
 
 #else
 
   (void)void_as_ptr;
+  (void)void_as_ref;
   (void)void_is_null;
 
 #endif
