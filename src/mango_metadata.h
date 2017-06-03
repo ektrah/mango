@@ -53,7 +53,7 @@ typedef struct mango_module_def {
   uint8_t version;
   uint8_t attributes;
   uint8_t import_count;
-  uint16_t static_init;
+  uint16_t initializer;
   mango_module_name imports[];
 } mango_module_def;
 

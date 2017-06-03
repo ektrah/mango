@@ -775,8 +775,8 @@ mango_result mango_execute(mango_vm *vm) {
       }
 
       printf("initialize module %u\n", module->index);
-      if (m->static_init != 0) {
-        result = set_entry_point(vm, module, m->static_init);
+      if (m->initializer != 0) {
+        result = set_entry_point(vm, module, m->initializer);
         if (result != MANGO_E_SUCCESS) {
           return result;
         }
