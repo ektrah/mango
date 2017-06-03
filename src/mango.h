@@ -139,49 +139,6 @@ MANGO_API uint32_t mango_syscall(const mango_vm *vm);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma pack(push, 4)
-
-typedef union mango_value {
-  int8_t i8;
-  int16_t i16;
-  int32_t i32;
-  int64_t i64;
-  uint8_t u8;
-  uint16_t u16;
-  uint32_t u32;
-  uint64_t u64;
-  float f32;
-  double f64;
-} mango_value;
-
-#pragma pack(pop)
-
-#define MANGO_DEFINE_READ_WRITE(Type, Member)                                  \
-  MANGO_API inline Type mango_read_##Member(const void *ref,                   \
-                                            uint32_t offset) {                 \
-    return ((const mango_value *)((uintptr_t)ref + offset))->Member;           \
-  }                                                                            \
-                                                                               \
-  MANGO_API inline void mango_write_##Member(void *ref, uint32_t offset,       \
-                                             Type value) {                     \
-    ((mango_value *)((uintptr_t)ref + offset))->Member = value;                \
-  }
-
-MANGO_DEFINE_READ_WRITE(int8_t, i8)
-MANGO_DEFINE_READ_WRITE(int16_t, i16)
-MANGO_DEFINE_READ_WRITE(int32_t, i32)
-MANGO_DEFINE_READ_WRITE(int64_t, i64)
-MANGO_DEFINE_READ_WRITE(uint8_t, u8)
-MANGO_DEFINE_READ_WRITE(uint16_t, u16)
-MANGO_DEFINE_READ_WRITE(uint32_t, u32)
-MANGO_DEFINE_READ_WRITE(uint64_t, u64)
-MANGO_DEFINE_READ_WRITE(float, f32)
-MANGO_DEFINE_READ_WRITE(double, f64)
-
-#undef MANGO_DEFINE_READ_WRITE
-
-////////////////////////////////////////////////////////////////////////////////
-
 #undef MANGO_API
 
 #ifdef __cplusplus
