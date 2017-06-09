@@ -1110,23 +1110,11 @@ DUP_X64: // value ... -> value value ...
   ip++;
   NEXT;
 
-SWAP_X32: // value1 value2 ... -> value2 value1 ...
+SWAP: // value1 value2 ... -> value2 value1 ...
   do {
     int32_t tmp = sp[0].i32;
     sp[0].i32 = sp[1].i32;
     sp[1].i32 = tmp;
-    ip++;
-    NEXT;
-  } while (false);
-
-SWAP_X64: // value1 value2 ... -> value2 value1 ...
-  do {
-    int32_t tmp0 = sp[0].i32;
-    int32_t tmp1 = sp[1].i32;
-    sp[0].i32 = sp[2].i32;
-    sp[1].i32 = sp[3].i32;
-    sp[2].i32 = tmp0;
-    sp[3].i32 = tmp1;
     ip++;
     NEXT;
   } while (false);
@@ -1161,6 +1149,7 @@ TUCK: // value1 value2 ... -> value1 value2 value1 ...
   ip++;
   NEXT;
 
+UNUSED13:
 UNUSED14:
 UNUSED15:
   INVALID;
@@ -1766,21 +1755,9 @@ LDELEM_X64: // index array length ... -> value ...
     NEXT;
   } while (false);
 
-  {
-    uint32_t size;
-
-  LDELEMA: // index array length ... -> address ...
-    size = FETCH(1, u16);
-    goto ldelema;
-
-  LDELEMA_X8:
-  LDELEMA_X16:
-  LDELEMA_X32:
-  LDELEMA_X64: // index array length ... -> address ...
-    size = UINT32_C(1) << (*ip - LDELEMA_X8);
-    goto ldelema;
-
-  ldelema:;
+LDELEMA: // index array length ... -> address ...
+  do {
+    uint32_t size = FETCH(1, u16);
     int32_t index = sp[0].i32;
     if (index < 0 || index >= sp[2].i32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
@@ -1793,7 +1770,7 @@ LDELEM_X64: // index array length ... -> value ...
     sp[0].ref.address = address + (uint32_t)index * size;
     ip += (*ip == LDELEMA) ? 3 : 1;
     NEXT;
-  }
+  } while (false);
 
 #define STORE_ELEMENT(cast)                                                    \
   do {                                                                         \
@@ -1840,6 +1817,10 @@ STELEM_X64: // value index array length ... -> ...
     NEXT;
   } while (false);
 
+UNUSED137:
+UNUSED138:
+UNUSED139:
+UNUSED140:
 UNUSED141:
 UNUSED142:
 UNUSED143:
@@ -1886,14 +1867,14 @@ LDELEM_U16:
 LDELEM_X32:
 LDELEM_X64:
 LDELEMA:
-LDELEMA_X8:
-LDELEMA_X16:
-LDELEMA_X32:
-LDELEMA_X64:
 STELEM_X8:
 STELEM_X16:
 STELEM_X32:
 STELEM_X64:
+UNUSED137:
+UNUSED138:
+UNUSED139:
+UNUSED140:
 UNUSED141:
 UNUSED142:
 UNUSED143:
