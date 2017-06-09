@@ -147,7 +147,7 @@ OPCODE(UNUSED95,        "unused",           0,      0,      0,      0x5F)
 
 OPCODE(NEWOBJ,          "newobj",           0,      1,      2,      0x60)
 OPCODE(NEWARR,          "newarr",           1,      2,      2,      0x61)
-OPCODE(SLICE,           "slice",            3,      2,      0,      0x62)
+OPCODE(SLICE1,          "slice1",           3,      2,      0,      0x62)
 OPCODE(SLICE2,          "slice2",           4,      2,      0,      0x63)
 
 OPCODE(UNUSED100,       "unused",           0,      0,      0,      0x64)

@@ -1575,7 +1575,7 @@ NEWARR: // length ... -> array length ...
     NEXT;
   } while (false);
 
-SLICE: // start array length ... -> array length ...
+SLICE1: // start array length ... -> array length ...
   do {
     int32_t start = sp[0].i32;
     if (start < 0 || start > sp[2].i32) {
@@ -1851,7 +1851,7 @@ UNUSED143:
 
 NEWOBJ:
 NEWARR:
-SLICE:
+SLICE1:
 SLICE2:
 UNUSED100:
 UNUSED101:
