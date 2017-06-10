@@ -1,6 +1,7 @@
 sudo: false
 language: c
 script: make
+after_success: base64 bin/*
 notifications:
   email: false
 matrix:
