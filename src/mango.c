@@ -1198,26 +1198,24 @@ UNUSED23:
 
 #pragma region calls
 
-  {
-  RET_X64: // value ... -> ...
-    sp[sf.pop + 1].u32 = sp[1].u32;
+RET_X64: // value ... -> ...
+  sp[sf.pop + 1].u32 = sp[1].u32;
 
-  RET_X32: // value ... -> ...
-    sp[sf.pop + 0].u32 = sp[0].u32;
+RET_X32: // value ... -> ...
+  sp[sf.pop + 0].u32 = sp[0].u32;
 
-  RET: // ... -> ...
-    sp += sf.pop;
-    --rp;
+RET: // ... -> ...
+  sp += sf.pop;
+  --rp;
 
-    if (sf.in_full_trust && !rp->sf.in_full_trust) {
-      printf("------------------------------ LEAVE FULL TRUST "
-             "------------------------------\n");
-    }
-
-    sf = rp->sf;
-    ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
-    NEXT;
+  if (sf.in_full_trust && !rp->sf.in_full_trust) {
+    printf("------------------------------ LEAVE FULL TRUST "
+           "------------------------------\n");
   }
+
+  sf = rp->sf;
+  ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
+  NEXT;
 
   {
   CALL:; // argumentN ... argument1 argument0 ... -> result ...
