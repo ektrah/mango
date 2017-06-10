@@ -874,7 +874,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define BINARY1(ty, op)                                                        \
   do {                                                                         \
-    sp[1].ty = (sp[1].ty)op(sp[0].ty);                                         \
+    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -885,7 +885,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
     if (sp[0].ty == 0) {                                                       \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp[1].ty = (sp[1].ty)op(sp[0].ty);                                         \
+    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -894,7 +894,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define BINARY2(ty, op)                                                        \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    sp2[1].ty = (sp2[1].ty)op(sp2[0].ty);                                      \
+    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -906,7 +906,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
     if (sp2[0].ty == 0) {                                                      \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp2[1].ty = (sp2[1].ty)op(sp2[0].ty);                                      \
+    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -929,7 +929,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define SHIFT1(ty, op)                                                         \
   do {                                                                         \
-    sp[1].ty = (sp[1].ty)op(sp[0].i32 & 31);                                   \
+    sp[1].ty = sp[1].ty op(sp[0].i32 & 31);                                    \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -938,7 +938,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define SHIFT2(ty, op)                                                         \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)(sp + 1);                                    \
-    sp2[0].ty = (sp2[0].ty)op(sp[0].i32 & 63);                                 \
+    sp2[0].ty = sp2[0].ty op(sp[0].i32 & 63);                                  \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -946,14 +946,14 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define CONVERT1(cast, dest, src)                                              \
   do {                                                                         \
-    sp[0].dest = (cast)(sp[0].src);                                            \
+    sp[0].dest = (cast)sp[0].src;                                              \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
 #define CONVERT21(cast, dest, src)                                             \
   do {                                                                         \
-    cast tmp = (cast)(sp[0].src);                                              \
+    cast tmp = (cast)sp[0].src;                                                \
     sp--;                                                                      \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
     sp2[0].dest = tmp;                                                         \
@@ -964,7 +964,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define CONVERT12(cast, dest, src)                                             \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    cast tmp = (cast)(sp2[0].src);                                             \
+    cast tmp = (cast)sp2[0].src;                                               \
     sp++;                                                                      \
     sp[0].dest = tmp;                                                          \
     ip++;                                                                      \
@@ -974,41 +974,41 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define CONVERT2(cast, dest, src)                                              \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    sp2[0].dest = (cast)(sp2[0].src);                                          \
+    sp2[0].dest = (cast)sp2[0].src;                                            \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
-#define COMPARE1(mem, op)                                                      \
+#define COMPARE1(ty, op)                                                       \
   do {                                                                         \
-    sp[1].i32 = (sp[1].mem)op(sp[0].mem);                                      \
+    sp[1].i32 = sp[1].ty op sp[0].ty;                                          \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
-#define COMPARE1F(mem, op)                                                     \
+#define COMPARE1F(ty, op)                                                      \
   do {                                                                         \
-    sp[1].i32 = op(sp[1].mem, sp[0].mem);                                      \
+    sp[1].i32 = op(sp[1].ty, sp[0].ty);                                        \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
-#define COMPARE2(mem, op)                                                      \
+#define COMPARE2(ty, op)                                                       \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    int32_t tmp = (sp2[1].mem)op(sp2[0].mem);                                  \
+    int32_t tmp = sp2[1].ty op sp2[0].ty;                                      \
     sp += 3;                                                                   \
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
-#define COMPARE2F(mem, op)                                                     \
+#define COMPARE2F(ty, op)                                                      \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    int32_t tmp = op(sp2[1].mem, sp2[0].mem);                                  \
+    int32_t tmp = op(sp2[1].ty, sp2[0].ty);                                    \
     sp += 3;                                                                   \
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
@@ -1521,11 +1521,11 @@ NEWOBJ: // ... -> address ...
 
 NEWARR: // length ... -> array length ...
   do {
-    uint32_t size = FETCH(1, u16);
     uint32_t length = sp[0].u32;
     if ((int32_t)length < 0) {
       RETURN(MANGO_E_ARGUMENT);
     }
+    uint32_t size = FETCH(1, u16);
     void *arr = mango_heap_alloc(vm, length, size, __alignof(stackval),
                                  MANGO_ALLOC_ZERO_MEMORY);
     if (!arr) {
@@ -1578,12 +1578,12 @@ UNUSED103:
 
 #define LOAD_FIELD(cast, ty)                                                   \
   do {                                                                         \
-    uintptr_t offset = FETCH(1, u16);                                          \
     if (void_is_null(sp[0].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
     const void *obj = void_as_ptr(vm, sp[0].ref);                              \
-    sp[0].ty = ((const cast *)((uintptr_t)obj + offset))[0];                   \
+    const cast *fld = (const cast *)((uintptr_t)obj + FETCH(1, u16));          \
+    sp[0].ty = fld[0];                                                         \
     ip += 3;                                                                   \
     NEXT;                                                                      \
   } while (false)
@@ -1605,37 +1605,36 @@ LDFLD_X32: // address ... -> value ...
 
 LDFLD_X64: // address ... -> value ...
   do {
-    uintptr_t offset = FETCH(1, u16);
     if (void_is_null(sp[0].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     const void *obj = void_as_ptr(vm, sp[0].ref);
+    const uint32_t *fld = (const uint32_t *)((uintptr_t)obj + FETCH(1, u16));
     sp--;
-    sp[0].u32 = ((const uint32_t *)((uintptr_t)obj + offset))[0];
-    sp[1].u32 = ((const uint32_t *)((uintptr_t)obj + offset))[1];
+    sp[0].u32 = fld[0];
+    sp[1].u32 = fld[1];
     ip += 3;
     NEXT;
   } while (false);
 
 LDFLDA: // address ... -> address ...
   do {
-    uint32_t offset = FETCH(1, u16);
     if (void_is_null(sp[0].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
-    sp[0].ref.address += offset;
+    sp[0].ref.address += FETCH(1, u16);
     ip += 3;
     NEXT;
   } while (false);
 
 #define STORE_FIELD(cast, ty)                                                  \
   do {                                                                         \
-    uintptr_t offset = FETCH(1, u16);                                          \
     if (void_is_null(sp[1].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
     void *obj = void_as_ptr(vm, sp[1].ref);                                    \
-    ((cast *)((uintptr_t)obj + offset))[0] = (cast)sp[0].ty;                   \
+    cast *fld = (cast *)((uintptr_t)obj + FETCH(1, u16));                      \
+    fld[0] = (cast)sp[0].ty;                                                   \
     sp += 2;                                                                   \
     ip += 3;                                                                   \
     NEXT;                                                                      \
@@ -1652,13 +1651,13 @@ STFLD_X32: // value address ... -> ...
 
 STFLD_X64: // value address -> ...
   do {
-    uintptr_t offset = FETCH(1, u16);
     if (void_is_null(sp[2].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     void *obj = void_as_ptr(vm, sp[2].ref);
-    ((uint32_t *)((uintptr_t)obj + offset))[0] = sp[0].u32;
-    ((uint32_t *)((uintptr_t)obj + offset))[1] = sp[1].u32;
+    uint32_t *fld = (uint32_t *)((uintptr_t)obj + FETCH(1, u16));
+    fld[0] = sp[0].u32;
+    fld[1] = sp[1].u32;
     sp += 3;
     ip += 3;
     NEXT;
@@ -1727,7 +1726,6 @@ LDELEM_X64: // index array length ... -> value ...
 
 LDELEMA: // index array length ... -> address ...
   do {
-    uint32_t size = FETCH(1, u16);
     uint32_t index = sp[0].u32;
     if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
@@ -1736,6 +1734,7 @@ LDELEMA: // index array length ... -> address ...
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     uint32_t address = sp[1].ref.address;
+    uint32_t size = FETCH(1, u16);
     sp += 2;
     sp[0].ref.address = address + index * size;
     ip += 3;
