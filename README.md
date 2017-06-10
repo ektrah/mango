@@ -8,7 +8,7 @@ Mango is a tiny, yet powerful virtual machine designed to run in very constraine
 #### Features
 
 * A fast stack-based bytecode interpreter
-* ~2200 lines of C11 code
+* ~2000 source lines of C11 code
 * Minimal dependencies
 * A real-world instruction set
   * Arithmetic, bitwise, conversion, comparison, branches, function calls, ...
