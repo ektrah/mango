@@ -1275,8 +1275,8 @@ RET: // ... -> ...
     NEXT;
   }
 
-  {
-  SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
+SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
+  do {
     if (!sf.in_full_trust) {
       printf("<< SECURITY VIOLATION >>\n");
       RETURN(MANGO_E_SECURITY);
@@ -1291,7 +1291,7 @@ RET: // ... -> ...
     vm->syscall = syscall;
 
     YIELD(MANGO_E_SYSCALL);
-  }
+  } while (false);
 
 UNUSED30:
 UNUSED31:
