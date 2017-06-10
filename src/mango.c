@@ -218,10 +218,6 @@ typedef union packed {
   uint16_t u16;
   int32_t i32;
   uint32_t u32;
-  int64_t i64;
-  uint64_t u64;
-  float f32;
-  double f64;
 } packed;
 
 #pragma pack(pop)
@@ -242,7 +238,6 @@ _Static_assert(sizeof(mango_vm) == 64, "Incorrect layout");
 _Static_assert(__alignof(mango_vm) == 4, "Incorrect layout");
 _Static_assert(sizeof(mango_module) == 32, "Incorrect layout");
 _Static_assert(__alignof(mango_module) == 4, "Incorrect layout");
-_Static_assert(sizeof(packed) == 8, "Incorrect layout");
 _Static_assert(__alignof(packed) == 1, "Incorrect layout");
 #endif
 
