@@ -1417,9 +1417,7 @@ REM_I32_UN: // value2 value1 ... -> result ...
   BINARY1D(u32, %);
 
 NEG_I32: // value ... -> result ...
-  sp[0].u32 = -(sp[0].u32);
-  ip++;
-  NEXT;
+  UNARY1(u32, -);
 
 #pragma endregion
 
@@ -1893,12 +1891,7 @@ REM_I64_UN: // value2 value1 ... -> result ...
   BINARY2D(u64, %);
 
 NEG_I64: // value ... -> result ...
-  do {
-    stackval2 *sp2 = (stackval2 *)sp;
-    sp2[0].u64 = -(sp2[0].u64);
-    ip++;
-    NEXT;
-  } while (false);
+  UNARY2(u64, -);
 
 #pragma endregion
 
