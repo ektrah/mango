@@ -842,7 +842,6 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-label-as-value"
-#pragma clang diagnostic ignored "-Wunused-macros"
 #pragma clang diagnostic ignored "-Wfloat-equal"
 
 #pragma region macros
@@ -853,11 +852,9 @@ uint32_t mango_syscall(const mango_vm *vm) {
     printf("* %s\n", opcodes[*ip]);                                            \
     goto *dispatch_table[*ip];                                                 \
   } while (false)
-#elif defined(_MSC_VER)
-#error Unsupported compiler
-#define NEXT
 #else
 #error Unsupported compiler
+#define NEXT
 #endif
 
 #define FETCH(offset, ty) (((const packed *)(ip + (offset)))->ty)
@@ -881,15 +878,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define BINARY1(ty, op)                                                        \
   do {                                                                         \
-    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
-    sp++;                                                                      \
-    ip++;                                                                      \
-    NEXT;                                                                      \
-  } while (false);
-
-#define BINARY1F(ty, op)                                                       \
-  do {                                                                         \
-    op(sp[1].ty, sp[0].ty, &sp[1].ty);                                         \
+    sp[1].ty = (sp[1].ty)op(sp[0].ty);                                         \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -900,7 +889,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
     if (sp[0].ty == 0) {                                                       \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
+    sp[1].ty = (sp[1].ty)op(sp[0].ty);                                         \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -909,16 +898,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define BINARY2(ty, op)                                                        \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
-    sp += 2;                                                                   \
-    ip++;                                                                      \
-    NEXT;                                                                      \
-  } while (false);
-
-#define BINARY2F(ty, op)                                                       \
-  do {                                                                         \
-    stackval2 *sp2 = (stackval2 *)sp;                                          \
-    op(sp2[1].ty, sp2[0].ty, &sp2[1].ty);                                      \
+    sp2[1].ty = (sp2[1].ty)op(sp2[0].ty);                                      \
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -930,7 +910,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
     if (sp2[0].ty == 0) {                                                      \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
+    sp2[1].ty = (sp2[1].ty)op(sp2[0].ty);                                      \
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -953,7 +933,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define SHIFT1(ty, op)                                                         \
   do {                                                                         \
-    sp[1].ty = sp[1].ty op sp[0].i32;                                          \
+    sp[1].ty = (sp[1].ty)op(sp[0].i32 & 31);                                   \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -962,7 +942,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define SHIFT2(ty, op)                                                         \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)(sp + 1);                                    \
-    sp2[0].ty = sp2[0].ty op sp[0].i32;                                        \
+    sp2[0].ty = (sp2[0].ty)op(sp[0].i32 & 63);                                 \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -970,14 +950,14 @@ uint32_t mango_syscall(const mango_vm *vm) {
 
 #define CONVERT1(cast, dest, src)                                              \
   do {                                                                         \
-    sp[0].dest = (cast)sp[0].src;                                              \
+    sp[0].dest = (cast)(sp[0].src);                                            \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
 #define CONVERT21(cast, dest, src)                                             \
   do {                                                                         \
-    cast tmp = (cast)sp[0].src;                                                \
+    cast tmp = (cast)(sp[0].src);                                              \
     sp--;                                                                      \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
     sp2[0].dest = tmp;                                                         \
@@ -988,7 +968,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define CONVERT12(cast, dest, src)                                             \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    cast tmp = (cast)sp2[0].src;                                               \
+    cast tmp = (cast)(sp2[0].src);                                             \
     sp++;                                                                      \
     sp[0].dest = tmp;                                                          \
     ip++;                                                                      \
@@ -998,14 +978,14 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define CONVERT2(cast, dest, src)                                              \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    sp2[0].dest = (cast)sp2[0].src;                                            \
+    sp2[0].dest = (cast)(sp2[0].src);                                          \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false);
 
 #define COMPARE1(mem, op)                                                      \
   do {                                                                         \
-    sp[1].i32 = sp[1].mem op sp[0].mem;                                        \
+    sp[1].i32 = (sp[1].mem)op(sp[0].mem);                                      \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -1022,7 +1002,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #define COMPARE2(mem, op)                                                      \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    int32_t tmp = sp2[1].mem op sp2[0].mem;                                    \
+    int32_t tmp = (sp2[1].mem)op(sp2[0].mem);                                  \
     sp += 3;                                                                   \
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
@@ -1099,53 +1079,53 @@ POP_X64: // value ... -> ...
 
 DUP_X32: // value ... -> value value ...
   sp--;
-  sp[0].i32 = sp[1].i32;
+  sp[0].u32 = sp[1].u32;
   ip++;
   NEXT;
 
 DUP_X64: // value ... -> value value ...
   sp -= 2;
-  sp[0].i32 = sp[2].i32;
-  sp[1].i32 = sp[3].i32;
+  sp[0].u32 = sp[2].u32;
+  sp[1].u32 = sp[3].u32;
   ip++;
   NEXT;
 
 SWAP: // value1 value2 ... -> value2 value1 ...
   do {
-    int32_t tmp = sp[0].i32;
-    sp[0].i32 = sp[1].i32;
-    sp[1].i32 = tmp;
+    uint32_t tmp = sp[0].u32;
+    sp[0].u32 = sp[1].u32;
+    sp[1].u32 = tmp;
     ip++;
     NEXT;
   } while (false);
 
 OVER: // value1 value2 ... -> value2 value1 value2 ...
   sp--;
-  sp[0].i32 = sp[2].i32;
+  sp[0].u32 = sp[2].u32;
   ip++;
   NEXT;
 
 ROT: // value1 value2 value3 ... -> value2 value3 value1 ...
   do {
-    int32_t tmp = sp[0].i32;
-    sp[0].i32 = sp[1].i32;
-    sp[1].i32 = sp[2].i32;
-    sp[2].i32 = tmp;
+    uint32_t tmp = sp[0].u32;
+    sp[0].u32 = sp[1].u32;
+    sp[1].u32 = sp[2].u32;
+    sp[2].u32 = tmp;
     ip++;
     NEXT;
   } while (false);
 
 NIP: // value1 value2 ... -> value1 ...
-  sp[1].i32 = sp[0].i32;
+  sp[1].u32 = sp[0].u32;
   sp++;
   ip++;
   NEXT;
 
 TUCK: // value1 value2 ... -> value1 value2 value1 ...
   sp--;
-  sp[0].i32 = sp[1].i32;
-  sp[1].i32 = sp[2].i32;
-  sp[2].i32 = sp[0].i32;
+  sp[0].u32 = sp[1].u32;
+  sp[1].u32 = sp[2].u32;
+  sp[2].u32 = sp[0].u32;
   ip++;
   NEXT;
 
@@ -1160,19 +1140,22 @@ UNUSED15:
 
 LDLOC_X32: // ... -> value ...
   do {
-    uint8_t index = FETCH(1, u8);
+    uint8_t slot = FETCH(1, u8);
+    uint32_t value = sp[slot].u32;
     sp--;
-    sp[0].i32 = sp[1 + index].i32;
+    sp[0].u32 = value;
     ip += 2;
     NEXT;
   } while (false);
 
 LDLOC_X64: // ... -> value ...
   do {
-    uint8_t index = FETCH(1, u8);
+    uint8_t slot = FETCH(1, u8);
+    uint32_t value1 = sp[slot + 0].u32;
+    uint32_t value2 = sp[slot + 1].u32;
     sp -= 2;
-    sp[0].i32 = sp[2 + index + 0].i32;
-    sp[1].i32 = sp[2 + index + 1].i32;
+    sp[0].u32 = value1;
+    sp[1].u32 = value2;
     ip += 2;
     NEXT;
   } while (false);
@@ -1180,8 +1163,8 @@ LDLOC_X64: // ... -> value ...
 LDLOCA: // ... -> address ...
 #ifndef MANGO_NO_REFS
   do {
-    uint8_t index = FETCH(1, u8);
-    void *obj = &sp[index];
+    uint8_t slot = FETCH(1, u8);
+    void *obj = &sp[slot];
     sp--;
     sp[0].ref = void_as_ref(vm, obj);
     ip += 2;
@@ -1193,8 +1176,8 @@ LDLOCA: // ... -> address ...
 
 STLOC_X32: // value ... -> ...
   do {
-    uint8_t index = FETCH(1, u8);
-    sp[index].i32 = sp[0].i32;
+    uint8_t slot = FETCH(1, u8);
+    sp[slot].u32 = sp[0].u32;
     sp++;
     ip += 2;
     NEXT;
@@ -1202,9 +1185,9 @@ STLOC_X32: // value ... -> ...
 
 STLOC_X64: // value ... -> ...
   do {
-    uint8_t index = FETCH(1, u8);
-    sp[index + 0].i32 = sp[0].i32;
-    sp[index + 1].i32 = sp[1].i32;
+    uint8_t slot = FETCH(1, u8);
+    sp[slot + 0].u32 = sp[0].u32;
+    sp[slot + 1].u32 = sp[1].u32;
     sp += 2;
     ip += 2;
     NEXT;
@@ -1221,10 +1204,10 @@ UNUSED23:
 
   {
   RET_X64: // value ... -> ...
-    sp[sf.pop + 1].i32 = sp[1].i32;
+    sp[sf.pop + 1].u32 = sp[1].u32;
 
   RET_X32: // value ... -> ...
-    sp[sf.pop + 0].i32 = sp[0].i32;
+    sp[sf.pop + 0].u32 = sp[0].u32;
 
   RET: // ... -> ...
     sp += sf.pop;
@@ -1241,10 +1224,8 @@ UNUSED23:
   }
 
   {
-    func_token ftn;
-
-  CALL: // argumentN ... argument1 argument0 ... -> result ...
-    ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
+  CALL:; // argumentN ... argument1 argument0 ... -> result ...
+    func_token ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
     goto call;
 
   CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
@@ -1307,7 +1288,7 @@ UNUSED23:
       RETURN(MANGO_E_SECURITY);
     }
 
-    int32_t adjustment = FETCH(1, i8);
+    int8_t adjustment = FETCH(1, i8);
     uint16_t syscall = FETCH(2, u16);
 
     ip += 4;
@@ -1331,12 +1312,12 @@ BR_S: // ... -> ...
   NEXT;
 
 BRFALSE_S: // value ... -> ...
-  ip += 2 + (sp[0].i32 == 0 ? FETCH(1, i8) : 0);
+  ip += 2 + (sp[0].u32 == 0 ? FETCH(1, i8) : 0);
   sp++;
   NEXT;
 
 BRTRUE_S: // value ... -> ...
-  ip += 2 + (sp[0].i32 != 0 ? FETCH(1, i8) : 0);
+  ip += 2 + (sp[0].u32 != 0 ? FETCH(1, i8) : 0);
   sp++;
   NEXT;
 
@@ -1345,12 +1326,12 @@ BR: // ... -> ...
   NEXT;
 
 BRFALSE: // value ... -> ...
-  ip += 3 + (sp[0].i32 == 0 ? FETCH(1, i16) : 0);
+  ip += 3 + (sp[0].u32 == 0 ? FETCH(1, i16) : 0);
   sp++;
   NEXT;
 
 BRTRUE: // value ... -> ...
-  ip += 3 + (sp[0].i32 != 0 ? FETCH(1, i16) : 0);
+  ip += 3 + (sp[0].u32 != 0 ? FETCH(1, i16) : 0);
   sp++;
   NEXT;
 
@@ -1385,14 +1366,14 @@ LDC_I32_S: // ... -> value ...
 
 LDC_X32: // ... -> value ...
   sp--;
-  sp[0].i32 = FETCH(1, i32);
+  sp[0].u32 = FETCH(1, u32);
   ip += 5;
   NEXT;
 
 LDC_X64: // ... -> value ...
   sp -= 2;
-  sp[0].i32 = FETCH(1, i32);
-  sp[1].i32 = FETCH(5, i32);
+  sp[0].u32 = FETCH(1, u32);
+  sp[1].u32 = FETCH(5, u32);
   ip += 9;
   NEXT;
 
@@ -1421,13 +1402,13 @@ UNUSED63:
 #pragma region i32 arithmetic
 
 ADD_I32: // value2 value1 ... -> result ...
-  BINARY1F(u32, __builtin_add_overflow);
+  BINARY1(u32, +);
 
 SUB_I32: // value2 value1 ... -> result ...
-  BINARY1F(u32, __builtin_sub_overflow);
+  BINARY1(u32, -);
 
 MUL_I32: // value2 value1 ... -> result ...
-  BINARY1F(u32, __builtin_mul_overflow);
+  BINARY1(u32, *);
 
 DIV_I32: // value2 value1 ... -> result ...
   BINARY1D(i32, /);
@@ -1442,7 +1423,7 @@ REM_I32_UN: // value2 value1 ... -> result ...
   BINARY1D(u32, %);
 
 NEG_I32: // value ... -> result ...
-  __builtin_sub_overflow(0, sp[0].i32, &sp[0].i32);
+  sp[0].u32 = -(sp[0].u32);
   ip++;
   NEXT;
 
@@ -1476,7 +1457,7 @@ NOT_I32: // value ... -> result ...
 #pragma region i32 comparison
 
 CEQ_I32: // value2 value1 ... -> result ...
-  COMPARE1(i32, ==);
+  COMPARE1(u32, ==);
 
 CNE_I32: // value2 value1 ... -> result ...
   COMPARE1(u32, !=);
@@ -1549,11 +1530,11 @@ NEWOBJ: // ... -> address ...
 NEWARR: // length ... -> array length ...
   do {
     uint32_t size = FETCH(1, u16);
-    int32_t count = sp[0].i32;
-    if (count < 0) {
+    uint32_t length = sp[0].u32;
+    if ((int32_t)length < 0) {
       RETURN(MANGO_E_ARGUMENT);
     }
-    void *arr = mango_heap_alloc(vm, (uint32_t)count, size, __alignof(stackval),
+    void *arr = mango_heap_alloc(vm, length, size, __alignof(stackval),
                                  MANGO_ALLOC_ZERO_MEMORY);
     if (!arr) {
       RETURN(MANGO_E_OUT_OF_MEMORY);
@@ -1566,36 +1547,33 @@ NEWARR: // length ... -> array length ...
 
 SLICE1: // start array length ... -> array length ...
   do {
-    int32_t start = sp[0].i32;
-    if (start < 0 || start > sp[2].i32) {
+    uint32_t start = sp[0].u32;
+    if (start > sp[2].u32) {
       RETURN(MANGO_E_ARGUMENT);
     }
     if (void_is_null(sp[1].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     sp++;
-    sp[0].ref.address += (uint32_t)start;
-    sp[1].i32 -= start;
+    sp[0].ref.address += start;
+    sp[1].u32 -= start;
     ip++;
     NEXT;
   } while (false);
 
 SLICE2: // length' start array length ... -> array length' ...
   do {
-    int32_t length = sp[0].i32;
-    int32_t start = sp[1].i32;
-    if (start < 0 || start > sp[3].i32) {
-      RETURN(MANGO_E_ARGUMENT);
-    }
-    if (length < 0 || length > sp[3].i32 - start) {
+    uint32_t length = sp[0].u32;
+    uint32_t start = sp[1].u32;
+    if (start > sp[3].u32 || length > sp[3].u32 - start) {
       RETURN(MANGO_E_ARGUMENT);
     }
     if (void_is_null(sp[2].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     sp += 2;
-    sp[0].ref.address += (uint32_t)start;
-    sp[1].i32 = length;
+    sp[0].ref.address += start;
+    sp[1].u32 = length;
     ip++;
     NEXT;
   } while (false);
@@ -1608,7 +1586,7 @@ UNUSED103:
 
 #define LOAD_FIELD(cast, ty)                                                   \
   do {                                                                         \
-    uint32_t offset = FETCH(1, u16);                                           \
+    uintptr_t offset = FETCH(1, u16);                                          \
     if (void_is_null(sp[0].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
@@ -1631,18 +1609,18 @@ LDFLD_U16: // address ... -> value ...
   LOAD_FIELD(uint16_t, u32);
 
 LDFLD_X32: // address ... -> value ...
-  LOAD_FIELD(int32_t, i32);
+  LOAD_FIELD(uint32_t, u32);
 
 LDFLD_X64: // address ... -> value ...
   do {
-    uint32_t offset = FETCH(1, u16);
+    uintptr_t offset = FETCH(1, u16);
     if (void_is_null(sp[0].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     const void *obj = void_as_ptr(vm, sp[0].ref);
     sp--;
-    sp[0].i32 = ((const int32_t *)((uintptr_t)obj + offset))[0];
-    sp[1].i32 = ((const int32_t *)((uintptr_t)obj + offset))[1];
+    sp[0].u32 = ((const uint32_t *)((uintptr_t)obj + offset))[0];
+    sp[1].u32 = ((const uint32_t *)((uintptr_t)obj + offset))[1];
     ip += 3;
     NEXT;
   } while (false);
@@ -1660,7 +1638,7 @@ LDFLDA: // address ... -> address ...
 
 #define STORE_FIELD(cast, ty)                                                  \
   do {                                                                         \
-    uint32_t offset = FETCH(1, u16);                                           \
+    uintptr_t offset = FETCH(1, u16);                                          \
     if (void_is_null(sp[1].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
@@ -1672,23 +1650,23 @@ LDFLDA: // address ... -> address ...
   } while (false)
 
 STFLD_X8: // value address ... -> ...
-  STORE_FIELD(int8_t, i32);
+  STORE_FIELD(uint8_t, u32);
 
 STFLD_X16: // value address ... -> ...
-  STORE_FIELD(int16_t, i32);
+  STORE_FIELD(uint16_t, u32);
 
 STFLD_X32: // value address ... -> ...
-  STORE_FIELD(int32_t, i32);
+  STORE_FIELD(uint32_t, u32);
 
 STFLD_X64: // value address -> ...
   do {
-    uint32_t offset = FETCH(1, u16);
+    uintptr_t offset = FETCH(1, u16);
     if (void_is_null(sp[2].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     void *obj = void_as_ptr(vm, sp[2].ref);
-    ((int32_t *)((uintptr_t)obj + offset))[0] = sp[0].i32;
-    ((int32_t *)((uintptr_t)obj + offset))[1] = sp[1].i32;
+    ((uint32_t *)((uintptr_t)obj + offset))[0] = sp[0].u32;
+    ((uint32_t *)((uintptr_t)obj + offset))[1] = sp[1].u32;
     sp += 3;
     ip += 3;
     NEXT;
@@ -1709,8 +1687,8 @@ UNUSED125:
 
 #define LOAD_ELEMENT(cast, ty)                                                 \
   do {                                                                         \
-    int32_t index = sp[0].i32;                                                 \
-    if (index < 0 || index >= sp[2].i32) {                                     \
+    uint32_t index = sp[0].u32;                                                \
+    if (index >= sp[2].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
     if (void_is_null(sp[1].ref)) {                                             \
@@ -1736,12 +1714,12 @@ LDELEM_U16: // index array length ... -> value ...
   LOAD_ELEMENT(uint16_t, u32);
 
 LDELEM_X32: // index array length ... -> value ...
-  LOAD_ELEMENT(int32_t, i32);
+  LOAD_ELEMENT(uint32_t, u32);
 
 LDELEM_X64: // index array length ... -> value ...
   do {
-    int32_t index = sp[0].i32;
-    if (index < 0 || index >= sp[2].i32) {
+    uint32_t index = sp[0].u32;
+    if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     if (void_is_null(sp[1].ref)) {
@@ -1749,8 +1727,8 @@ LDELEM_X64: // index array length ... -> value ...
     }
     void *arr = void_as_ptr(vm, sp[1].ref);
     sp += 1;
-    sp[0].i32 = ((int32_t *)arr)[2 * index + 0];
-    sp[1].i32 = ((int32_t *)arr)[2 * index + 1];
+    sp[0].u32 = ((uint32_t *)arr)[2 * index + 0];
+    sp[1].u32 = ((uint32_t *)arr)[2 * index + 1];
     ip++;
     NEXT;
   } while (false);
@@ -1758,8 +1736,8 @@ LDELEM_X64: // index array length ... -> value ...
 LDELEMA: // index array length ... -> address ...
   do {
     uint32_t size = FETCH(1, u16);
-    int32_t index = sp[0].i32;
-    if (index < 0 || index >= sp[2].i32) {
+    uint32_t index = sp[0].u32;
+    if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     if (void_is_null(sp[1].ref)) {
@@ -1767,16 +1745,16 @@ LDELEMA: // index array length ... -> address ...
     }
     uint32_t address = sp[1].ref.address;
     sp += 2;
-    sp[0].ref.address = address + (uint32_t)index * size;
-    ip += (*ip == LDELEMA) ? 3 : 1;
+    sp[0].ref.address = address + index * size;
+    ip += 3;
     NEXT;
   } while (false);
 
 #define STORE_ELEMENT(cast)                                                    \
   do {                                                                         \
-    int32_t value = sp[0].i32;                                                 \
-    int32_t index = sp[1].i32;                                                 \
-    if (index < 0 || index >= sp[3].i32) {                                     \
+    uint32_t value = sp[0].u32;                                                \
+    uint32_t index = sp[1].u32;                                                \
+    if (index >= sp[3].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
     if (void_is_null(sp[2].ref)) {                                             \
@@ -1790,20 +1768,20 @@ LDELEMA: // index array length ... -> address ...
   } while (false)
 
 STELEM_X8: // value index array length ... -> ...
-  STORE_ELEMENT(int8_t);
+  STORE_ELEMENT(uint8_t);
 
 STELEM_X16: // value index array length ... -> ...
-  STORE_ELEMENT(int16_t);
+  STORE_ELEMENT(uint16_t);
 
 STELEM_X32: // value index array length ... -> ...
-  STORE_ELEMENT(int32_t);
+  STORE_ELEMENT(uint32_t);
 
 STELEM_X64: // value index array length ... -> ...
   do {
-    int32_t value1 = sp[0].i32;
-    int32_t value2 = sp[1].i32;
-    int32_t index = sp[2].i32;
-    if (index < 0 || index >= sp[4].i32) {
+    uint32_t value1 = sp[0].u32;
+    uint32_t value2 = sp[1].u32;
+    uint32_t index = sp[2].u32;
+    if (index >= sp[4].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
     if (void_is_null(sp[3].ref)) {
@@ -1811,8 +1789,8 @@ STELEM_X64: // value index array length ... -> ...
     }
     void *arr = void_as_ptr(vm, sp[3].ref);
     sp += 5;
-    ((int32_t *)arr)[2 * index + 0] = value1;
-    ((int32_t *)arr)[2 * index + 1] = value2;
+    ((uint32_t *)arr)[2 * index + 0] = value1;
+    ((uint32_t *)arr)[2 * index + 1] = value2;
     ip++;
     NEXT;
   } while (false);
@@ -1900,13 +1878,13 @@ UNUSED143:
 #pragma region i64 arithmetic
 
 ADD_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_add_overflow);
+  BINARY2(u64, +);
 
 SUB_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_sub_overflow);
+  BINARY2(u64, -);
 
 MUL_I64: // value2 value1 ... -> result ...
-  BINARY2F(u64, __builtin_mul_overflow);
+  BINARY2(u64, *);
 
 DIV_I64: // value2 value1 ... -> result ...
   BINARY2D(i64, /);
@@ -1923,7 +1901,7 @@ REM_I64_UN: // value2 value1 ... -> result ...
 NEG_I64: // value ... -> result ...
   do {
     stackval2 *sp2 = (stackval2 *)sp;
-    __builtin_sub_overflow(0, sp2[0].i64, &sp2[0].i64);
+    sp2[0].u64 = -(sp2[0].u64);
     ip++;
     NEXT;
   } while (false);
@@ -1958,7 +1936,7 @@ NOT_I64: // value ... -> result ...
 #pragma region i64 comparison
 
 CEQ_I64: // value2 value1 ... -> result ...
-  COMPARE2(i64, ==);
+  COMPARE2(u64, ==);
 
 CNE_I64: // value2 value1 ... -> result ...
   COMPARE2(u64, !=);
