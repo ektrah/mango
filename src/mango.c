@@ -842,6 +842,7 @@ uint32_t mango_syscall(const mango_vm *vm) {
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-label-as-value"
+#pragma clang diagnostic ignored "-Wunused-macros"
 #pragma clang diagnostic ignored "-Wfloat-equal"
 
 #pragma region macros
