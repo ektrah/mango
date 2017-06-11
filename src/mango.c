@@ -269,8 +269,6 @@ uint32_t mango_features(void) {
 ////////////////////////////////////////////////////////////////////////////////
 
 mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
-  uintptr_t address_end;
-
   if (!address) {
     return NULL;
   }
@@ -278,12 +276,6 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
     return NULL;
   }
   if (size < sizeof(mango_vm)) {
-    return NULL;
-  }
-  if (__builtin_add_overflow((uintptr_t)address, size - 1, &address_end)) {
-    return NULL;
-  }
-  if (address_end > UINTPTR_MAX) {
     return NULL;
   }
 
