@@ -462,9 +462,6 @@ uint32_t mango_stack_available(const mango_vm *vm) {
   if (!vm) {
     return 0;
   }
-  if (stackval_is_null(vm->stack)) {
-    return 0;
-  }
 
   return (vm->sp - vm->rp) * sizeof(stackval);
 }
@@ -715,6 +712,9 @@ mango_result mango_execute(mango_vm *vm) {
     return MANGO_E_INVALID_OPERATION;
   }
   if (vm->modules_imported != vm->modules_created) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+  if (stackval_is_null(vm->stack)) {
     return MANGO_E_INVALID_OPERATION;
   }
   if (vm->sp != vm->sp_expected) {
@@ -2374,16 +2374,16 @@ UNUSED255:
 
 #endif
 
-  {
-  invalid:
-    printf("<< INVALID PROGRAM >>\n");
-    result = MANGO_E_INVALID_PROGRAM;
+invalid:
+  printf("<< INVALID PROGRAM >>\n");
+  result = MANGO_E_INVALID_PROGRAM;
 
-  done:
-    vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
-    vm->syscall = 0;
+done:
+  vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
+  vm->syscall = 0;
 
-  yield:;
+yield:
+  do {
     const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
     const mango_module *mp = &modules[sf.module];
     sf.ip = (uint16_t)(ip - mp->image);
@@ -2391,7 +2391,7 @@ UNUSED255:
     vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
     vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
     return result;
-  }
+  } while (false);
 }
 
 #pragma clang diagnostic pop
