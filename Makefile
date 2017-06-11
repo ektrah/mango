@@ -1,7 +1,3 @@
-CC ?= clang-3.8
-ifeq "$(CC)" "cc"
-	CC = clang-3.8
-endif
 ifneq "$(findstring clang,$(CC))" ""
 	CFLAGS += -Werror -Weverything
 else
