@@ -455,7 +455,7 @@ uint32_t mango_stack_size(const mango_vm *vm) {
     return 0;
   }
 
-  return vm->stack_size;
+  return vm->stack_size * sizeof(stackval);
 }
 
 uint32_t mango_stack_available(const mango_vm *vm) {
