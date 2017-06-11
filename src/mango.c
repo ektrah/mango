@@ -117,15 +117,15 @@ typedef struct stack_frame {
   uint16_t ip;
 } stack_frame;
 
-typedef struct func_token {
+typedef struct function_token {
   uint8_t _reserved;
   uint8_t module;
   uint16_t ip;
-} func_token;
+} function_token;
 
 typedef union stackval {
   stack_frame sf;
-  func_token ftn;
+  function_token ftn;
   int32_t i32;
   uint32_t u32;
 #ifndef MANGO_NO_F32
@@ -1035,6 +1035,7 @@ static mango_result _mango_execute(mango_vm *vm) {
   stackval *sp;
   stack_frame sf;
   const uint8_t *ip;
+  function_token ftn;
   mango_result result;
 
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
@@ -1217,25 +1218,34 @@ RET: // ... -> ...
   ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
   NEXT;
 
-  {
-  CALL:; // argumentN ... argument1 argument0 ... -> result ...
-    func_token ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
-    goto call;
+CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
+  ftn = sp[0].ftn;
+  goto call;
 
-  CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
-    ftn = sp[0].ftn;
-    goto call;
+CALL_S: // argumentN ... argument1 argument0 ... -> result ...
+  ftn = (function_token){3, sf.module, FETCH(1, u16)};
+  goto call;
 
-  call:;
+CALL: // argumentN ... argument1 argument0 ... -> result ...
+  do {
+    uint8_t import = FETCH(1, u8);
+    uint16_t offset = FETCH(2, u16);
+    if (import == INVALID_MODULE) {
+      ftn = (function_token){4, sf.module, offset};
+    } else {
+      const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+      const mango_module *mp = &modules[sf.module];
+      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+      ftn = (function_token){4, imports[import], offset};
+    }
+    goto call;
+  } while (false);
+
+call:
+  do {
     const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
     const mango_module *mp = &modules[sf.module];
-    const mango_module *module;
-    if (ftn.module == INVALID_MODULE) {
-      module = mp;
-    } else {
-      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      module = &modules[imports[ftn.module]];
-    }
+    const mango_module *module = &modules[ftn.module];
     const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
     bool in_full_trust = sf.in_full_trust;
@@ -1257,8 +1267,8 @@ RET: // ... -> ...
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += (*ip == CALLI ? 1 : 0);
-    ip += (*ip == CALLI ? 1 : 4);
+    sp += ftn._reserved & 1;
+    ip += ftn._reserved;
 
     if (!(sf.pop == 0 && *ip == RET)) {
       sf.ip = (uint16_t)(ip - mp->image);
@@ -1271,9 +1281,8 @@ RET: // ... -> ...
     sf.module = module->index;
     ip = f->code;
     sp -= f->loc_count;
-
     NEXT;
-  }
+  } while (false);
 
 SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
@@ -1293,7 +1302,6 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     YIELD(MANGO_E_SYSCALL);
   } while (false);
 
-UNUSED30:
 UNUSED31:
   INVALID;
 
@@ -1371,11 +1379,24 @@ LDC_X64: // ... -> value ...
   ip += 9;
   NEXT;
 
-LDFTN: // ... -> ftn ...
-  sp--;
-  sp[0].ftn = (func_token){0, FETCH(1, u8), FETCH(2, u16)};
-  ip += 4;
-  NEXT;
+LDFTN:; // ... -> ftn ...
+  do {
+    uint8_t import = FETCH(1, u8);
+    uint16_t offset = FETCH(2, u16);
+    if (import == INVALID_MODULE) {
+      ftn = (function_token){1, sf.module, offset};
+    } else {
+      const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+      const mango_module *mp = &modules[sf.module];
+      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
+      ftn = (function_token){1, imports[import], offset};
+    }
+
+    sp--;
+    sp[0].ftn = ftn;
+    ip += 4;
+    NEXT;
+  } while (false);
 
 UNUSED54:
 UNUSED55:
