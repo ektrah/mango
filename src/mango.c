@@ -272,10 +272,8 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   if (!address) {
     return NULL;
   }
-  if ((uintptr_t)address & (__alignof(mango_vm) - 1)) {
-    return NULL;
-  }
-  if (size < sizeof(mango_vm)) {
+  if (((uintptr_t)address & (__alignof(mango_vm) - 1)) != 0 ||
+      size < sizeof(mango_vm)) {
     return NULL;
   }
 
@@ -292,11 +290,7 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
 }
 
 void *mango_context(const mango_vm *vm) {
-  if (!vm) {
-    return NULL;
-  }
-
-  return vm->context;
+  return vm != NULL ? vm->context : NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -307,23 +301,17 @@ void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
   uint32_t offset;
   uint32_t available;
 
-  if (!vm) {
+  if (vm == NULL) {
     return NULL;
   }
-  if (!(alignment == 1 || alignment == 2 || alignment == 4)) {
-    return NULL;
-  }
-  if (__builtin_mul_overflow(count, size, &total_size)) {
-    return NULL;
-  }
-  if (__builtin_add_overflow(vm->heap_used, alignment - 1, &offset)) {
+  if (!(alignment == 1 || alignment == 2 || alignment == 4) ||
+      __builtin_mul_overflow(count, size, &total_size) ||
+      __builtin_add_overflow(vm->heap_used, alignment - 1, &offset)) {
     return NULL;
   }
   offset &= ~(alignment - 1);
-  if (__builtin_sub_overflow(vm->heap_size, offset, &available)) {
-    return NULL;
-  }
-  if (total_size > available) {
+  if (__builtin_sub_overflow(vm->heap_size, offset, &available) ||
+      total_size > available) {
     return NULL;
   }
 
@@ -340,31 +328,21 @@ void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
 }
 
 uint32_t mango_heap_size(const mango_vm *vm) {
-  if (!vm) {
-    return 0;
-  }
-
-  return vm->heap_size;
+  return vm != NULL ? vm->heap_size : 0;
 }
 
 uint32_t mango_heap_available(const mango_vm *vm) {
-  if (!vm) {
-    return 0;
-  }
-
-  return vm->heap_size - vm->heap_used;
+  return vm != NULL ? vm->heap_size - vm->heap_used : 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
-  if (!vm) {
+  if (vm == NULL) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (size > UINT16_MAX * sizeof(stackval)) {
-    return MANGO_E_ARGUMENT;
-  }
-  if ((size & (sizeof(stackval) - 1)) != 0) {
+  if (size > UINT16_MAX * sizeof(stackval) ||
+      (size & (sizeof(stackval) - 1)) != 0) {
     return MANGO_E_ARGUMENT;
   }
   if (!stackval_is_null(vm->stack)) {
@@ -388,7 +366,7 @@ mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
 }
 
 void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags) {
-  if (!vm) {
+  if (vm == NULL) {
     return NULL;
   }
   if (size > UINT16_MAX * sizeof(stackval)) {
@@ -416,7 +394,7 @@ void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags) {
 }
 
 mango_result mango_stack_free(mango_vm *vm, uint32_t size) {
-  if (!vm) {
+  if (vm == NULL) {
     return MANGO_E_ARGUMENT_NULL;
   }
   if (size > UINT16_MAX * sizeof(stackval)) {
@@ -437,13 +415,10 @@ mango_result mango_stack_free(mango_vm *vm, uint32_t size) {
 }
 
 void *mango_stack_top(const mango_vm *vm) {
-  if (!vm) {
+  if (vm == NULL) {
     return NULL;
   }
-  if (stackval_is_null(vm->stack)) {
-    return NULL;
-  }
-  if (vm->sp == vm->stack_size) {
+  if (stackval_is_null(vm->stack) || vm->sp == vm->stack_size) {
     return NULL;
   }
 
@@ -451,19 +426,11 @@ void *mango_stack_top(const mango_vm *vm) {
 }
 
 uint32_t mango_stack_size(const mango_vm *vm) {
-  if (!vm) {
-    return 0;
-  }
-
-  return vm->stack_size * sizeof(stackval);
+  return vm != NULL ? vm->stack_size * sizeof(stackval) : 0;
 }
 
 uint32_t mango_stack_available(const mango_vm *vm) {
-  if (!vm) {
-    return 0;
-  }
-
-  return (vm->sp - vm->rp) * sizeof(stackval);
+  return vm != NULL ? (vm->sp - vm->rp) * sizeof(stackval) : 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -611,7 +578,7 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
 mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
                                  const uint8_t *image, uint32_t size,
                                  void *context, uint32_t flags) {
-  if (!vm || !name || !image) {
+  if (vm == NULL || name == NULL || image == NULL) {
     return MANGO_E_ARGUMENT_NULL;
   }
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
@@ -634,7 +601,7 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
 }
 
 const uint8_t *mango_module_missing(const mango_vm *vm) {
-  if (!vm) {
+  if (vm == NULL) {
     return NULL;
   }
   if (vm->modules_imported == vm->modules_created) {
@@ -649,13 +616,11 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
 }
 
 void *mango_module_context(const mango_vm *vm) {
-  if (!vm) {
+  if (vm == NULL) {
     return NULL;
   }
-  if (vm->modules_imported == 0) {
-    return NULL;
-  }
-  if (vm->modules_imported != vm->modules_created) {
+  if (vm->modules_imported == 0 ||
+      vm->modules_imported != vm->modules_created) {
     return NULL;
   }
 
@@ -672,13 +637,11 @@ void *mango_module_context(const mango_vm *vm) {
 static mango_result _mango_execute(mango_vm *vm);
 
 mango_result mango_execute(mango_vm *vm) {
-  if (!vm) {
+  if (vm == NULL) {
     return MANGO_E_ARGUMENT_NULL;
   }
-  if (vm->modules_imported == 0) {
-    return MANGO_E_INVALID_OPERATION;
-  }
-  if (vm->modules_imported != vm->modules_created) {
+  if (vm->modules_imported == 0 ||
+      vm->modules_imported != vm->modules_created) {
     return MANGO_E_INVALID_OPERATION;
   }
   if (stackval_is_null(vm->stack)) {
@@ -770,11 +733,7 @@ mango_result mango_execute(mango_vm *vm) {
 }
 
 uint32_t mango_syscall(const mango_vm *vm) {
-  if (!vm) {
-    return 0;
-  }
-
-  return vm->syscall;
+  return vm != NULL ? vm->syscall : 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
