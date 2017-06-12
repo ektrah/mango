@@ -439,7 +439,7 @@ static uint8_t _mango_get_or_create_module(mango_vm *vm,
     return 0;
   }
 
-  for (uint8_t i = 1; i < vm->modules_created; i++) {
+  for (uint_fast8_t i = 1; i < vm->modules_created; i++) {
     const mango_module_name *n = _mango_get_module_name(modules, &modules[i]);
     if (memcmp(name, n, sizeof(mango_module_name)) == 0) {
       return i;
@@ -465,7 +465,7 @@ static mango_result _mango_initialize_module(mango_vm *vm,
       return MANGO_E_OUT_OF_MEMORY;
     }
 
-    for (uint8_t i = 0; i < m->import_count; i++) {
+    for (uint_fast8_t i = 0; i < m->import_count; i++) {
       imports[i] =
           _mango_get_or_create_module(vm, &m->imports[i], module->index, i);
     }
@@ -654,7 +654,7 @@ mango_result mango_execute(mango_vm *vm) {
 
       const uint8_t *imports = uint8_t_as_ptr(vm, module->imports);
 
-      for (uint8_t i = 0; i < m->import_count; i++) {
+      for (uint_fast8_t i = 0; i < m->import_count; i++) {
         uint8_t p = imports[i];
         mango_module *import = &modules[p];
 
@@ -1174,7 +1174,7 @@ call:
     ip = f->code;
 
     if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
-      for (int i = 0, n = f->loc_count; i < n; i++) {
+      for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
         sp[i].u32 = 0;
       }
     }
