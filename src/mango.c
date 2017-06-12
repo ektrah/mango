@@ -118,7 +118,8 @@ typedef struct stack_frame {
 } stack_frame;
 
 typedef struct function_token {
-  uint8_t flags;
+  uint8_t add_sp : 4;
+  uint8_t add_ip : 4;
   uint8_t module;
   uint16_t ip;
 } function_token;
@@ -1130,7 +1131,7 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
   goto call;
 
 CALL_S: // argumentN ... argument1 argument0 ... -> result ...
-  ftn = (function_token){3, sf.module, FETCH(1, u16)};
+  ftn = (function_token){0, 3, sf.module, FETCH(1, u16)};
   goto call;
 
 CALL: // argumentN ... argument1 argument0 ... -> result ...
@@ -1138,12 +1139,12 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     uint8_t import = FETCH(1, u8);
     uint16_t offset = FETCH(2, u16);
     if (import == INVALID_MODULE) {
-      ftn = (function_token){4, sf.module, offset};
+      ftn = (function_token){0, 4, sf.module, offset};
     } else {
       const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
       const mango_module *mp = &modules[sf.module];
       const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      ftn = (function_token){4, imports[import], offset};
+      ftn = (function_token){0, 4, imports[import], offset};
     }
     goto call;
   } while (false);
@@ -1174,8 +1175,8 @@ call:
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += ftn.flags == 1;
-    ip += ftn.flags;
+    sp += ftn.add_sp;
+    ip += ftn.add_ip;
 
     if (!(sf.pop == 0 && *ip == RET)) {
       sf.ip = (uint16_t)(ip - mp->image);
@@ -1298,12 +1299,12 @@ LDFTN: // ... -> ftn ...
     uint8_t import = FETCH(1, u8);
     uint16_t offset = FETCH(2, u16);
     if (import == INVALID_MODULE) {
-      ftn = (function_token){1, sf.module, offset};
+      ftn = (function_token){1, 1, sf.module, offset};
     } else {
       const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
       const mango_module *mp = &modules[sf.module];
       const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      ftn = (function_token){1, imports[import], offset};
+      ftn = (function_token){1, 1, imports[import], offset};
     }
 
     sp--;
