@@ -954,7 +954,9 @@ static mango_result _mango_execute(mango_vm *vm) {
 
 HALT: // ... -> ...
   if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
-    RETURN(MANGO_E_STACK_IMBALANCE);
+    vm->sp_expected = vm->stack_size;
+    vm->syscall = 0;
+    YIELD(MANGO_E_STACK_IMBALANCE);
   }
   RETURN(MANGO_E_SUCCESS);
 
