@@ -1174,7 +1174,7 @@ call:
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += ftn.flags & 1;
+    sp += ftn.flags == 1;
     ip += ftn.flags;
 
     if (!(sf.pop == 0 && *ip == RET)) {
