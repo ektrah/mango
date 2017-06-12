@@ -118,7 +118,7 @@ typedef struct stack_frame {
 } stack_frame;
 
 typedef struct function_token {
-  uint8_t _reserved;
+  uint8_t flags;
   uint8_t module;
   uint16_t ip;
 } function_token;
@@ -1257,8 +1257,8 @@ call:
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += ftn._reserved & 1;
-    ip += ftn._reserved;
+    sp += ftn.flags & 1;
+    ip += ftn.flags;
 
     if (!(sf.pop == 0 && *ip == RET)) {
       sf.ip = (uint16_t)(ip - mp->image);
@@ -1269,8 +1269,8 @@ call:
     sf.in_full_trust = in_full_trust;
     sf.pop = f->arg_count + f->loc_count;
     sf.module = module->index;
-    ip = f->code;
     sp -= f->loc_count;
+    ip = f->code;
     NEXT;
   } while (false);
 
@@ -1369,7 +1369,7 @@ LDC_X64: // ... -> value ...
   ip += 9;
   NEXT;
 
-LDFTN:; // ... -> ftn ...
+LDFTN: // ... -> ftn ...
   do {
     uint8_t import = FETCH(1, u8);
     uint16_t offset = FETCH(2, u16);
@@ -1763,8 +1763,8 @@ LDELEMA: // index array length ... -> address ...
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
     void *arr = void_as_ptr(vm, sp[2].ref);                                    \
-    sp += 4;                                                                   \
     ((cast *)arr)[index] = (cast)value;                                        \
+    sp += 4;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (false)
@@ -1790,9 +1790,9 @@ STELEM_X64: // value index array length ... -> ...
       RETURN(MANGO_E_NULL_REFERENCE);
     }
     void *arr = void_as_ptr(vm, sp[3].ref);
-    sp += 5;
     ((uint32_t *)arr)[2 * index + 0] = value1;
     ((uint32_t *)arr)[2 * index + 1] = value2;
+    sp += 5;
     ip++;
     NEXT;
   } while (false);
