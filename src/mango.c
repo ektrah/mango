@@ -505,9 +505,8 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
     }
   }
 
-  mango_module *modules =
-      mango_heap_alloc(vm, app->module_count, sizeof(mango_module),
-                       __alignof(mango_module), MANGO_ALLOC_ZERO_MEMORY);
+  mango_module *modules = mango_heap_alloc(
+      vm, app->module_count, sizeof(mango_module), __alignof(mango_module), 0);
 
   if (!modules) {
     return MANGO_E_OUT_OF_MEMORY;
@@ -528,6 +527,8 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   module->init_prev = INVALID_MODULE;
   module->name_module = INVALID_MODULE;
   module->name_index = INVALID_MODULE;
+  module->imports = (uint8_t_ref){0};
+  module->static_data = (void_ref){0};
   module->context = context;
 
   return _mango_initialize_module(vm, module);
@@ -553,6 +554,8 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
+  module->imports = (uint8_t_ref){0};
+  module->static_data = (void_ref){0};
   module->context = context;
 
   return _mango_initialize_module(vm, module);
