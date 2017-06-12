@@ -67,6 +67,7 @@ typedef struct mango_app_info {
 
 typedef enum mango_func_attributes {
   MANGO_FD_NONE = 0x0,
+  MANGO_FD_INIT_LOCALS = 0x1,
   MANGO_FD_SECURITY_CRITICAL = 0x2,
   MANGO_FD_SECURITY_SAFE_CRITICAL = 0x4,
 } mango_function_attributes;

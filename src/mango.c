@@ -1271,6 +1271,13 @@ call:
     sf.module = module->index;
     sp -= f->loc_count;
     ip = f->code;
+
+    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+      for (int i = 0, n = f->loc_count; i < n; i++) {
+        sp[i].u32 = 0;
+      }
+    }
+
     NEXT;
   } while (false);
 
