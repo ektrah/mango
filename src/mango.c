@@ -543,7 +543,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   if ((app->features & mango_features()) != app->features) {
     return MANGO_E_NOT_SUPPORTED;
   }
-  if (app->halt != HALT) {
+  if (app->entry_point[3] != HALT) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
 
@@ -567,7 +567,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){false, 0, 0, (uint16_t)(&app->halt - image)};
+  vm->sf = (stack_frame){false, 0, 0, (uint16_t)(&app->entry_point[3] - image)};
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -671,39 +671,6 @@ void *mango_module_context(const mango_vm *vm) {
 
 static mango_result _mango_execute(mango_vm *vm);
 
-static mango_result _mango_set_entry_point(mango_vm *vm, mango_module *module,
-                                           uint32_t offset) {
-  const mango_func_def *f = (const mango_func_def *)(module->image + offset);
-
-  bool in_full_trust = vm->sf.in_full_trust;
-  if (!in_full_trust &&
-      (f->attributes &
-       (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
-    if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
-        (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
-      printf("<< SECURITY VIOLATION >>\n");
-      return MANGO_E_SECURITY;
-    }
-    printf("------------------------------ ENTER FULL TRUST "
-           "------------------------------\n");
-    in_full_trust = true;
-  }
-
-  if (vm->sp - vm->rp < 1 + f->loc_count + f->max_stack) {
-    printf("<< STACK OVERFLOW >>\n");
-    return MANGO_E_STACK_OVERFLOW;
-  }
-
-  stackval *rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
-  rp->sf = vm->sf;
-  vm->rp++;
-
-  vm->sf = (stack_frame){in_full_trust, f->arg_count + f->loc_count,
-                         module->index, (uint16_t)(f->code - module->image)};
-  vm->sp -= f->loc_count;
-  return MANGO_E_SUCCESS;
-}
-
 mango_result mango_execute(mango_vm *vm) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
@@ -769,15 +736,11 @@ mango_result mango_execute(mango_vm *vm) {
       }
 
       printf("initialize module %u\n", module->index);
-      if (m->initializer != 0) {
-        result = _mango_set_entry_point(vm, module, m->initializer);
-        if (result != MANGO_E_SUCCESS) {
-          return result;
-        }
-        result = _mango_execute(vm);
-        if (result != MANGO_E_SUCCESS) {
-          return result;
-        }
+      vm->sf = (stack_frame){false, 0, module->index,
+                             (uint16_t)(m->initializer - module->image)};
+      result = _mango_execute(vm);
+      if (result != MANGO_E_SUCCESS) {
+        return result;
       }
     }
   }
@@ -791,13 +754,9 @@ mango_result mango_execute(mango_vm *vm) {
                                  (module->image_size - sizeof(mango_app_info)));
 
     printf("execute main\n");
-    if (app->main != 0) {
-      result = _mango_set_entry_point(vm, module, app->main);
-      if (result != MANGO_E_SUCCESS) {
-        return result;
-      }
-      return _mango_execute(vm);
-    }
+    vm->sf = (stack_frame){false, 0, module->index,
+                           (uint16_t)(app->entry_point - module->image)};
+    return _mango_execute(vm);
   }
 
 #ifdef _DEBUG

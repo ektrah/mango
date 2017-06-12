@@ -53,7 +53,7 @@ typedef struct mango_module_def {
   uint8_t version;
   uint8_t attributes;
   uint8_t import_count;
-  uint16_t initializer;
+  uint8_t initializer[4];
   mango_module_name imports[];
 } mango_module_def;
 
@@ -61,8 +61,7 @@ typedef struct mango_app_info {
   uint16_t features;
   uint16_t stack_size;
   uint8_t module_count;
-  uint8_t halt;
-  uint16_t main;
+  uint8_t entry_point[4];
 } mango_app_info;
 
 typedef enum mango_func_attributes {
