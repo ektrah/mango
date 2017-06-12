@@ -32,7 +32,7 @@
 
 #include <math.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 
 #ifdef _DEBUG
@@ -737,7 +737,7 @@ mango_result mango_execute(mango_vm *vm) {
 
       printf("initialize module %u\n", module->index);
       vm->sf = (stack_frame){false, 0, module->index,
-                             (uint16_t)(m->initializer - module->image)};
+                             (uint16_t)offsetof(mango_module_def, initializer)};
       result = _mango_execute(vm);
       if (result != MANGO_E_SUCCESS) {
         return result;
@@ -748,14 +748,11 @@ mango_result mango_execute(mango_vm *vm) {
   if ((vm->flags & VISITED) == 0) {
     vm->flags |= VISITED;
 
-    mango_module *module = &modules[0];
-    const mango_app_info *app =
-        (const mango_app_info *)(module->image +
-                                 (module->image_size - sizeof(mango_app_info)));
-
     printf("execute main\n");
-    vm->sf = (stack_frame){false, 0, module->index,
-                           (uint16_t)(app->entry_point - module->image)};
+    vm->sf = (stack_frame){false, 0, 0,
+                           (uint16_t)(modules[0].image_size -
+                                      (sizeof(mango_app_info) -
+                                       offsetof(mango_app_info, entry_point)))};
     return _mango_execute(vm);
   }
 
