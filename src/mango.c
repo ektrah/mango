@@ -732,7 +732,11 @@ uint32_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #pragma region macros
 
 #if defined(__clang__) || defined(__GNUC__)
-#define NEXT goto *dispatch_table[*ip]
+#define NEXT                                                                   \
+  do {                                                                         \
+    printf("* %s\n", opcodes[*ip]);                                            \
+    goto *dispatch_table[*ip];                                                 \
+  } while (false)
 #else
 #error Unsupported compiler
 #define NEXT
@@ -908,6 +912,13 @@ static mango_result _mango_execute(mango_vm *vm) {
 #include "mango_opcodes.inc"
 #undef OPCODE
   };
+#ifdef _DEBUG
+  static const char *const opcodes[] = {
+#define OPCODE(c, s, pop, push, args, i) s,
+#include "mango_opcodes.inc"
+#undef OPCODE
+  };
+#endif
 
   stackval *rp;
   stackval *sp;
