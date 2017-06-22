@@ -175,8 +175,8 @@ typedef struct mango_vm {
   uint16_t sp_expected;
   stack_frame sf;
 
-  uint32_t _reserved2;
-  uint32_t _reserved3;
+  uint8_t result;
+  uint8_t _reserved[7];
 
   union {
     void *context;
@@ -287,6 +287,21 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
   vm->heap_used = sizeof(mango_vm);
   vm->context = context;
   return vm;
+}
+
+mango_result mango_error(mango_vm *vm, mango_result error) {
+  if (!vm) {
+    return MANGO_E_ARGUMENT_NULL;
+  }
+  if (!(error > MANGO_E_SUCCESS && error < MANGO_E_BREAKPOINT)) {
+    return MANGO_E_ARGUMENT;
+  }
+  if (vm->result > MANGO_E_SUCCESS && vm->result < MANGO_E_BREAKPOINT) {
+    return MANGO_E_INVALID_OPERATION;
+  }
+
+  vm->result = error;
+  return MANGO_E_SUCCESS;
 }
 
 void *mango_context(const mango_vm *vm) { return vm ? vm->context : NULL; }
@@ -636,6 +651,9 @@ mango_result mango_execute(mango_vm *vm) {
   if (vm->sp != vm->sp_expected) {
     return MANGO_E_STACK_IMBALANCE;
   }
+  if (vm->result > MANGO_E_SUCCESS && vm->result < MANGO_E_BREAKPOINT) {
+    return vm->result;
+  }
 
   mango_result result = _mango_execute(vm);
   if (result != MANGO_E_SUCCESS) {
@@ -746,13 +764,13 @@ uint32_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 #define YIELD(Result)                                                          \
   do {                                                                         \
-    result = Result;                                                           \
+    vm->result = Result;                                                       \
     goto yield;                                                                \
   } while (false)
 
 #define RETURN(Result)                                                         \
   do {                                                                         \
-    result = Result;                                                           \
+    vm->result = Result;                                                       \
     goto done;                                                                 \
   } while (false)
 
@@ -925,7 +943,6 @@ static mango_result _mango_execute(mango_vm *vm) {
   stack_frame sf;
   const uint8_t *ip;
   function_token ftn;
-  mango_result result;
 
   rp = stackval_as_ptr(vm, vm->stack) + vm->rp;
   sp = stackval_as_ptr(vm, vm->stack) + vm->sp;
@@ -2284,7 +2301,7 @@ UNUSED255:
 
 invalid:
   printf("<< INVALID PROGRAM >>\n");
-  result = MANGO_E_INVALID_PROGRAM;
+  vm->result = MANGO_E_INVALID_PROGRAM;
 
 done:
   vm->sp_expected = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
@@ -2298,7 +2315,7 @@ yield:
     vm->sf = sf;
     vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
     vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
-    return result;
+    return vm->result;
   } while (false);
 }
 

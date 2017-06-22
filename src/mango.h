@@ -104,6 +104,8 @@ MANGO_API uint32_t mango_features(void);
 MANGO_API mango_vm *mango_initialize(void *address, uint32_t size,
                                      void *context);
 
+MANGO_API mango_result mango_error(mango_vm *vm, mango_result error);
+
 MANGO_API void *mango_context(const mango_vm *vm);
 
 MANGO_API void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
