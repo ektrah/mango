@@ -95,7 +95,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define MANGO_MEMORY_MAGIC 127
+#define MANGO_VM_MAGIC UINT16_C(0x007F)
 
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
@@ -152,8 +152,7 @@ typedef union stackval2 {
 } stackval2;
 
 typedef struct mango_vm {
-  uint8_t magic;
-  uint8_t version;
+  uint16_t magic;
 
   uint16_t syscall;
 
@@ -281,8 +280,7 @@ mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
-  vm->magic = MANGO_MEMORY_MAGIC;
-  vm->version = MANGO_VERSION_MAJOR;
+  vm->magic = MANGO_VM_MAGIC;
   vm->heap_size = size;
   vm->heap_used = sizeof(mango_vm);
   vm->context = context;
@@ -585,11 +583,11 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
-  if (image[0] != MANGO_IMAGE_MAGIC || image[1] != MANGO_VERSION_MAJOR) {
-    return MANGO_E_BAD_IMAGE_FORMAT;
-  }
   if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
     return MANGO_E_VERIFICATION;
+  }
+  if (((const mango_module_def *)image)->magic != MANGO_IMAGE_MAGIC) {
+    return MANGO_E_BAD_IMAGE_FORMAT;
   }
 
   if (vm->modules_imported == 0) {
