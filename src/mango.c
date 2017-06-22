@@ -129,10 +129,10 @@ typedef union stackval {
   function_token ftn;
   int32_t i32;
   uint32_t u32;
-#ifndef MANGO_NO_F32
+#if !defined(MANGO_NO_F32)
   float f32;
 #endif
-#ifndef MANGO_NO_REFS
+#if !defined(MANGO_NO_REFS)
   void_ref ref;
 #endif
 } stackval;
@@ -142,11 +142,11 @@ typedef union stackval2 {
     void_ref ref;
     int32_t length;
   } slice;
-#ifndef MANGO_NO_I64
+#if !defined(MANGO_NO_I64)
   int64_t i64;
   uint64_t u64;
 #endif
-#ifndef MANGO_NO_F64
+#if !defined(MANGO_NO_F64)
   double f64;
 #endif
 } stackval2;
@@ -252,16 +252,16 @@ const char *mango_version_string(void) { return MANGO_VERSION_STRING; }
 
 uint32_t mango_features(void) {
   uint32_t features = 0;
-#ifndef MANGO_NO_I64
+#if !defined(MANGO_NO_I64)
   features |= MANGO_FEATURE_I64;
 #endif
-#ifndef MANGO_NO_F32
+#if !defined(MANGO_NO_F32)
   features |= MANGO_FEATURE_F32;
 #endif
-#ifndef MANGO_NO_F64
+#if !defined(MANGO_NO_F64)
   features |= MANGO_FEATURE_F64;
 #endif
-#ifndef MANGO_NO_REFS
+#if !defined(MANGO_NO_REFS)
   features |= MANGO_FEATURE_REFS;
 #endif
   return features;
@@ -1049,7 +1049,7 @@ LDLOC_X64: // ... -> value ...
   } while (false);
 
 LDLOCA: // ... -> address ...
-#ifndef MANGO_NO_REFS
+#if !defined(MANGO_NO_REFS)
   do {
     uint8_t slot = FETCH(1, u8);
     void *obj = &sp[slot];
