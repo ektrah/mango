@@ -646,11 +646,11 @@ mango_result mango_execute(mango_vm *vm) {
   if (stackval_is_null(vm->stack)) {
     return MANGO_E_INVALID_OPERATION;
   }
-  if (vm->sp != vm->sp_expected) {
-    return MANGO_E_STACK_IMBALANCE;
-  }
   if (vm->result > MANGO_E_SUCCESS && vm->result < MANGO_E_BREAKPOINT) {
     return vm->result;
+  }
+  if (vm->sp != vm->sp_expected) {
+    return vm->result = MANGO_E_STACK_IMBALANCE;
   }
 
   mango_result result = _mango_execute(vm);
