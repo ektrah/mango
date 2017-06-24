@@ -31,7 +31,6 @@
 #include "mango_metadata.h"
 
 #include <math.h>
-#include <stdbool.h>
 #include <string.h>
 
 #ifdef _DEBUG
@@ -64,7 +63,7 @@
                                                                                \
   static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
                                                                                \
-  static inline bool Type##_is_null(Type##_ref ref) { return !ref.address; }
+  static inline int Type##_is_null(Type##_ref ref) { return !ref.address; }
 
 #elif UINTPTR_MAX == UINT64_MAX
 
@@ -86,7 +85,7 @@
                                                                                \
   static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
                                                                                \
-  static inline bool Type##_is_null(Type##_ref ref) { return !ref.address; }
+  static inline int Type##_is_null(Type##_ref ref) { return !ref.address; }
 
 #else
 #error Unsupported bitness
@@ -540,7 +539,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){false, 0, 0, (uint16_t)(&app->entry_point[3] - image)};
+  vm->sf = (stack_frame){0, 0, 0, (uint16_t)(&app->entry_point[3] - image)};
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -702,7 +701,7 @@ mango_result mango_execute(mango_vm *vm) {
       }
 
       printf("initialize module %u\n", module->index);
-      vm->sf = (stack_frame){false, 0, module->index,
+      vm->sf = (stack_frame){0, 0, module->index,
                              (uint16_t)offsetof(mango_module_def, initializer)};
       result = _mango_execute(vm);
       if (result != MANGO_E_SUCCESS) {
@@ -715,7 +714,7 @@ mango_result mango_execute(mango_vm *vm) {
     vm->flags |= VISITED;
 
     printf("execute main\n");
-    vm->sf = (stack_frame){false, 0, 0,
+    vm->sf = (stack_frame){0, 0, 0,
                            (uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
                                        offsetof(mango_app_info, entry_point)))};
@@ -743,7 +742,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
   do {                                                                         \
     printf("* %s\n", opcodes[*ip]);                                            \
     goto *dispatch_table[*ip];                                                 \
-  } while (false)
+  } while (0)
 #else
 #error Unsupported compiler
 #define NEXT
@@ -755,18 +754,18 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
   do {                                                                         \
     vm->result = Result;                                                       \
     goto yield;                                                                \
-  } while (false)
+  } while (0)
 
 #define RETURN(Result)                                                         \
   do {                                                                         \
     vm->result = Result;                                                       \
     goto done;                                                                 \
-  } while (false)
+  } while (0)
 
 #define INVALID                                                                \
   do {                                                                         \
     goto invalid;                                                              \
-  } while (false)
+  } while (0)
 
 #define BINARY1(ty, op)                                                        \
   do {                                                                         \
@@ -774,7 +773,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define BINARY1D(ty, op)                                                       \
   do {                                                                         \
@@ -785,7 +784,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define BINARY2(ty, op)                                                        \
   do {                                                                         \
@@ -794,7 +793,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define BINARY2D(ty, op)                                                       \
   do {                                                                         \
@@ -806,14 +805,14 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define UNARY1(ty, op)                                                         \
   do {                                                                         \
     sp[0].ty = op(sp[0].ty);                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define UNARY2(ty, op)                                                         \
   do {                                                                         \
@@ -821,7 +820,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].ty = op(sp2[0].ty);                                                 \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define SHIFT1(ty, op)                                                         \
   do {                                                                         \
@@ -829,7 +828,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define SHIFT2(ty, op)                                                         \
   do {                                                                         \
@@ -838,14 +837,14 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define CONVERT1(cast, dest, src)                                              \
   do {                                                                         \
     sp[0].dest = (cast)sp[0].src;                                              \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define CONVERT21(cast, dest, src)                                             \
   do {                                                                         \
@@ -855,7 +854,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].dest = tmp;                                                         \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define CONVERT12(cast, dest, src)                                             \
   do {                                                                         \
@@ -865,7 +864,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].dest = tmp;                                                          \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define CONVERT2(cast, dest, src)                                              \
   do {                                                                         \
@@ -873,7 +872,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].dest = (cast)sp2[0].src;                                            \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define COMPARE1(ty, op)                                                       \
   do {                                                                         \
@@ -881,7 +880,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define COMPARE1F(ty, op)                                                      \
   do {                                                                         \
@@ -889,7 +888,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define COMPARE2(ty, op)                                                       \
   do {                                                                         \
@@ -899,7 +898,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #define COMPARE2F(ty, op)                                                      \
   do {                                                                         \
@@ -909,7 +908,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false);
+  } while (0);
 
 #pragma endregion
 
@@ -991,7 +990,7 @@ SWAP: // value1 value2 ... -> value2 value1 ...
     sp[1].u32 = tmp;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 OVER: // value1 value2 ... -> value2 value1 value2 ...
   sp--;
@@ -1007,7 +1006,7 @@ ROT: // value1 value2 value3 ... -> value2 value3 value1 ...
     sp[2].u32 = tmp;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 NIP: // value1 value2 ... -> value1 ...
   sp[1].u32 = sp[0].u32;
@@ -1040,7 +1039,7 @@ LDLOC_X32: // ... -> value ...
     sp[0].u32 = value;
     ip += 2;
     NEXT;
-  } while (false);
+  } while (0);
 
 LDLOC_X64: // ... -> value ...
   do {
@@ -1052,7 +1051,7 @@ LDLOC_X64: // ... -> value ...
     sp[1].u32 = value2;
     ip += 2;
     NEXT;
-  } while (false);
+  } while (0);
 
 LDLOCA: // ... -> address ...
 #if !defined(MANGO_NO_REFS)
@@ -1063,7 +1062,7 @@ LDLOCA: // ... -> address ...
     sp[0].ref = void_as_ref(vm, obj);
     ip += 2;
     NEXT;
-  } while (false);
+  } while (0);
 #else
   INVALID;
 #endif
@@ -1075,7 +1074,7 @@ STLOC_X32: // value ... -> ...
     sp++;
     ip += 2;
     NEXT;
-  } while (false);
+  } while (0);
 
 STLOC_X64: // value ... -> ...
   do {
@@ -1085,7 +1084,7 @@ STLOC_X64: // value ... -> ...
     sp += 2;
     ip += 2;
     NEXT;
-  } while (false);
+  } while (0);
 
 UNUSED21:
 UNUSED22:
@@ -1136,7 +1135,7 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
       ftn = (function_token){0, 4, imports[import], offset};
     }
     goto call;
-  } while (false);
+  } while (0);
 
 call:
   do {
@@ -1145,7 +1144,7 @@ call:
     const mango_module *module = &modules[ftn.module];
     const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
-    bool in_full_trust = sf.in_full_trust;
+    uint8_t in_full_trust = sf.in_full_trust;
     if (!in_full_trust &&
         (f->attributes &
          (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
@@ -1156,7 +1155,7 @@ call:
       }
       printf("------------------------------ ENTER FULL TRUST "
              "------------------------------\n");
-      in_full_trust = true;
+      in_full_trust = 1;
     }
 
     if ((uintptr_t)sp - (uintptr_t)rp < 1U + f->loc_count + f->max_stack) {
@@ -1186,7 +1185,7 @@ call:
     }
 
     NEXT;
-  } while (false);
+  } while (0);
 
 SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
@@ -1204,7 +1203,7 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     vm->syscall = syscall;
 
     YIELD(MANGO_E_SYSCALL);
-  } while (false);
+  } while (0);
 
 UNUSED31:
   INVALID;
@@ -1300,7 +1299,7 @@ LDFTN: // ... -> ftn ...
     sp[0].ftn = ftn;
     ip += 4;
     NEXT;
-  } while (false);
+  } while (0);
 
 UNUSED54:
 UNUSED55:
@@ -1442,7 +1441,7 @@ NEWOBJ: // ... -> address ...
     sp[0].ref = void_as_ref(vm, obj);
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 NEWARR: // length ... -> array length ...
   do {
@@ -1460,7 +1459,7 @@ NEWARR: // length ... -> array length ...
     sp[0].ref = void_as_ref(vm, arr);
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 SLICE1: // start array length ... -> array length ...
   do {
@@ -1476,7 +1475,7 @@ SLICE1: // start array length ... -> array length ...
     sp[1].u32 -= start;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 SLICE2: // length' start array length ... -> array length' ...
   do {
@@ -1493,7 +1492,7 @@ SLICE2: // length' start array length ... -> array length' ...
     sp[1].u32 = length;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 UNUSED100:
 UNUSED101:
@@ -1511,7 +1510,7 @@ UNUSED103:
     sp[0].ty = fld[0];                                                         \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (false)
+  } while (0)
 
 LDFLD_I8: // address ... -> value ...
   LOAD_FIELD(int8_t, i32);
@@ -1540,7 +1539,7 @@ LDFLD_X64: // address ... -> value ...
     sp[1].u32 = fld[1];
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 LDFLDA: // address ... -> address ...
   do {
@@ -1550,7 +1549,7 @@ LDFLDA: // address ... -> address ...
     sp[0].ref.address += FETCH(1, u16);
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 #define STORE_FIELD(cast, ty)                                                  \
   do {                                                                         \
@@ -1563,7 +1562,7 @@ LDFLDA: // address ... -> address ...
     sp += 2;                                                                   \
     ip += 3;                                                                   \
     NEXT;                                                                      \
-  } while (false)
+  } while (0)
 
 STFLD_X8: // value address ... -> ...
   STORE_FIELD(uint8_t, u32);
@@ -1586,7 +1585,7 @@ STFLD_X64: // value address -> ...
     sp += 3;
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 UNUSED115:
 UNUSED116:
@@ -1615,7 +1614,7 @@ UNUSED125:
     sp[0].ty = ((const cast *)arr)[index];                                     \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false)
+  } while (0)
 
 LDELEM_I8: // index array length ... -> value ...
   LOAD_ELEMENT(int8_t, i32);
@@ -1647,7 +1646,7 @@ LDELEM_X64: // index array length ... -> value ...
     sp[1].u32 = ((uint32_t *)arr)[2 * index + 1];
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 LDELEMA: // index array length ... -> address ...
   do {
@@ -1664,7 +1663,7 @@ LDELEMA: // index array length ... -> address ...
     sp[0].ref.address = address + index * size;
     ip += 3;
     NEXT;
-  } while (false);
+  } while (0);
 
 #define STORE_ELEMENT(cast)                                                    \
   do {                                                                         \
@@ -1681,7 +1680,7 @@ LDELEMA: // index array length ... -> address ...
     sp += 4;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (false)
+  } while (0)
 
 STELEM_X8: // value index array length ... -> ...
   STORE_ELEMENT(uint8_t);
@@ -1709,7 +1708,7 @@ STELEM_X64: // value index array length ... -> ...
     sp += 5;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 UNUSED137:
 UNUSED138:
@@ -2187,7 +2186,7 @@ REM_F64: // value2 value1 ... -> result ...
     sp += 2;
     ip++;
     NEXT;
-  } while (false);
+  } while (0);
 
 NEG_F64: // value ... -> result ...
   UNARY2(f64, -);
@@ -2307,7 +2306,7 @@ yield:
     vm->sp = (uint16_t)(sp - stackval_as_ptr(vm, vm->stack));
     vm->rp = (uint16_t)(rp - stackval_as_ptr(vm, vm->stack));
     return vm->result;
-  } while (false);
+  } while (0);
 }
 
 #pragma clang diagnostic pop
