@@ -601,32 +601,22 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
 }
 
 const uint8_t *mango_module_missing(const mango_vm *vm) {
-  if (!vm) {
-    return NULL;
-  }
-  if (vm->modules_imported == vm->modules_created) {
+  if (!vm || vm->modules_imported >= vm->modules_created) {
     return NULL;
   }
 
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
-  const mango_module_name *n = _mango_get_module_name(modules, module);
-
-  return (const uint8_t *)n;
+  return (const uint8_t *)_mango_get_module_name(modules, module);
 }
 
 void *mango_module_context(const mango_vm *vm) {
-  if (!vm) {
-    return NULL;
-  }
-  if (vm->modules_imported == 0 ||
-      vm->modules_imported != vm->modules_created) {
+  if (!vm || vm->sf.module >= vm->modules_imported) {
     return NULL;
   }
 
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->sf.module];
-
   return module->context;
 }
 
