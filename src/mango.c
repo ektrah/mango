@@ -47,7 +47,7 @@
 
 #define MANGO_DECLARE_REF_TYPE(Type)                                           \
                                                                                \
-  typedef struct Type##_ref { uint32_t address; } Type##_ref;
+  typedef struct Type##_ref { uintptr_t address; } Type##_ref;
 
 #define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
                                                                                \
@@ -60,7 +60,7 @@
   static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
                                          Const Type *ptr) {                    \
     (void)vm;                                                                  \
-    return (Type##_ref){(uint32_t)ptr};                                        \
+    return (Type##_ref){(uintptr_t)ptr};                                       \
   }                                                                            \
                                                                                \
   static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
