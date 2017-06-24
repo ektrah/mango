@@ -32,7 +32,6 @@
 
 #include <math.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <string.h>
 
 #ifdef _DEBUG
@@ -273,20 +272,25 @@ uint32_t mango_features(void) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-mango_vm *mango_initialize(void *address, uint32_t size, void *context) {
+mango_vm *mango_initialize(void *address, size_t size, void *context) {
   if (!address || size < sizeof(mango_vm)) {
     return NULL;
   }
+#if SIZE_MAX > UINT32_MAX
+  if (size > UINT32_MAX) {
+    return NULL;
+  }
+#endif
   if (((uintptr_t)address & (__alignof(mango_vm) - 1)) != 0) {
     return NULL;
   }
 
-  printf("allocate %u bytes\n", (uint32_t)sizeof(mango_vm));
+  printf("allocate %u bytes\n", (unsigned int)sizeof(mango_vm));
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
   vm->magic = MANGO_VM_MAGIC;
-  vm->heap_size = size;
+  vm->heap_size = (uint32_t)size;
   vm->heap_used = sizeof(mango_vm);
   vm->context = context;
   return vm;
@@ -311,11 +315,11 @@ void *mango_context(const mango_vm *vm) { return vm ? vm->context : NULL; }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
-                       uint32_t alignment, uint32_t flags) {
-  uint32_t total_size;
-  uint32_t offset;
-  uint32_t available;
+void *mango_heap_alloc(mango_vm *vm, size_t count, size_t size,
+                       size_t alignment, int flags) {
+  size_t total_size;
+  size_t offset;
+  size_t available;
 
   if (!vm) {
     return NULL;
@@ -331,9 +335,9 @@ void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
     return NULL;
   }
 
-  printf("allocate %u bytes\n", total_size);
+  printf("allocate %u bytes\n", (unsigned int)total_size);
 
-  vm->heap_used = offset + total_size;
+  vm->heap_used = (uint32_t)(offset + total_size);
   void *block = (void *)((uintptr_t)vm + offset);
 
   if ((flags & MANGO_ALLOC_ZERO_MEMORY) != 0) {
@@ -343,15 +347,17 @@ void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
   return block;
 }
 
-uint32_t mango_heap_size(const mango_vm *vm) { return vm ? vm->heap_size : 0; }
+size_t mango_heap_size(const mango_vm *vm) {
+  return vm ? (size_t)vm->heap_size : 0;
+}
 
-uint32_t mango_heap_available(const mango_vm *vm) {
-  return vm ? vm->heap_size - vm->heap_used : 0;
+size_t mango_heap_available(const mango_vm *vm) {
+  return vm ? (size_t)vm->heap_size - (size_t)vm->heap_used : 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
+mango_result mango_stack_create(mango_vm *vm, size_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -381,14 +387,14 @@ mango_result mango_stack_create(mango_vm *vm, uint32_t size) {
   return MANGO_E_SUCCESS;
 }
 
-void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags) {
+void *mango_stack_alloc(mango_vm *vm, size_t size, int flags) {
   if (!vm || stackval_is_null(vm->stack)) {
     return NULL;
   }
 
-  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+  size_t count = (size + (sizeof(stackval) - 1)) / sizeof(stackval);
 
-  if ((uint32_t)vm->sp - (uint32_t)vm->rp < count) {
+  if ((size_t)vm->sp - (size_t)vm->rp < count) {
     return NULL;
   }
 
@@ -403,14 +409,14 @@ void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags) {
   return block;
 }
 
-mango_result mango_stack_free(mango_vm *vm, uint32_t size) {
+mango_result mango_stack_free(mango_vm *vm, size_t size) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
 
-  uint32_t count = (size + sizeof(stackval) - 1) / sizeof(stackval);
+  size_t count = (size + (sizeof(stackval) - 1)) / sizeof(stackval);
 
-  if ((uint32_t)vm->stack_size - (uint32_t)vm->sp < count) {
+  if ((size_t)vm->stack_size - (size_t)vm->sp < count) {
     return MANGO_E_STACK_OVERFLOW;
   }
 
@@ -426,12 +432,12 @@ void *mango_stack_top(const mango_vm *vm) {
   return stackval_as_ptr(vm, vm->stack) + vm->sp;
 }
 
-uint32_t mango_stack_size(const mango_vm *vm) {
-  return vm ? (uint32_t)vm->stack_size * sizeof(stackval) : 0;
+size_t mango_stack_size(const mango_vm *vm) {
+  return vm ? (size_t)vm->stack_size * sizeof(stackval) : 0;
 }
 
-uint32_t mango_stack_available(const mango_vm *vm) {
-  return vm ? ((uint32_t)vm->sp - (uint32_t)vm->rp) * sizeof(stackval) : 0;
+size_t mango_stack_available(const mango_vm *vm) {
+  return vm ? ((size_t)vm->sp - (size_t)vm->rp) * sizeof(stackval) : 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -497,8 +503,8 @@ static mango_result _mango_initialize_module(mango_vm *vm,
 static mango_result _mango_import_startup_module(mango_vm *vm,
                                                  const uint8_t *name,
                                                  const uint8_t *image,
-                                                 uint32_t size, void *context,
-                                                 uint32_t flags) {
+                                                 size_t size, void *context,
+                                                 int flags) {
   const mango_module_def *m = (const mango_module_def *)image;
 
   if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
@@ -555,8 +561,8 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
 static mango_result _mango_import_missing_module(mango_vm *vm,
                                                  const uint8_t *name,
                                                  const uint8_t *image,
-                                                 uint32_t size, void *context,
-                                                 uint32_t flags) {
+                                                 size_t size, void *context,
+                                                 int flags) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
   const mango_module_name *n = _mango_get_module_name(modules, module);
@@ -580,8 +586,8 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
 }
 
 mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
-                                 const uint8_t *image, uint32_t size,
-                                 void *context, uint32_t flags) {
+                                 const uint8_t *image, size_t size,
+                                 void *context, int flags) {
   if (!vm || !name || !image) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -719,7 +725,7 @@ mango_result mango_execute(mango_vm *vm) {
   return MANGO_E_SUCCESS;
 }
 
-uint32_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
+uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -937,7 +943,7 @@ static mango_result _mango_execute(mango_vm *vm) {
 #pragma region basic
 
 HALT: // ... -> ...
-  if (sp - stackval_as_ptr(vm, vm->stack) < vm->stack_size) {
+  if ((uint16_t)(sp - stackval_as_ptr(vm, vm->stack)) < vm->stack_size) {
     vm->sp_expected = vm->stack_size;
     vm->syscall = 0;
     YIELD(MANGO_E_STACK_IMBALANCE);
@@ -1153,7 +1159,7 @@ call:
       in_full_trust = true;
     }
 
-    if (sp - rp < 1 + f->loc_count + f->max_stack) {
+    if ((uintptr_t)sp - (uintptr_t)rp < 1U + f->loc_count + f->max_stack) {
       printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
     }

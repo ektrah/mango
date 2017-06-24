@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -101,35 +102,34 @@ MANGO_API const char *mango_version_string(void);
 
 MANGO_API uint32_t mango_features(void);
 
-MANGO_API mango_vm *mango_initialize(void *address, uint32_t size,
-                                     void *context);
+MANGO_API mango_vm *mango_initialize(void *address, size_t size, void *context);
 
 MANGO_API mango_result mango_error(mango_vm *vm, mango_result error);
 
 MANGO_API void *mango_context(const mango_vm *vm);
 
-MANGO_API void *mango_heap_alloc(mango_vm *vm, uint32_t count, uint32_t size,
-                                 uint32_t alignment, uint32_t flags);
+MANGO_API void *mango_heap_alloc(mango_vm *vm, size_t count, size_t size,
+                                 size_t alignment, int flags);
 
-MANGO_API uint32_t mango_heap_size(const mango_vm *vm);
+MANGO_API size_t mango_heap_size(const mango_vm *vm);
 
-MANGO_API uint32_t mango_heap_available(const mango_vm *vm);
+MANGO_API size_t mango_heap_available(const mango_vm *vm);
 
-MANGO_API mango_result mango_stack_create(mango_vm *vm, uint32_t size);
+MANGO_API mango_result mango_stack_create(mango_vm *vm, size_t size);
 
-MANGO_API void *mango_stack_alloc(mango_vm *vm, uint32_t size, uint32_t flags);
+MANGO_API void *mango_stack_alloc(mango_vm *vm, size_t size, int flags);
 
-MANGO_API mango_result mango_stack_free(mango_vm *vm, uint32_t size);
+MANGO_API mango_result mango_stack_free(mango_vm *vm, size_t size);
 
 MANGO_API void *mango_stack_top(const mango_vm *vm);
 
-MANGO_API uint32_t mango_stack_size(const mango_vm *vm);
+MANGO_API size_t mango_stack_size(const mango_vm *vm);
 
-MANGO_API uint32_t mango_stack_available(const mango_vm *vm);
+MANGO_API size_t mango_stack_available(const mango_vm *vm);
 
 MANGO_API mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
-                                           const uint8_t *image, uint32_t size,
-                                           void *context, uint32_t flags);
+                                           const uint8_t *image, size_t size,
+                                           void *context, int flags);
 
 MANGO_API const uint8_t *mango_module_missing(const mango_vm *vm);
 
@@ -137,7 +137,7 @@ MANGO_API void *mango_module_context(const mango_vm *vm);
 
 MANGO_API mango_result mango_execute(mango_vm *vm);
 
-MANGO_API uint32_t mango_syscall(const mango_vm *vm);
+MANGO_API uint16_t mango_syscall(const mango_vm *vm);
 
 ////////////////////////////////////////////////////////////////////////////////
 
