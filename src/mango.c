@@ -63,6 +63,8 @@
     return (Type##_ref){(uint32_t)ptr};                                        \
   }                                                                            \
                                                                                \
+  static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
+                                                                               \
   static inline bool Type##_is_null(Type##_ref ref) { return !ref.address; }
 
 #elif UINTPTR_MAX == UINT64_MAX
@@ -82,6 +84,8 @@
                                          Const Type *ptr) {                    \
     return (Type##_ref){(uint32_t)((uintptr_t)ptr - (uintptr_t)vm)};           \
   }                                                                            \
+                                                                               \
+  static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
                                                                                \
   static inline bool Type##_is_null(Type##_ref ref) { return !ref.address; }
 
@@ -541,8 +545,8 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   module->init_prev = INVALID_MODULE;
   module->name_module = INVALID_MODULE;
   module->name_index = INVALID_MODULE;
-  module->imports = (uint8_t_ref){0};
-  module->static_data = (void_ref){0};
+  module->imports = uint8_t_null();
+  module->static_data = void_null();
   module->context = context;
 
   return _mango_initialize_module(vm, module);
@@ -568,8 +572,8 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
   module->flags = (uint8_t)flags;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
-  module->imports = (uint8_t_ref){0};
-  module->static_data = (void_ref){0};
+  module->imports = uint8_t_null();
+  module->static_data = void_null();
   module->context = context;
 
   return _mango_initialize_module(vm, module);
@@ -1776,6 +1780,8 @@ UNUSED143:
 
 #endif
 
+  (void)stackval_null;
+  (void)mango_module_null;
   (void)uint8_t_is_null;
   (void)mango_module_is_null;
 
