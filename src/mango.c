@@ -712,16 +712,6 @@ mango_result mango_execute(mango_vm *vm) {
     return _mango_execute(vm);
   }
 
-#ifdef _DEBUG
-  printf("\n  stack\n  -----\n");
-  for (const stackval *stack = stackval_as_ptr(vm, vm->stack),
-                      *sp = stack + vm->sp, *rp = stack + vm->rp, *p = stack;
-       p != stack + vm->stack_size; p++) {
-    printf("   %3u %c   %8X\n", (uint32_t)(p - stack),
-           (p == sp || p == rp) ? '*' : ' ', p->u32);
-  }
-#endif
-
   return MANGO_E_SUCCESS;
 }
 
