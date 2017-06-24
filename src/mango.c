@@ -238,6 +238,7 @@ _Static_assert(sizeof(mango_vm) == 64, "Incorrect layout");
 _Static_assert(__alignof(mango_vm) == 4, "Incorrect layout");
 _Static_assert(sizeof(mango_module) == 32, "Incorrect layout");
 _Static_assert(__alignof(mango_module) == 4, "Incorrect layout");
+_Static_assert(sizeof(packed) == 4, "Incorrect layout");
 _Static_assert(__alignof(packed) == 1, "Incorrect layout");
 #endif
 
