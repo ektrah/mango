@@ -183,14 +183,14 @@ typedef struct mango_vm {
 
   union {
     void *context;
-    uint32_t _context[2];
+    uint8_t _context[8];
   };
 } mango_vm;
 
 typedef struct mango_module {
   union {
     const uint8_t *image;
-    uint32_t _image[2];
+    uint8_t _image[8];
   };
 
   uint16_t image_size;
@@ -207,7 +207,7 @@ typedef struct mango_module {
 
   union {
     void *context;
-    uint32_t _context[2];
+    uint8_t _context[8];
   };
 } mango_module;
 
