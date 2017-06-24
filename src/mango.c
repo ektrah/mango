@@ -139,8 +139,8 @@ typedef union stackval {
 
 typedef union stackval2 {
   struct {
-    void_ref ref;
-    int32_t length;
+    void_ref address;
+    uint32_t length;
   } slice;
 #if !defined(MANGO_NO_I64)
   int64_t i64;
