@@ -961,9 +961,6 @@ BREAK: // ... -> ...
   ++ip;
   RETURN(MANGO_E_BREAKPOINT);
 
-UNUSED3:
-  INVALID;
-
 POP_X32: // value ... -> ...
   sp++;
   ip++;
@@ -1026,24 +1023,34 @@ TUCK: // value1 value2 ... -> value1 value2 value1 ...
   ip++;
   NEXT;
 
-UNUSED13:
-UNUSED14:
-UNUSED15:
-  INVALID;
-
 #pragma endregion
 
 #pragma region locals
 
+#define LOAD_LOCAL(cast, ty)                                                   \
+  do {                                                                         \
+    uint8_t slot = FETCH(1, u8);                                               \
+    cast value = (cast)sp[slot].ty;                                            \
+    sp--;                                                                      \
+    sp[0].ty = value;                                                          \
+    ip += 2;                                                                   \
+    NEXT;                                                                      \
+  } while (0)
+
+LDLOC_I8: // ... -> value ...
+  LOAD_LOCAL(int8_t, i32);
+
+LDLOC_U8: // ... -> value ...
+  LOAD_LOCAL(uint8_t, u32);
+
+LDLOC_I16: // ... -> value ...
+  LOAD_LOCAL(int16_t, i32);
+
+LDLOC_U16: // ... -> value ...
+  LOAD_LOCAL(uint16_t, u32);
+
 LDLOC_X32: // ... -> value ...
-  do {
-    uint8_t slot = FETCH(1, u8);
-    uint32_t value = sp[slot].u32;
-    sp--;
-    sp[0].u32 = value;
-    ip += 2;
-    NEXT;
-  } while (0);
+  LOAD_LOCAL(uint32_t, u32);
 
 LDLOC_X64: // ... -> value ...
   do {
