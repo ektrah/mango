@@ -4,7 +4,7 @@
  * | | | |     | | | |  |  |  |  |
  * |_|_|_|__|__|_|___|_____|_____|
  *
- * Mango Virtual Machine 0.34-dev
+ * Mango Virtual Machine 1.0-dev
  *
  * Copyright (c) 2017 Klaus Hartke
  *
@@ -36,10 +36,10 @@
 extern "C" {
 #endif
 
-#define MANGO_VERSION_MAJOR 0
-#define MANGO_VERSION_MINOR 34
+#define MANGO_VERSION_MAJOR 1
+#define MANGO_VERSION_MINOR 0
 
-#define MANGO_VERSION_STRING "0.34-dev"
+#define MANGO_VERSION_STRING "1.0-dev"
 
 #ifdef MANGO_EXPORTS
 #ifdef _WIN32

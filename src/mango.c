@@ -4,7 +4,7 @@
  * | | | |     | | | |  |  |  |  |
  * |_|_|_|__|__|_|___|_____|_____|
  *
- * Mango Virtual Machine 0.34-dev
+ * Mango Virtual Machine 1.0-dev
  *
  * Copyright (c) 2017 Klaus Hartke
  *
@@ -93,6 +93,10 @@
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error Unsupported byte order
+#endif
+
+#if MANGO_IMAGE_MAGIC != UINT16_C(0x00FF)
+#error Unsupported image format
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

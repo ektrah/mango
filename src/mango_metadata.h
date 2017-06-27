@@ -4,7 +4,7 @@
  * | | | |     | | | |  |  |  |  |
  * |_|_|_|__|__|_|___|_____|_____|
  *
- * Mango Virtual Machine 0.34-dev
+ * Mango Virtual Machine 1.0-dev
  *
  * Copyright (c) 2017 Klaus Hartke
  *
