@@ -101,8 +101,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define MANGO_VM_MAGIC UINT16_C(0x007F)
-
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
 MANGO_DECLARE_REF_TYPE(stackval)
@@ -158,8 +156,9 @@ typedef union stackval2 {
 } stackval2;
 
 typedef struct mango_vm {
-  uint16_t magic;
+  uint8_t version;
 
+  uint8_t result;
   uint16_t syscall;
 
   uint32_t heap_size;
@@ -180,8 +179,7 @@ typedef struct mango_vm {
   uint16_t sp_expected;
   stack_frame sf;
 
-  uint8_t result;
-  uint8_t _reserved[7];
+  uint32_t _reserved[2];
 
   union {
     void *context;
@@ -294,7 +292,7 @@ mango_vm *mango_initialize(void *address, size_t size, void *context) {
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
-  vm->magic = MANGO_VM_MAGIC;
+  vm->version = MANGO_VERSION_MAJOR;
   vm->heap_size = (uint32_t)size;
   vm->heap_used = sizeof(mango_vm);
   vm->context = context;
