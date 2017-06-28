@@ -236,6 +236,8 @@ MANGO_DEFINE_REF_TYPE(mango_module, )
 #if defined(__clang__) || defined(__GNUC__)
 _Static_assert(sizeof(stack_frame) == 4, "Incorrect layout");
 _Static_assert(__alignof(stack_frame) == 2, "Incorrect layout");
+_Static_assert(sizeof(function_token) == 4, "Incorrect layout");
+_Static_assert(__alignof(function_token) == 2, "Incorrect layout");
 _Static_assert(sizeof(stackval) == 4, "Incorrect layout");
 _Static_assert(__alignof(stackval) == 4, "Incorrect layout");
 _Static_assert(sizeof(stackval2) == 8, "Incorrect layout");
