@@ -897,7 +897,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #define COMPARE2(ty, op)                                                       \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    int32_t tmp = sp2[1].ty op sp2[0].ty;                                      \
+    int tmp = sp2[1].ty op sp2[0].ty;                                          \
     sp += 3;                                                                   \
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
@@ -907,7 +907,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #define COMPARE2F(ty, op)                                                      \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    int32_t tmp = op(sp2[1].ty, sp2[0].ty);                                    \
+    int tmp = op(sp2[1].ty, sp2[0].ty);                                        \
     sp += 3;                                                                   \
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
@@ -1270,7 +1270,7 @@ LDC_I32_6:
 LDC_I32_7:
 LDC_I32_8: // ... -> value ...
   sp--;
-  sp[0].i32 = (int32_t)(*ip) - LDC_I32_0;
+  sp[0].i32 = (int)(*ip) - LDC_I32_0;
   ip++;
   NEXT;
 
