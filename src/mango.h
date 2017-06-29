@@ -102,7 +102,8 @@ MANGO_API const char *mango_version_string(void);
 
 MANGO_API uint32_t mango_features(void);
 
-MANGO_API mango_vm *mango_initialize(void *address, size_t size, void *context);
+MANGO_API mango_vm *mango_initialize(void *address, size_t heap_size,
+                                     size_t stack_size, void *context);
 
 MANGO_API mango_result mango_error(mango_vm *vm, mango_result error);
 
@@ -115,13 +116,11 @@ MANGO_API size_t mango_heap_size(const mango_vm *vm);
 
 MANGO_API size_t mango_heap_available(const mango_vm *vm);
 
-MANGO_API mango_result mango_stack_create(mango_vm *vm, size_t size);
-
 MANGO_API void *mango_stack_alloc(mango_vm *vm, size_t size, int flags);
 
 MANGO_API mango_result mango_stack_free(mango_vm *vm, size_t size);
 
-MANGO_API void *mango_stack_top(const mango_vm *vm);
+MANGO_API void *mango_stack_top(mango_vm *vm);
 
 MANGO_API size_t mango_stack_size(const mango_vm *vm);
 
