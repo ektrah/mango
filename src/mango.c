@@ -746,12 +746,26 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     NEXT;                                                                      \
   } while (0);
 
-#define BINARY1D(ty, op)                                                       \
+#define BINARY1I(op)                                                           \
   do {                                                                         \
-    if (sp[0].ty == 0) {                                                       \
+    if (sp[0].i32 == 0) {                                                      \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp[1].ty = sp[1].ty op sp[0].ty;                                           \
+    if (sp[0].i32 == -1 && sp[1].i32 == INT32_MIN) {                           \
+      RETURN(MANGO_E_ARITHMETIC);                                              \
+    }                                                                          \
+    sp[1].i32 = sp[1].i32 op sp[0].i32;                                        \
+    sp++;                                                                      \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
+
+#define BINARY1U(op)                                                           \
+  do {                                                                         \
+    if (sp[0].u32 == 0) {                                                      \
+      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
+    }                                                                          \
+    sp[1].u32 = sp[1].u32 op sp[0].u32;                                        \
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -766,13 +780,28 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     NEXT;                                                                      \
   } while (0);
 
-#define BINARY2D(ty, op)                                                       \
+#define BINARY2I(op)                                                           \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    if (sp2[0].ty == 0) {                                                      \
+    if (sp2[0].i64 == 0) {                                                     \
       RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
     }                                                                          \
-    sp2[1].ty = sp2[1].ty op sp2[0].ty;                                        \
+    if (sp2[0].i64 == -1 && sp2[1].i64 == INT64_MIN) {                         \
+      RETURN(MANGO_E_ARITHMETIC);                                              \
+    }                                                                          \
+    sp2[1].i64 = sp2[1].i64 op sp2[0].i64;                                     \
+    sp += 2;                                                                   \
+    ip++;                                                                      \
+    NEXT;                                                                      \
+  } while (0);
+
+#define BINARY2U(op)                                                           \
+  do {                                                                         \
+    stackval2 *sp2 = (stackval2 *)sp;                                          \
+    if (sp2[0].u64 == 0) {                                                     \
+      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
+    }                                                                          \
+    sp2[1].u64 = sp2[1].u64 op sp2[0].u64;                                     \
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -1306,16 +1335,16 @@ MUL_I32: // value2 value1 ... -> result ...
   BINARY1(u32, *);
 
 DIV_I32: // value2 value1 ... -> result ...
-  BINARY1D(i32, /);
+  BINARY1I(/);
 
 DIV_I32_UN: // value2 value1 ... -> result ...
-  BINARY1D(u32, /);
+  BINARY1U(/);
 
 REM_I32: // value2 value1 ... -> result ...
-  BINARY1D(i32, %);
+  BINARY1I(%);
 
 REM_I32_UN: // value2 value1 ... -> result ...
-  BINARY1D(u32, %);
+  BINARY1U(%);
 
 NEG_I32: // value ... -> result ...
   UNARY1(u32, -);
@@ -1780,16 +1809,16 @@ MUL_I64: // value2 value1 ... -> result ...
   BINARY2(u64, *);
 
 DIV_I64: // value2 value1 ... -> result ...
-  BINARY2D(i64, /);
+  BINARY2I(/);
 
 DIV_I64_UN: // value2 value1 ... -> result ...
-  BINARY2D(u64, /);
+  BINARY2U(/);
 
 REM_I64: // value2 value1 ... -> result ...
-  BINARY2D(i64, %);
+  BINARY2I(%);
 
 REM_I64_UN: // value2 value1 ... -> result ...
-  BINARY2D(u64, %);
+  BINARY2U(%);
 
 NEG_I64: // value ... -> result ...
   UNARY2(u64, -);
