@@ -1,26 +1,23 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2006
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{65A0FFBE-920F-4E0F-AF37-55407AA3513A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CA8DC76B-7EBF-40D9-8021-D532CD5961F0}"
 	ProjectSection(SolutionItems) = preProject
 		.clang-format = .clang-format
+		.editorconfig = .editorconfig
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
 		.travis.yml = .travis.yml
 		LICENSE = LICENSE
 		Makefile = Makefile
 		NOTICE = NOTICE
+		docs\opcodes.md = docs\opcodes.md
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mango", "Mango.vcxproj", "{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{FF0C02F6-5CD9-4563-9ACD-86A91E171944}"
-	ProjectSection(SolutionItems) = preProject
-		docs\opcodes.md = docs\opcodes.md
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Mango", "Mango.vcxproj", "{FF87258B-82A7-4B94-83A0-8E8293C6C47A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,19 +27,19 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Debug|x64.ActiveCfg = Debug|x64
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Debug|x64.Build.0 = Debug|x64
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Debug|x86.ActiveCfg = Debug|Win32
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Debug|x86.Build.0 = Debug|Win32
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Release|x64.ActiveCfg = Release|x64
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Release|x64.Build.0 = Release|x64
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Release|x86.ActiveCfg = Release|Win32
-		{386E6D46-FDC1-4529-9365-2BCA5D0DBEE6}.Release|x86.Build.0 = Release|Win32
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Debug|x64.ActiveCfg = Debug|x64
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Debug|x64.Build.0 = Debug|x64
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Debug|x86.ActiveCfg = Debug|Win32
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Debug|x86.Build.0 = Debug|Win32
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Release|x64.ActiveCfg = Release|x64
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Release|x64.Build.0 = Release|x64
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Release|x86.ActiveCfg = Release|Win32
+		{FF87258B-82A7-4B94-83A0-8E8293C6C47A}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{FF0C02F6-5CD9-4563-9ACD-86A91E171944} = {65A0FFBE-920F-4E0F-AF37-55407AA3513A}
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {633D9322-8513-456C-A7AE-A1F0D16B8097}
 	EndGlobalSection
 EndGlobal
