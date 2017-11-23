@@ -1,6 +1,5 @@
 # Mango Virtual Machine
 
-[![Build Status](https://travis-ci.org/ektrah/mango.svg?branch=master)](https://travis-ci.org/ektrah/mango)
 [![Maintenance](https://img.shields.io/maintenance/yes/2017.svg)](https://github.com/ektrah/mango)
 [![MIT License](https://img.shields.io/github/license/ektrah/mango.svg?maxAge=2592000)](LICENSE)
 
