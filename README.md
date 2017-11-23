@@ -3,7 +3,7 @@
 [![Maintenance](https://img.shields.io/maintenance/yes/2017.svg)](https://github.com/ektrah/mango)
 [![MIT License](https://img.shields.io/github/license/ektrah/mango.svg?maxAge=2592000)](LICENSE)
 
-Mango is a tiny, yet powerful virtual machine designed to run in very constrained memory space (<1 KB RAM).
+Mango is a tiny, yet powerful virtual machine that runs type-safe mobile code in very little memory (<1 KiB RAM).
 
 #### Features
 
@@ -21,5 +21,5 @@ Mango is a tiny, yet powerful virtual machine designed to run in very constraine
 * Code access security (security critical and security safe-critical code)
 * Memory safety and type safety
 * No garbage collector
+* No standard library
 * An easy-to-use C API (event-loop friendly)
-* A minimal runtime
