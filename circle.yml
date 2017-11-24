@@ -1,0 +1,18 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: buildpack-deps:stretch-scm
+    steps:
+      - run:
+          name: Install prerequisites
+          command: |
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+            echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" > /etc/apt/sources.list.d/clang-5.0.list
+            apt-get update
+            apt-get install --yes --no-install-recommends clang-5.0 lldb-5.0 lld-5.0 make
+      - checkout
+      - run:
+          name: Build
+          command: make CC=clang-5.0 CFLAGS="-target x86_64-linux-gnu"
