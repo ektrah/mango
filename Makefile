@@ -1,31 +1,26 @@
-ifeq "$(findstring clang,$(CC))" "clang"
-	CFLAGS += -Werror -Weverything
+ifeq "$(findstring clang,$(notdir $(CC)))" "clang"
+	WCFLAGS := $(CFLAGS) -Werror -Weverything
 else
-	CFLAGS += -Werror -Wall -Wextra
+	WCFLAGS := $(CFLAGS) -Werror -Wall -Wextra
 endif
 
 ifeq "$(OS)" "Windows_NT"
-	LIBMANGO = bin/libmango.dll
+	LIBMANGO := libmango.dll
 else ifeq "$(shell uname -s)" "Darwin"
-	LIBMANGO = bin/libmango.dylib
+	LIBMANGO := libmango.dylib
 else
-	LIBMANGO = bin/libmango.so
+	LIBMANGO := libmango.so
 endif
-
-CFLAGS += -std=c11 -O3 -fvisibility=hidden
 
 all: $(LIBMANGO)
 
-bin/libmango.dll: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc bin
-	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -Wl,-nodefaultlib:libcmt -o $@ $< -lmsvcrt -lvcruntime -lucrt
+libmango.dll: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
+	$(CC) $(WCFLAGS) -std=c11 -O3 -DMANGO_EXPORTS -fvisibility=hidden -shared -Wl,-nodefaultlib:libcmt -o $@ $< -lmsvcrt -lvcruntime -lucrt
 
-bin/libmango.so: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc bin
-	$(CC) $(CFLAGS) -DMANGO_EXPORTS -shared -fPIC -Wl,--no-undefined -o $@ $< -lm
+libmango.so: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
+	$(CC) $(WCFLAGS) -std=c11 -O3 -DMANGO_EXPORTS -fvisibility=hidden -shared -fPIC -Wl,--no-undefined -Wl,--as-needed -o $@ $< -lm
 
-bin/libmango.dylib: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc bin
-	$(CC) $(CFLAGS) -DMANGO_EXPORTS -dynamiclib -o $@ $<
-
-bin:
-	mkdir bin
+libmango.dylib: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
+	$(CC) $(WCFLAGS) -std=c11 -O3 -DMANGO_EXPORTS -fvisibility=hidden -dynamiclib -o $@ $<
 
 .PHONY: all
