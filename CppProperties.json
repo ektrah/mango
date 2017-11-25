@@ -7,6 +7,7 @@
         {
           "Platform": "x86",
           "Configuration": "Debug",
+          "CC": "clang.exe",
           "CFLAGS": "-target i686-pc-windows-msvc -g"
         }
       ],
@@ -26,6 +27,7 @@
         {
           "Platform": "x86",
           "Configuration": "Release",
+          "CC": "clang.exe",
           "CFLAGS": "-target i686-pc-windows-msvc -O3"
         }
       ],
@@ -45,6 +47,7 @@
         {
           "Platform": "x64",
           "Configuration": "Debug",
+          "CC": "clang.exe",
           "CFLAGS": "-target x86_64-pc-windows-msvc -g"
         }
       ],
@@ -64,6 +67,7 @@
         {
           "Platform": "x64",
           "Configuration": "Release",
+          "CC": "clang.exe",
           "CFLAGS": "-target x86_64-pc-windows-msvc -O3"
         }
       ],
