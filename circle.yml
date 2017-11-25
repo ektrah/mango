@@ -8,12 +8,18 @@ jobs:
       - run:
           name: Install prerequisites
           command: |
-            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+            wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
             echo "deb http://apt.llvm.org/stretch/ llvm-toolchain-stretch-5.0 main" > /etc/apt/sources.list.d/clang-5.0.list
-            apt-get update
-            apt-get install --yes --no-install-recommends clang-5.0 lldb-5.0 lld-5.0 make
+            apt-get -qq update
+            apt-get -qq install --yes --no-install-recommends clang-5.0 gcc-6 gcc-6-multilib make
       - checkout
       - run:
           name: Build
           command: |
-            make CC=clang-5.0 CFLAGS="-target x86_64-linux-gnu -O3"
+            mkdir -p bin/x64/clang/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3" OUTDIR=bin/x64/clang/
+            mkdir -p bin/x86/clang/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3" OUTDIR=bin/x86/clang/
+            mkdir -p bin/x64/gcc/ && make CC=gcc-6 CFLAGS="-m64 -O3" OUTDIR=bin/x64/gcc/
+            mkdir -p bin/x86/gcc/ && make CC=gcc-6 CFLAGS="-m32 -O3" OUTDIR=bin/x86/gcc/
+      - store_artifacts:
+          path: bin
+          destination: /
