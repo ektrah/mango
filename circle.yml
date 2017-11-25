@@ -15,4 +15,5 @@ jobs:
       - checkout
       - run:
           name: Build
-          command: make CC=clang-5.0 CFLAGS="-target x86_64-linux-gnu"
+          command: |
+            make CC=clang-5.0 CFLAGS="-target x86_64-linux-gnu -O3"
