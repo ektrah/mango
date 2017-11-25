@@ -1,0 +1,54 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskName": "build-Makefile",
+      "appliesTo": "Makefile",
+      "type": "launch",
+      "contextType": "build",
+      "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
+      "command": "${env.ComSpec}",
+      "args": [
+        "mkdir",
+        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\"",
+        "&",
+        "make",
+        "OUTDIR=bin/${env.Platform}/${env.Configuration}/"
+      ],
+      "workingDirectory": "${fileDirname}",
+      "output": "${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\libmango.dll"
+    },
+    {
+      "taskName": "rebuild-Makefile",
+      "appliesTo": "Makefile",
+      "type": "launch",
+      "contextType": "rebuild",
+      "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
+      "command": "${env.ComSpec}",
+      "args": [
+        "mkdir",
+        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\"",
+        "&",
+        "make",
+        "OUTDIR=bin/${env.Platform}/${env.Configuration}/",
+        "-B"
+      ],
+      "workingDirectory": "${fileDirname}",
+      "output": "${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\libmango.dll"
+    },
+    {
+      "taskName": "clean-Makefile",
+      "appliesTo": "Makefile",
+      "type": "launch",
+      "contextType": "clean",
+      "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
+      "command": "${env.ComSpec}",
+      "args": [
+        "del",
+        "/Q",
+        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\*.*\""
+      ],
+      "workingDirectory": "${fileDirname}"
+    }
+  ]
+}

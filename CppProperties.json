@@ -1,0 +1,80 @@
+{
+  "configurations": [
+    {
+      "inheritEnvironments": [ "msvc_x86" ],
+      "name": "x86-Debug",
+      "environments": [
+        {
+          "Platform": "x86",
+          "Configuration": "Debug",
+          "CFLAGS": "-target i686-pc-windows-msvc -g"
+        }
+      ],
+      "includePath": [
+        "${env.INCLUDE}"
+      ],
+      "defines": [
+        "_DEBUG",
+        "MANGO_EXPORTS"
+      ],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "inheritEnvironments": [ "msvc_x86" ],
+      "name": "x86-Release",
+      "environments": [
+        {
+          "Platform": "x86",
+          "Configuration": "Release",
+          "CFLAGS": "-target i686-pc-windows-msvc -O3"
+        }
+      ],
+      "includePath": [
+        "${env.INCLUDE}"
+      ],
+      "defines": [
+        "NDEBUG",
+        "MANGO_EXPORTS"
+      ],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "inheritEnvironments": [ "msvc_x64" ],
+      "name": "x64-Debug",
+      "environments": [
+        {
+          "Platform": "x64",
+          "Configuration": "Debug",
+          "CFLAGS": "-target x86_64-pc-windows-msvc -g"
+        }
+      ],
+      "includePath": [
+        "${env.INCLUDE}"
+      ],
+      "defines": [
+        "_DEBUG",
+        "MANGO_EXPORTS"
+      ],
+      "intelliSenseMode": "windows-msvc-x64"
+    },
+    {
+      "inheritEnvironments": [ "msvc_x64" ],
+      "name": "x64-Release",
+      "environments": [
+        {
+          "Platform": "x64",
+          "Configuration": "Release",
+          "CFLAGS": "-target x86_64-pc-windows-msvc -O3"
+        }
+      ],
+      "includePath": [
+        "${env.INCLUDE}"
+      ],
+      "defines": [
+        "NDEBUG",
+        "MANGO_EXPORTS"
+      ],
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  ]
+}
