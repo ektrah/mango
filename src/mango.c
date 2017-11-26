@@ -118,8 +118,7 @@ typedef enum opcode {
 } opcode;
 
 typedef struct stack_frame {
-  uint8_t in_full_trust : 1;
-  uint8_t pop : 7;
+  uint8_t pop;
   uint8_t module;
   uint16_t ip;
 } stack_frame;
@@ -517,7 +516,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){0, 0, 0, (uint16_t)(&app->entry_point[3] - image)};
+  vm->sf = (stack_frame){0, 0, (uint16_t)(&app->entry_point[3] - image)};
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -673,7 +672,7 @@ mango_result mango_execute(mango_vm *vm) {
       }
 
       printf("initialize module %u\n", module->index);
-      vm->sf = (stack_frame){0, 0, module->index,
+      vm->sf = (stack_frame){0, module->index,
                              (uint16_t)offsetof(mango_module_def, initializer)};
       result = _mango_execute(vm);
       if (result != MANGO_E_SUCCESS) {
@@ -686,7 +685,7 @@ mango_result mango_execute(mango_vm *vm) {
     vm->flags |= VISITED;
 
     printf("execute main\n");
-    vm->sf = (stack_frame){0, 0, 0,
+    vm->sf = (stack_frame){0, 0,
                            (uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
                                        offsetof(mango_app_info, entry_point)))};
@@ -1112,12 +1111,6 @@ RET_X32: // value ... -> ...
 RET: // ... -> ...
   sp += sf.pop;
   --rp;
-
-  if (sf.in_full_trust && !rp->sf.in_full_trust) {
-    printf("------------------------------ LEAVE FULL TRUST "
-           "------------------------------\n");
-  }
-
   sf = rp->sf;
   ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
   NEXT;
@@ -1152,20 +1145,6 @@ call:
     const mango_module *module = &modules[ftn.module];
     const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
 
-    uint8_t in_full_trust = sf.in_full_trust;
-    if (!in_full_trust &&
-        (f->attributes &
-         (MANGO_FD_SECURITY_CRITICAL | MANGO_FD_SECURITY_SAFE_CRITICAL)) != 0) {
-      if ((f->attributes & MANGO_FD_SECURITY_SAFE_CRITICAL) == 0 ||
-          (module->flags & MANGO_IMPORT_TRUSTED_MODULE) == 0) {
-        printf("<< SECURITY VIOLATION >>\n");
-        RETURN(MANGO_E_SECURITY);
-      }
-      printf("------------------------------ ENTER FULL TRUST "
-             "------------------------------\n");
-      in_full_trust = 1;
-    }
-
     if ((uintptr_t)sp - (uintptr_t)rp < 1U + f->loc_count + f->max_stack) {
       printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
@@ -1180,7 +1159,6 @@ call:
       rp++;
     }
 
-    sf.in_full_trust = in_full_trust;
     sf.pop = f->arg_count + f->loc_count;
     sf.module = module->index;
     sp -= f->loc_count;
@@ -1197,11 +1175,6 @@ call:
 
 SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
-    if (!sf.in_full_trust) {
-      printf("<< SECURITY VIOLATION >>\n");
-      RETURN(MANGO_E_SECURITY);
-    }
-
     int8_t adjustment = FETCH(1, i8);
     uint16_t syscall = FETCH(2, u16);
 

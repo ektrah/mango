@@ -19,7 +19,6 @@ Mango is a tiny, yet powerful virtual machine that runs type-safe mobile code in
   * Arrays and slices
   * References
 * A module system
-* Code access security (security critical and security safe-critical code)
 * Memory safety and type safety
 * No garbage collector
 * No standard library

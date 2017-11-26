@@ -86,11 +86,6 @@ typedef enum mango_alloc_flags {
   MANGO_ALLOC_ZERO_MEMORY = 0x8,
 } mango_alloc_flags;
 
-typedef enum mango_import_flags {
-  // 0x1 is reserved
-  MANGO_IMPORT_TRUSTED_MODULE = 0x2,
-} mango_import_flags;
-
 typedef struct mango_vm mango_vm;
 
 MANGO_API uint32_t mango_version_major(void);
