@@ -118,15 +118,15 @@ typedef enum opcode {
 } opcode;
 
 typedef struct stack_frame {
-  uint8_t pop;
-  uint8_t module;
   uint16_t ip;
+  uint8_t module;
+  uint8_t pop;
 } stack_frame;
 
 typedef struct function_token {
-  uint8_t _reserved;
+  uint16_t offset;
   uint8_t module;
-  uint16_t ip;
+  uint8_t _reserved;
 } function_token;
 
 typedef union stackval {
@@ -514,7 +514,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){0, 0, (uint16_t)(&app->entry_point[3] - image)};
+  vm->sf = (stack_frame){(uint16_t)(&app->entry_point[3] - image), 0, 0};
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -669,8 +669,8 @@ mango_result mango_execute(mango_vm *vm) {
       }
 
       printf("initialize module %u\n", module->index);
-      vm->sf = (stack_frame){0, module->index,
-                             (uint16_t)offsetof(mango_module_def, initializer)};
+      vm->sf = (stack_frame){(uint16_t)offsetof(mango_module_def, initializer),
+                             module->index, 0};
       result = _mango_execute(vm);
       if (result != MANGO_E_SUCCESS) {
         return result;
@@ -682,10 +682,10 @@ mango_result mango_execute(mango_vm *vm) {
     vm->flags |= VISITED;
 
     printf("execute main\n");
-    vm->sf = (stack_frame){0, 0,
-                           (uint16_t)(modules[0].image_size -
+    vm->sf = (stack_frame){(uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
-                                       offsetof(mango_app_info, entry_point)))};
+                                       offsetof(mango_app_info, entry_point))),
+                           0, 0};
     return _mango_execute(vm);
   }
 
@@ -1114,7 +1114,7 @@ RET: // ... -> ...
 CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
   do {
     uint8_t module = sp[0].ftn.module;
-    uint16_t offset = sp[0].ftn.ip;
+    uint16_t offset = sp[0].ftn.offset;
 
     const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
     const mango_module *caller = &modules[sf.module];
@@ -1136,8 +1136,8 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf.pop = f->arg_count + f->loc_count;
     sf.module = callee->index;
+    sf.pop = f->arg_count + f->loc_count;
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1173,8 +1173,8 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf.pop = f->arg_count + f->loc_count;
     sf.module = callee->index;
+    sf.pop = f->arg_count + f->loc_count;
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1214,8 +1214,8 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf.pop = f->arg_count + f->loc_count;
     sf.module = callee->index;
+    sf.pop = f->arg_count + f->loc_count;
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1324,11 +1324,11 @@ LDFTN: // ... -> ftn ...
 
     function_token ftn;
     if (import == INVALID_MODULE) {
-      ftn = (function_token){0, sf.module, offset};
+      ftn = (function_token){offset, sf.module, 0};
     } else {
       const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
       const uint8_t *imports = uint8_t_as_ptr(vm, modules[sf.module].imports);
-      ftn = (function_token){0, imports[import], offset};
+      ftn = (function_token){offset, imports[import], 0};
     }
 
     sp--;
