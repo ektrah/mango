@@ -17,12 +17,12 @@ endif
 all: $(OUTDIR)$(TARGET)
 
 $(OUTDIR)libmango.dll: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
-	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -shared -Wl,-nodefaultlib:libcmt -o $@ $< -lmsvcrt -lvcruntime -lucrt
+	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -shared -Wl,-nodefaultlib:libcmt -o $(abspath $@ $<) -lmsvcrt -lvcruntime -lucrt
 
 $(OUTDIR)libmango.so: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
-	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -shared -fPIC -Wl,--no-undefined -Wl,--as-needed -o $@ $< -lm
+	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -shared -fPIC -Wl,--no-undefined -Wl,--as-needed -o $(abspath $@ $<) -lm
 
 $(OUTDIR)libmango.dylib: src/mango.c src/mango.h src/mango_metadata.h src/mango_opcodes.inc
-	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -dynamiclib -o $@ $<
+	$(CC) $(_CFLAGS) -std=c11 -DMANGO_EXPORTS -fvisibility=hidden -dynamiclib -o $(abspath $@ $<)
 
 .PHONY: all
