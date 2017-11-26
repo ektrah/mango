@@ -949,10 +949,8 @@ static mango_result _mango_execute(mango_vm *vm) {
 #pragma region basic
 
 HALT: // ... -> ...
-  if ((uint16_t)(sp - vm->stack) < vm->stack_size) {
-    vm->sp_expected = vm->stack_size;
-    vm->syscall = 0;
-    YIELD(MANGO_E_STACK_IMBALANCE);
+  if (sp != vm->stack + vm->stack_size) {
+    RETURN(MANGO_E_STACK_IMBALANCE);
   }
   RETURN(MANGO_E_SUCCESS);
 
