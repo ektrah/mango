@@ -427,27 +427,38 @@ size_t mango_stack_available(const mango_vm *vm) {
 
 #define INVALID_MODULE 255
 
-static inline const mango_module_name *
-_mango_get_module_name(const mango_module *modules,
-                       const mango_module *module) {
-  const mango_module_def *m =
-      (const mango_module_def *)(modules[module->name_module].image);
+static inline mango_module *_mango_get_modules(const mango_vm *vm) {
+  return mango_module_as_ptr(vm, vm->modules);
+}
 
-  return &m->imports[module->name_index];
+static inline mango_module *_mango_get_module(const mango_vm *vm,
+                                              uint8_t index) {
+  return mango_module_as_ptr(vm, vm->modules) + index;
+}
+
+static inline const uint8_t *
+_mango_get_module_imports(const mango_vm *vm, const mango_module *module) {
+  return uint8_t_as_ptr(vm, module->imports);
+}
+
+static inline const mango_module_name *
+_mango_get_module_name(const mango_vm *vm, const mango_module *module) {
+  if (module->name_module == INVALID_MODULE) {
+    return &vm->app_name;
+  } else {
+    const uint8_t *image = _mango_get_module(vm, module->name_module)->image;
+    return ((const mango_module_def *)image)->imports + module->name_index;
+  }
 }
 
 static uint8_t _mango_get_or_create_module(mango_vm *vm,
                                            const mango_module_name *name,
                                            uint8_t name_module,
                                            uint8_t name_index) {
-  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+  mango_module *modules = _mango_get_modules(vm);
 
-  if (memcmp(name, &vm->app_name, sizeof(mango_module_name)) == 0) {
-    return 0;
-  }
-
-  for (uint_fast8_t i = 1; i < vm->modules_created; i++) {
-    const mango_module_name *n = _mango_get_module_name(modules, &modules[i]);
+  for (uint_fast8_t i = 0; i < vm->modules_created; i++) {
+    const mango_module_name *n = _mango_get_module_name(vm, &modules[i]);
     if (memcmp(name, n, sizeof(mango_module_name)) == 0) {
       return i;
     }
@@ -536,9 +547,8 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
                                                  const uint8_t *name,
                                                  const uint8_t *image,
                                                  size_t size, void *context) {
-  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-  mango_module *module = &modules[vm->modules_imported];
-  const mango_module_name *n = _mango_get_module_name(modules, module);
+  mango_module *module = _mango_get_module(vm, vm->modules_imported);
+  const mango_module_name *n = _mango_get_module_name(vm, module);
 
   if (memcmp(name, n, sizeof(mango_module_name)) != 0) {
     return MANGO_E_INVALID_OPERATION;
@@ -585,9 +595,8 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
     return NULL;
   }
 
-  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-  mango_module *module = &modules[vm->modules_imported];
-  return (const uint8_t *)_mango_get_module_name(modules, module);
+  mango_module *module = _mango_get_module(vm, vm->modules_imported);
+  return (const uint8_t *)_mango_get_module_name(vm, module);
 }
 
 void *mango_module_context(const mango_vm *vm) {
@@ -595,9 +604,7 @@ void *mango_module_context(const mango_vm *vm) {
     return NULL;
   }
 
-  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-  mango_module *module = &modules[vm->sf.module];
-  return module->context;
+  return _mango_get_module(vm, vm->sf.module)->context;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -623,20 +630,20 @@ mango_result mango_execute(mango_vm *vm) {
 
   mango_result result = _mango_execute(vm);
   if (result != MANGO_E_SUCCESS) {
-    return result;
+    return vm->result = result;
   }
 
-  mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+  mango_module *modules = _mango_get_modules(vm);
   uint8_t head = vm->module_init_head;
 
   while (head != INVALID_MODULE) {
     mango_module *module = &modules[head];
-    const mango_module_def *m = (const mango_module_def *)(module->image);
 
     if ((module->flags & VISITED) == 0) {
       module->flags |= VISITED;
 
-      const uint8_t *imports = uint8_t_as_ptr(vm, module->imports);
+      const mango_module_def *m = (const mango_module_def *)(module->image);
+      const uint8_t *imports = _mango_get_module_imports(vm, module);
 
       for (uint_fast8_t i = 0; i < m->import_count; i++) {
         uint8_t p = imports[i];
@@ -673,7 +680,7 @@ mango_result mango_execute(mango_vm *vm) {
                              module->index, 0};
       result = _mango_execute(vm);
       if (result != MANGO_E_SUCCESS) {
-        return result;
+        return vm->result = result;
       }
     }
   }
@@ -686,7 +693,10 @@ mango_result mango_execute(mango_vm *vm) {
                                       (sizeof(mango_app_info) -
                                        offsetof(mango_app_info, entry_point))),
                            0, 0};
-    return _mango_execute(vm);
+    result = _mango_execute(vm);
+    if (result != MANGO_E_SUCCESS) {
+      return vm->result = result;
+    }
   }
 
   return MANGO_E_SUCCESS;
@@ -720,13 +730,13 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 #define YIELD(Result)                                                          \
   do {                                                                         \
-    vm->result = Result;                                                       \
+    result = Result;                                                           \
     goto yield;                                                                \
   } while (0)
 
 #define RETURN(Result)                                                         \
   do {                                                                         \
-    vm->result = Result;                                                       \
+    result = Result;                                                           \
     goto done;                                                                 \
   } while (0)
 
@@ -923,15 +933,16 @@ static mango_result _mango_execute(mango_vm *vm) {
   };
 #endif
 
+  mango_result result;
+  stack_frame sf;
   stackval *rp;
   stackval *sp;
-  stack_frame sf;
   const uint8_t *ip;
 
   rp = vm->stack + vm->rp;
   sp = vm->stack + vm->sp;
   sf = vm->sf;
-  ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
+  ip = _mango_get_module(vm, sf.module)->image + sf.ip;
 
   NEXT;
 
@@ -1108,7 +1119,7 @@ RET: // ... -> ...
   sp += sf.pop;
   --rp;
   sf = rp->sf;
-  ip = mango_module_as_ptr(vm, vm->modules)[sf.module].image + sf.ip;
+  ip = _mango_get_module(vm, sf.module)->image + sf.ip;
   NEXT;
 
 CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
@@ -1116,9 +1127,9 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     uint8_t module = sp[0].ftn.module;
     uint16_t offset = sp[0].ftn.offset;
 
-    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    const mango_module *caller = &modules[sf.module];
-    const mango_module *callee = &modules[module];
+    const mango_module *modules = _mango_get_modules(vm);
+    const mango_module *caller = modules + sf.module;
+    const mango_module *callee = modules + module;
 
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
@@ -1131,13 +1142,11 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     ip++;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      sf.ip = (uint16_t)(ip - caller->image);
-      rp->sf = sf;
+      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
       rp++;
     }
 
-    sf.module = callee->index;
-    sf.pop = f->arg_count + f->loc_count;
+    sf = (stack_frame){0, callee->index, f->arg_count + f->loc_count};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1154,8 +1163,8 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
   do {
     uint16_t offset = FETCH(1, u16);
 
-    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    const mango_module *caller = &modules[sf.module];
+    const mango_module *modules = _mango_get_modules(vm);
+    const mango_module *caller = modules + sf.module;
     const mango_module *callee = caller;
 
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
@@ -1168,13 +1177,11 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
     ip += 3;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      sf.ip = (uint16_t)(ip - caller->image);
-      rp->sf = sf;
+      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
       rp++;
     }
 
-    sf.module = callee->index;
-    sf.pop = f->arg_count + f->loc_count;
+    sf = (stack_frame){0, callee->index, f->arg_count + f->loc_count};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1192,12 +1199,12 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     uint8_t import = FETCH(1, u8);
     uint16_t offset = FETCH(2, u16);
 
-    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    const mango_module *caller = &modules[sf.module];
+    const mango_module *modules = _mango_get_modules(vm);
+    const mango_module *caller = modules + sf.module;
     const mango_module *callee =
         import == INVALID_MODULE
             ? caller
-            : &modules[uint8_t_as_ptr(vm, caller->imports)[import]];
+            : modules + _mango_get_module_imports(vm, caller)[import];
 
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
@@ -1209,13 +1216,11 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     ip += 4;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      sf.ip = (uint16_t)(ip - caller->image);
-      rp->sf = sf;
+      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
       rp++;
     }
 
-    sf.module = callee->index;
-    sf.pop = f->arg_count + f->loc_count;
+    sf = (stack_frame){0, callee->index, f->arg_count + f->loc_count};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1326,8 +1331,8 @@ LDFTN: // ... -> ftn ...
     if (import == INVALID_MODULE) {
       ftn = (function_token){offset, sf.module, 0};
     } else {
-      const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-      const uint8_t *imports = uint8_t_as_ptr(vm, modules[sf.module].imports);
+      const mango_module *module = _mango_get_module(vm, sf.module);
+      const uint8_t *imports = _mango_get_module_imports(vm, module);
       ftn = (function_token){offset, imports[import], 0};
     }
 
@@ -2326,21 +2331,19 @@ UNUSED255:
 
 invalid:
   printf("<< INVALID PROGRAM >>\n");
-  vm->result = MANGO_E_INVALID_PROGRAM;
+  result = MANGO_E_INVALID_PROGRAM;
 
 done:
   vm->sp_expected = (uint16_t)(sp - vm->stack);
   vm->syscall = 0;
 
 yield:
-  do {
-    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    sf.ip = (uint16_t)(ip - modules[sf.module].image);
-    vm->sf = sf;
-    vm->sp = (uint16_t)(sp - vm->stack);
-    vm->rp = (uint16_t)(rp - vm->stack);
-    return vm->result;
-  } while (0);
+  vm->sf =
+      (stack_frame){(uint16_t)(ip - _mango_get_module(vm, sf.module)->image),
+                    sf.module, sf.pop};
+  vm->rp = (uint16_t)(rp - vm->stack);
+  vm->sp = (uint16_t)(sp - vm->stack);
+  return result;
 }
 
 #pragma clang diagnostic pop
