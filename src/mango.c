@@ -124,8 +124,7 @@ typedef struct stack_frame {
 } stack_frame;
 
 typedef struct function_token {
-  uint8_t add_sp : 4;
-  uint8_t add_ip : 4;
+  uint8_t _reserved;
   uint8_t module;
   uint16_t ip;
 } function_token;
@@ -928,7 +927,6 @@ static mango_result _mango_execute(mango_vm *vm) {
   stackval *sp;
   stack_frame sf;
   const uint8_t *ip;
-  function_token ftn;
 
   rp = vm->stack + vm->rp;
   sp = vm->stack + vm->sp;
@@ -1114,51 +1112,110 @@ RET: // ... -> ...
   NEXT;
 
 CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
-  ftn = sp[0].ftn;
-  goto call;
-
-CALL_S: // argumentN ... argument1 argument0 ... -> result ...
-  ftn = (function_token){0, 3, sf.module, FETCH(1, u16)};
-  goto call;
-
-CALL: // argumentN ... argument1 argument0 ... -> result ...
   do {
-    uint8_t import = FETCH(1, u8);
-    uint16_t offset = FETCH(2, u16);
-    if (import == INVALID_MODULE) {
-      ftn = (function_token){0, 4, sf.module, offset};
-    } else {
-      const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-      const mango_module *mp = &modules[sf.module];
-      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      ftn = (function_token){0, 4, imports[import], offset};
-    }
-    goto call;
-  } while (0);
+    uint8_t module = sp[0].ftn.module;
+    uint16_t offset = sp[0].ftn.ip;
 
-call:
-  do {
     const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    const mango_module *mp = &modules[sf.module];
-    const mango_module *module = &modules[ftn.module];
-    const mango_func_def *f = (const mango_func_def *)(module->image + ftn.ip);
+    const mango_module *caller = &modules[sf.module];
+    const mango_module *callee = &modules[module];
 
-    if ((uintptr_t)sp - (uintptr_t)rp < 1U + f->loc_count + f->max_stack) {
+    const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
+
+    if (sp - rp < 1 + f->loc_count + f->max_stack) {
       printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
-    sp += ftn.add_sp;
-    ip += ftn.add_ip;
+    sp++;
+    ip++;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      sf.ip = (uint16_t)(ip - mp->image);
+      sf.ip = (uint16_t)(ip - caller->image);
       rp->sf = sf;
       rp++;
     }
 
     sf.pop = f->arg_count + f->loc_count;
-    sf.module = module->index;
+    sf.module = callee->index;
+    sp -= f->loc_count;
+    ip = f->code;
+
+    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+      for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
+        sp[i].u32 = 0;
+      }
+    }
+
+    NEXT;
+  } while (0);
+
+CALL_S: // argumentN ... argument1 argument0 ... -> result ...
+  do {
+    uint16_t offset = FETCH(1, u16);
+
+    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+    const mango_module *caller = &modules[sf.module];
+    const mango_module *callee = caller;
+
+    const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
+
+    if (sp - rp < 1 + f->loc_count + f->max_stack) {
+      printf("<< STACK OVERFLOW >>\n");
+      RETURN(MANGO_E_STACK_OVERFLOW);
+    }
+
+    ip += 3;
+
+    if (!(sf.pop == 0 && *ip == RET)) {
+      sf.ip = (uint16_t)(ip - caller->image);
+      rp->sf = sf;
+      rp++;
+    }
+
+    sf.pop = f->arg_count + f->loc_count;
+    sf.module = callee->index;
+    sp -= f->loc_count;
+    ip = f->code;
+
+    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+      for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
+        sp[i].u32 = 0;
+      }
+    }
+
+    NEXT;
+  } while (0);
+
+CALL: // argumentN ... argument1 argument0 ... -> result ...
+  do {
+    uint8_t import = FETCH(1, u8);
+    uint16_t offset = FETCH(2, u16);
+
+    const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
+    const mango_module *caller = &modules[sf.module];
+    const mango_module *callee =
+        import == INVALID_MODULE
+            ? caller
+            : &modules[uint8_t_as_ptr(vm, caller->imports)[import]];
+
+    const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
+
+    if (sp - rp < 1 + f->loc_count + f->max_stack) {
+      printf("<< STACK OVERFLOW >>\n");
+      RETURN(MANGO_E_STACK_OVERFLOW);
+    }
+
+    ip += 4;
+
+    if (!(sf.pop == 0 && *ip == RET)) {
+      sf.ip = (uint16_t)(ip - caller->image);
+      rp->sf = sf;
+      rp++;
+    }
+
+    sf.pop = f->arg_count + f->loc_count;
+    sf.module = callee->index;
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1264,13 +1321,14 @@ LDFTN: // ... -> ftn ...
   do {
     uint8_t import = FETCH(1, u8);
     uint16_t offset = FETCH(2, u16);
+
+    function_token ftn;
     if (import == INVALID_MODULE) {
-      ftn = (function_token){1, 1, sf.module, offset};
+      ftn = (function_token){0, sf.module, offset};
     } else {
       const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-      const mango_module *mp = &modules[sf.module];
-      const uint8_t *imports = uint8_t_as_ptr(vm, mp->imports);
-      ftn = (function_token){1, 1, imports[import], offset};
+      const uint8_t *imports = uint8_t_as_ptr(vm, modules[sf.module].imports);
+      ftn = (function_token){0, imports[import], offset};
     }
 
     sp--;
@@ -2277,8 +2335,7 @@ done:
 yield:
   do {
     const mango_module *modules = mango_module_as_ptr(vm, vm->modules);
-    const mango_module *mp = &modules[sf.module];
-    sf.ip = (uint16_t)(ip - mp->image);
+    sf.ip = (uint16_t)(ip - modules[sf.module].image);
     vm->sf = sf;
     vm->sp = (uint16_t)(sp - vm->stack);
     vm->rp = (uint16_t)(rp - vm->stack);
