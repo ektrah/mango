@@ -1132,7 +1132,6 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
     if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
@@ -1168,7 +1167,6 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
     if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
@@ -1207,7 +1205,6 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
     if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      printf("<< STACK OVERFLOW >>\n");
       RETURN(MANGO_E_STACK_OVERFLOW);
     }
 
@@ -2328,7 +2325,6 @@ UNUSED255:
 #endif
 
 invalid:
-  printf("<< INVALID PROGRAM >>\n");
   result = MANGO_E_INVALID_PROGRAM;
 
 done:
