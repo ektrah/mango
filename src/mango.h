@@ -61,7 +61,6 @@ typedef enum mango_result {
   MANGO_E_NOT_SUPPORTED = 67,
   MANGO_E_NOT_IMPLEMENTED = 68,
   MANGO_E_BAD_IMAGE_FORMAT = 69,
-  MANGO_E_VERIFICATION = 70,
   MANGO_E_OUT_OF_MEMORY = 80,
   MANGO_E_SECURITY = 81,
   MANGO_E_STACK_OVERFLOW = 82,
@@ -90,7 +89,6 @@ typedef enum mango_alloc_flags {
 typedef enum mango_import_flags {
   // 0x1 is reserved
   MANGO_IMPORT_TRUSTED_MODULE = 0x2,
-  MANGO_IMPORT_SKIP_VERIFICATION = 0x100,
 } mango_import_flags;
 
 typedef struct mango_vm mango_vm;

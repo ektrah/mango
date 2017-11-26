@@ -571,9 +571,6 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
-  if ((flags & MANGO_IMPORT_SKIP_VERIFICATION) == 0) {
-    return MANGO_E_VERIFICATION;
-  }
   if (((const mango_module_def *)image)->magic != MANGO_IMAGE_MAGIC) {
     return MANGO_E_BAD_IMAGE_FORMAT;
   }
