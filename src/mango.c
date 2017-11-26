@@ -165,8 +165,6 @@ typedef struct mango_vm {
   uint32_t heap_size;
   uint32_t heap_used;
 
-  mango_module_name app_name;
-
   uint8_t flags;
   uint8_t modules_created;
   uint8_t modules_imported;
@@ -179,7 +177,10 @@ typedef struct mango_vm {
   uint16_t sp_expected;
   stack_frame sf;
 
-  uint32_t _reserved[3];
+  uint32_t _reserved[2];
+
+  mango_module_name app_name;
+  void_ref base;
 
   union {
     void *context;
@@ -305,6 +306,7 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
   vm->heap_used = (uint32_t)(sizeof(mango_vm) + stack_size);
   vm->stack_size = (uint16_t)(stack_size / sizeof(stackval));
   vm->sp_expected = vm->sp = vm->stack_size;
+  vm->base = void_as_ref(vm, vm);
   vm->context = context;
   return vm;
 }
@@ -521,11 +523,11 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
     return MANGO_E_OUT_OF_MEMORY;
   }
 
-  memcpy(&vm->app_name, name, sizeof(mango_module_name));
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
   vm->sf = (stack_frame){(uint16_t)(&app->entry_point[3] - image), 0, 0};
+  memcpy(&vm->app_name, name, sizeof(mango_module_name));
 
   mango_module *module = &modules[0];
   module->image = image;
