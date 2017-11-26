@@ -487,8 +487,7 @@ static mango_result _mango_initialize_module(mango_vm *vm,
 static mango_result _mango_import_startup_module(mango_vm *vm,
                                                  const uint8_t *name,
                                                  const uint8_t *image,
-                                                 size_t size, void *context,
-                                                 int flags) {
+                                                 size_t size, void *context) {
   const mango_module_def *m = (const mango_module_def *)image;
 
   if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
@@ -522,7 +521,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   module->image = image;
   module->image_size = (uint16_t)size;
   module->index = 0;
-  module->flags = (uint8_t)flags;
+  module->flags = 0;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
   module->name_module = INVALID_MODULE;
@@ -537,8 +536,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
 static mango_result _mango_import_missing_module(mango_vm *vm,
                                                  const uint8_t *name,
                                                  const uint8_t *image,
-                                                 size_t size, void *context,
-                                                 int flags) {
+                                                 size_t size, void *context) {
   mango_module *modules = mango_module_as_ptr(vm, vm->modules);
   mango_module *module = &modules[vm->modules_imported];
   const mango_module_name *n = _mango_get_module_name(modules, module);
@@ -551,7 +549,7 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
 
   module->image = image;
   module->image_size = (uint16_t)size;
-  module->flags = (uint8_t)flags;
+  module->flags = 0;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
   module->imports = uint8_t_null();
@@ -563,7 +561,7 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
 
 mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
                                  const uint8_t *image, size_t size,
-                                 void *context, int flags) {
+                                 void *context) {
   if (!vm || !name || !image) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -575,9 +573,9 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   }
 
   if (vm->modules_imported == 0) {
-    return _mango_import_startup_module(vm, name, image, size, context, flags);
+    return _mango_import_startup_module(vm, name, image, size, context);
   } else if (vm->modules_imported != vm->modules_created) {
-    return _mango_import_missing_module(vm, name, image, size, context, flags);
+    return _mango_import_missing_module(vm, name, image, size, context);
   } else {
     return MANGO_E_INVALID_OPERATION;
   }
