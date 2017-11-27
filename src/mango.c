@@ -955,7 +955,7 @@ static mango_result _mango_execute(mango_vm *vm) {
 #pragma region basic
 
 HALT: // ... -> ...
-  if (sp != vm->stack + vm->stack_size) {
+  if (rp != vm->stack || sp != vm->stack + vm->stack_size) {
     RETURN(MANGO_E_STACK_IMBALANCE);
   }
   RETURN(MANGO_E_SUCCESS);
