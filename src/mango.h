@@ -128,7 +128,7 @@ MANGO_API const uint8_t *mango_module_missing(const mango_vm *vm);
 
 MANGO_API void *mango_module_context(const mango_vm *vm);
 
-MANGO_API mango_result mango_execute(mango_vm *vm);
+MANGO_API mango_result mango_run(mango_vm *vm);
 
 MANGO_API uint16_t mango_syscall(const mango_vm *vm);
 

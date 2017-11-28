@@ -616,9 +616,9 @@ void *mango_module_context(const mango_vm *vm) {
 
 #define VISITED 1
 
-static mango_result _mango_execute(mango_vm *vm);
+static mango_result _mango_interpret(mango_vm *vm);
 
-mango_result mango_execute(mango_vm *vm) {
+mango_result mango_run(mango_vm *vm) {
   if (!vm) {
     return MANGO_E_ARGUMENT_NULL;
   }
@@ -633,7 +633,7 @@ mango_result mango_execute(mango_vm *vm) {
     return vm->result = MANGO_E_STACK_IMBALANCE;
   }
 
-  mango_result result = _mango_execute(vm);
+  mango_result result = _mango_interpret(vm);
   if (result != MANGO_E_SUCCESS) {
     return vm->result = result;
   }
@@ -683,7 +683,7 @@ mango_result mango_execute(mango_vm *vm) {
         modules[head].init_prev = INVALID_MODULE;
       }
 
-      result = _mango_execute(vm);
+      result = _mango_interpret(vm);
       if (result != MANGO_E_SUCCESS) {
         return vm->result = result;
       }
@@ -693,13 +693,13 @@ mango_result mango_execute(mango_vm *vm) {
   if ((vm->flags & VISITED) == 0) {
     vm->flags |= VISITED;
 
-    printf("execute main\n");
+    printf("run main\n");
     vm->sf = (stack_frame){(uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
                                        offsetof(mango_app_info, entry_point))),
                            0, 0};
 
-    result = _mango_execute(vm);
+    result = _mango_interpret(vm);
     if (result != MANGO_E_SUCCESS) {
       return vm->result = result;
     }
@@ -925,7 +925,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 #pragma endregion
 
-static mango_result _mango_execute(mango_vm *vm) {
+static mango_result _mango_interpret(mango_vm *vm) {
   static const void *const dispatch_table[] = {
 #define OPCODE(c, s, pop, push, args, i) &&c,
 #include "mango_opcodes.inc"
