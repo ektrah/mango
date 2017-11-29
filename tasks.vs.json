@@ -8,13 +8,7 @@
       "contextType": "build",
       "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
       "command": "${env.ComSpec}",
-      "args": [
-        "mkdir",
-        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\"",
-        "&",
-        "make",
-        "OUTDIR=bin/${env.Platform}/${env.Configuration}/"
-      ],
+      "args": [ "mkdir \"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\" & make PREFIX=bin/${env.Platform}/${env.Configuration}/" ],
       "workingDirectory": "${fileDirname}",
       "output": "${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\libmango.dll"
     },
@@ -25,14 +19,7 @@
       "contextType": "rebuild",
       "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
       "command": "${env.ComSpec}",
-      "args": [
-        "mkdir",
-        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\"",
-        "&",
-        "make",
-        "OUTDIR=bin/${env.Platform}/${env.Configuration}/",
-        "-B"
-      ],
+      "args": [ "mkdir \"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\" & make -B PREFIX=bin/${env.Platform}/${env.Configuration}/" ],
       "workingDirectory": "${fileDirname}",
       "output": "${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\libmango.dll"
     },
@@ -43,11 +30,7 @@
       "contextType": "clean",
       "inheritEnvironments": [ "${cpp.activeConfiguration}" ],
       "command": "${env.ComSpec}",
-      "args": [
-        "del",
-        "/Q",
-        "\"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\*.*\""
-      ],
+      "args": [ "del /Q \"${fileDirname}\\bin\\${env.Platform}\\${env.Configuration}\\*.*\"" ],
       "workingDirectory": "${fileDirname}"
     }
   ]
