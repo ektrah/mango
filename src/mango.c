@@ -255,14 +255,14 @@ _Static_assert(__alignof(packed) == 1, "Incorrect layout");
 
 ////////////////////////////////////////////////////////////////////////////////
 
-uint32_t mango_version_major(void) { return MANGO_VERSION_MAJOR; }
+uint16_t mango_version_major(void) { return MANGO_VERSION_MAJOR; }
 
-uint32_t mango_version_minor(void) { return MANGO_VERSION_MINOR; }
+uint16_t mango_version_minor(void) { return MANGO_VERSION_MINOR; }
 
 const char *mango_version_string(void) { return MANGO_VERSION_STRING; }
 
-uint32_t mango_features(void) {
-  uint32_t features = 0;
+uint16_t mango_features(void) {
+  uint16_t features = 0;
 #if !defined(MANGO_NO_I64)
   features |= MANGO_FEATURE_I64;
 #endif

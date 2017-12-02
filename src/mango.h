@@ -88,13 +88,13 @@ typedef enum mango_alloc_flags {
 
 typedef struct mango_vm mango_vm;
 
-MANGO_API uint32_t mango_version_major(void);
+MANGO_API uint16_t mango_version_major(void);
 
-MANGO_API uint32_t mango_version_minor(void);
+MANGO_API uint16_t mango_version_minor(void);
 
 MANGO_API const char *mango_version_string(void);
 
-MANGO_API uint32_t mango_features(void);
+MANGO_API uint16_t mango_features(void);
 
 MANGO_API mango_vm *mango_initialize(void *address, size_t heap_size,
                                      size_t stack_size, void *context);
