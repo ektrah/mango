@@ -16,10 +16,10 @@ jobs:
       - run:
           name: Build
           command: |
-            mkdir -p bin/x64/clang/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3" OUTDIR=bin/x64/clang/
-            mkdir -p bin/x86/clang/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3" OUTDIR=bin/x86/clang/
-            mkdir -p bin/x64/gcc/ && make CC=gcc-6 CFLAGS="-m64 -O3" OUTDIR=bin/x64/gcc/
-            mkdir -p bin/x86/gcc/ && make CC=gcc-6 CFLAGS="-m32 -O3" OUTDIR=bin/x86/gcc/
+            mkdir -p bin/x64/clang/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x64/clang/
+            mkdir -p bin/x86/clang/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x86/clang/
+            mkdir -p bin/x64/gcc/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG" PREFIX=bin/x64/gcc/
+            mkdir -p bin/x86/gcc/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG" PREFIX=bin/x86/gcc/
       - store_artifacts:
           path: bin
           destination: /
