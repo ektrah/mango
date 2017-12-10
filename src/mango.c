@@ -33,12 +33,6 @@
 #include <math.h>
 #include <string.h>
 
-#ifdef _DEBUG
-#include <stdio.h>
-#else
-#define printf(...) (void)0
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////
 
 #if UINTPTR_MAX == UINT32_MAX
@@ -300,8 +294,6 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
     return NULL;
   }
 
-  printf("allocate %u bytes\n", (unsigned int)sizeof(mango_vm));
-
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
   vm->version = MANGO_VERSION_MAJOR;
@@ -352,8 +344,6 @@ void *mango_heap_alloc(mango_vm *vm, size_t count, size_t size,
       total_size > available) {
     return NULL;
   }
-
-  printf("allocate %u bytes\n", (unsigned int)total_size);
 
   vm->heap_used = (uint32_t)(offset + total_size);
   void *block = (void *)((uintptr_t)vm + offset);
@@ -671,7 +661,6 @@ mango_result mango_run(mango_vm *vm) {
         }
       }
     } else {
-      printf("initialize module %u\n", head);
       vm->sf = (stack_frame){(uint16_t)offsetof(mango_module_def, initializer),
                              head, 0};
 
@@ -693,7 +682,6 @@ mango_result mango_run(mango_vm *vm) {
   if ((vm->flags & VISITED) == 0) {
     vm->flags |= VISITED;
 
-    printf("run main\n");
     vm->sf = (stack_frame){(uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
                                        offsetof(mango_app_info, entry_point))),
@@ -722,11 +710,7 @@ uint16_t mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #pragma region macros
 
 #if defined(__clang__) || defined(__GNUC__)
-#define NEXT                                                                   \
-  do {                                                                         \
-    printf("* %s\n", opcodes[*ip]);                                            \
-    goto *dispatch_table[*ip];                                                 \
-  } while (0)
+#define NEXT goto *dispatch_table[*ip]
 #else
 #error Unsupported compiler
 #define NEXT
@@ -931,13 +915,6 @@ static mango_result _mango_interpret(mango_vm *vm) {
 #include "mango_opcodes.inc"
 #undef OPCODE
   };
-#ifdef _DEBUG
-  static const char *const opcodes[] = {
-#define OPCODE(c, s, pop, push, args, i) s,
-#include "mango_opcodes.inc"
-#undef OPCODE
-  };
-#endif
 
   mango_result result;
   stack_frame sf;
