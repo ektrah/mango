@@ -47,13 +47,11 @@
                                                                                \
   static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
                                           Type##_ref ref) {                    \
-    (void)vm;                                                                  \
     return (Const Type *)ref.address;                                          \
   }                                                                            \
                                                                                \
   static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
                                          Const Type *ptr) {                    \
-    (void)vm;                                                                  \
     return (Type##_ref){(uintptr_t)ptr};                                       \
   }                                                                            \
                                                                                \
@@ -98,6 +96,13 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 MANGO_DECLARE_REF_TYPE(void)
 MANGO_DECLARE_REF_TYPE(uint8_t)
@@ -229,6 +234,9 @@ typedef union packed {
 MANGO_DEFINE_REF_TYPE(void, )
 MANGO_DEFINE_REF_TYPE(uint8_t, const)
 MANGO_DEFINE_REF_TYPE(mango_module, )
+
+#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 #if defined(__clang__) || defined(__GNUC__)
 _Static_assert(sizeof(stack_frame) == 4, "Incorrect layout");
@@ -1785,21 +1793,7 @@ UNUSED142:
 UNUSED143:
   INVALID;
 
-  (void)void_as_ptr;
-  (void)void_as_ref;
-  (void)void_is_null;
-
-#else
-
-  (void)void_as_ptr;
-  (void)void_as_ref;
-  (void)void_is_null;
-
 #endif
-
-  (void)mango_module_null;
-  (void)uint8_t_is_null;
-  (void)mango_module_is_null;
 
 #if !defined(MANGO_NO_I64)
 
