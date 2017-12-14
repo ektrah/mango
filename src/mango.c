@@ -117,15 +117,15 @@ typedef enum opcode {
 } opcode;
 
 typedef struct stack_frame {
-  uint16_t ip;
-  uint8_t module;
   uint8_t pop;
+  uint8_t module;
+  uint16_t ip;
 } stack_frame;
 
 typedef struct function_token {
-  uint16_t offset;
-  uint8_t module;
   uint8_t _reserved;
+  uint8_t module;
+  uint16_t offset;
 } function_token;
 
 typedef union stackval {
@@ -531,7 +531,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   vm->modules_created = 1;
   vm->modules_imported = 1;
   vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){(uint16_t)(&app->entry_point[3] - image), 0, 0};
+  vm->sf = (stack_frame){0, 0, (uint16_t)(&app->entry_point[3] - image)};
   memcpy(&vm->app_name, name, sizeof(mango_module_name));
 
   mango_module *module = &modules[0];
@@ -669,8 +669,8 @@ mango_result mango_run(mango_vm *vm) {
         }
       }
     } else {
-      vm->sf = (stack_frame){(uint16_t)offsetof(mango_module_def, initializer),
-                             head, 0};
+      vm->sf = (stack_frame){0, head,
+                             (uint16_t)offsetof(mango_module_def, initializer)};
 
       head = module->init_next;
       vm->init_head = head;
@@ -690,10 +690,10 @@ mango_result mango_run(mango_vm *vm) {
   if ((vm->flags & VISITED) == 0) {
     vm->flags |= VISITED;
 
-    vm->sf = (stack_frame){(uint16_t)(modules[0].image_size -
+    vm->sf = (stack_frame){0, 0,
+                           (uint16_t)(modules[0].image_size -
                                       (sizeof(mango_app_info) -
-                                       offsetof(mango_app_info, entry_point))),
-                           0, 0};
+                                       offsetof(mango_app_info, entry_point)))};
 
     result = _mango_interpret(vm);
     if (result != MANGO_E_SUCCESS) {
@@ -1129,11 +1129,11 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     ip++;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
+      rp->sf = (stack_frame){sf.pop, sf.module, (uint16_t)(ip - caller->image)};
       rp++;
     }
 
-    sf = (stack_frame){0, module, f->arg_count + f->loc_count};
+    sf = (stack_frame){f->arg_count + f->loc_count, module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1162,11 +1162,11 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
     ip += 3;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
+      rp->sf = (stack_frame){sf.pop, sf.module, (uint16_t)(ip - caller->image)};
       rp++;
     }
 
-    sf = (stack_frame){0, sf.module, f->arg_count + f->loc_count};
+    sf = (stack_frame){f->arg_count + f->loc_count, sf.module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1199,11 +1199,11 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     ip += 4;
 
     if (!(sf.pop == 0 && *ip == RET)) {
-      rp->sf = (stack_frame){(uint16_t)(ip - caller->image), sf.module, sf.pop};
+      rp->sf = (stack_frame){sf.pop, sf.module, (uint16_t)(ip - caller->image)};
       rp++;
     }
 
-    sf = (stack_frame){0, module, f->arg_count + f->loc_count};
+    sf = (stack_frame){f->arg_count + f->loc_count, module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1316,7 +1316,7 @@ LDFTN: // ... -> ftn ...
                                vm, _mango_get_module(vm, sf.module))[import];
 
     sp--;
-    sp[0].ftn = (function_token){offset, module, 0};
+    sp[0].ftn = (function_token){0, module, offset};
     ip += 4;
     NEXT;
   } while (0);
@@ -2303,8 +2303,8 @@ done:
 
 yield:
   vm->sf =
-      (stack_frame){(uint16_t)(ip - _mango_get_module(vm, sf.module)->image),
-                    sf.module, sf.pop};
+      (stack_frame){sf.pop, sf.module,
+                    (uint16_t)(ip - _mango_get_module(vm, sf.module)->image)};
   vm->rp = (uint16_t)(rp - vm->stack);
   vm->sp = (uint16_t)(sp - vm->stack);
   return result;
