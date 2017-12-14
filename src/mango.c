@@ -287,6 +287,12 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
   if (!address || ((uintptr_t)address & (__alignof(mango_vm) - 1)) != 0) {
     return NULL;
   }
+  if (stack_size > UINT16_MAX * sizeof(stackval)) {
+    return NULL;
+  }
+  if ((stack_size & (sizeof(stackval) - 1)) != 0) {
+    return NULL;
+  }
   if (heap_size < stack_size || heap_size - stack_size < sizeof(mango_vm)) {
     return NULL;
   }
@@ -295,12 +301,6 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
     return NULL;
   }
 #endif
-  if (stack_size > UINT16_MAX * sizeof(stackval)) {
-    return NULL;
-  }
-  if ((stack_size & (sizeof(stackval) - 1)) != 0) {
-    return NULL;
-  }
 
   mango_vm *vm = address;
   memset(vm, 0, sizeof(mango_vm));
