@@ -16,10 +16,70 @@ jobs:
       - run:
           name: Build
           command: |
-            mkdir -p bin/x64/clang/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x64/clang/
-            mkdir -p bin/x86/clang/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x86/clang/
-            mkdir -p bin/x64/gcc/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG" PREFIX=bin/x64/gcc/
-            mkdir -p bin/x86/gcc/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG" PREFIX=bin/x86/gcc/
+            mkdir -p bin/x64/Release/0xf000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x64/Release/0xf000/clang-5.0/
+            mkdir -p bin/x64/Release/0xf000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG" PREFIX=bin/x64/Release/0xf000/gcc-6/
+            mkdir -p bin/x64/Release/0xe000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64" PREFIX=bin/x64/Release/0xe000/clang-5.0/
+            mkdir -p bin/x64/Release/0xe000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64" PREFIX=bin/x64/Release/0xe000/gcc-6/
+            mkdir -p bin/x64/Release/0xd000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32" PREFIX=bin/x64/Release/0xd000/clang-5.0/
+            mkdir -p bin/x64/Release/0xd000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F32" PREFIX=bin/x64/Release/0xd000/gcc-6/
+            mkdir -p bin/x64/Release/0xc000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32" PREFIX=bin/x64/Release/0xc000/clang-5.0/
+            mkdir -p bin/x64/Release/0xc000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32" PREFIX=bin/x64/Release/0xc000/gcc-6/
+            mkdir -p bin/x64/Release/0xb000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F64" PREFIX=bin/x64/Release/0xb000/clang-5.0/
+            mkdir -p bin/x64/Release/0xb000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F64" PREFIX=bin/x64/Release/0xb000/gcc-6/
+            mkdir -p bin/x64/Release/0xa000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0xa000/clang-5.0/
+            mkdir -p bin/x64/Release/0xa000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0xa000/gcc-6/
+            mkdir -p bin/x64/Release/0x9000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0x9000/clang-5.0/
+            mkdir -p bin/x64/Release/0x9000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0x9000/gcc-6/
+            mkdir -p bin/x64/Release/0x8000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0x8000/clang-5.0/
+            mkdir -p bin/x64/Release/0x8000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x64/Release/0x8000/gcc-6/
+            mkdir -p bin/x64/Release/0x7000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x7000/clang-5.0/
+            mkdir -p bin/x64/Release/0x7000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x7000/gcc-6/
+            mkdir -p bin/x64/Release/0x6000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x6000/clang-5.0/
+            mkdir -p bin/x64/Release/0x6000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x6000/gcc-6/
+            mkdir -p bin/x64/Release/0x5000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x5000/clang-5.0/
+            mkdir -p bin/x64/Release/0x5000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x5000/gcc-6/
+            mkdir -p bin/x64/Release/0x4000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x4000/clang-5.0/
+            mkdir -p bin/x64/Release/0x4000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x4000/gcc-6/
+            mkdir -p bin/x64/Release/0x3000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x3000/clang-5.0/
+            mkdir -p bin/x64/Release/0x3000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x3000/gcc-6/
+            mkdir -p bin/x64/Release/0x2000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x2000/clang-5.0/
+            mkdir -p bin/x64/Release/0x2000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x2000/gcc-6/
+            mkdir -p bin/x64/Release/0x1000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x1000/clang-5.0/
+            mkdir -p bin/x64/Release/0x1000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x1000/gcc-6/
+            mkdir -p bin/x64/Release/0x0000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x0000/clang-5.0/
+            mkdir -p bin/x64/Release/0x0000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x0000/gcc-6/
+            mkdir -p bin/x86/Release/0xf000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x86/Release/0xf000/clang-5.0/
+            mkdir -p bin/x86/Release/0xf000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG" PREFIX=bin/x86/Release/0xf000/gcc-6/
+            mkdir -p bin/x86/Release/0xe000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64" PREFIX=bin/x86/Release/0xe000/clang-5.0/
+            mkdir -p bin/x86/Release/0xe000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64" PREFIX=bin/x86/Release/0xe000/gcc-6/
+            mkdir -p bin/x86/Release/0xd000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32" PREFIX=bin/x86/Release/0xd000/clang-5.0/
+            mkdir -p bin/x86/Release/0xd000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F32" PREFIX=bin/x86/Release/0xd000/gcc-6/
+            mkdir -p bin/x86/Release/0xc000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32" PREFIX=bin/x86/Release/0xc000/clang-5.0/
+            mkdir -p bin/x86/Release/0xc000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32" PREFIX=bin/x86/Release/0xc000/gcc-6/
+            mkdir -p bin/x86/Release/0xb000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F64" PREFIX=bin/x86/Release/0xb000/clang-5.0/
+            mkdir -p bin/x86/Release/0xb000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F64" PREFIX=bin/x86/Release/0xb000/gcc-6/
+            mkdir -p bin/x86/Release/0xa000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0xa000/clang-5.0/
+            mkdir -p bin/x86/Release/0xa000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0xa000/gcc-6/
+            mkdir -p bin/x86/Release/0x9000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0x9000/clang-5.0/
+            mkdir -p bin/x86/Release/0x9000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0x9000/gcc-6/
+            mkdir -p bin/x86/Release/0x8000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0x8000/clang-5.0/
+            mkdir -p bin/x86/Release/0x8000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64" PREFIX=bin/x86/Release/0x8000/gcc-6/
+            mkdir -p bin/x86/Release/0x7000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x7000/clang-5.0/
+            mkdir -p bin/x86/Release/0x7000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x7000/gcc-6/
+            mkdir -p bin/x86/Release/0x6000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x6000/clang-5.0/
+            mkdir -p bin/x86/Release/0x6000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x6000/gcc-6/
+            mkdir -p bin/x86/Release/0x5000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x5000/clang-5.0/
+            mkdir -p bin/x86/Release/0x5000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x5000/gcc-6/
+            mkdir -p bin/x86/Release/0x4000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x4000/clang-5.0/
+            mkdir -p bin/x86/Release/0x4000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x4000/gcc-6/
+            mkdir -p bin/x86/Release/0x3000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x3000/clang-5.0/
+            mkdir -p bin/x86/Release/0x3000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x3000/gcc-6/
+            mkdir -p bin/x86/Release/0x2000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x2000/clang-5.0/
+            mkdir -p bin/x86/Release/0x2000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x2000/gcc-6/
+            mkdir -p bin/x86/Release/0x1000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x1000/clang-5.0/
+            mkdir -p bin/x86/Release/0x1000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x1000/gcc-6/
+            mkdir -p bin/x86/Release/0x0000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x0000/clang-5.0/
+            mkdir -p bin/x86/Release/0x0000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x0000/gcc-6/
       - store_artifacts:
-          path: bin
+          path: bin/x64/Release/0xf000/clang-5.0/
           destination: /
