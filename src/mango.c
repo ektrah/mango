@@ -405,7 +405,7 @@ mango_result mango_stack_free(mango_vm *vm, size_t size) {
   size_t count = (size + (sizeof(stackval) - 1)) / sizeof(stackval);
 
   if ((size_t)vm->stack_size - (size_t)vm->sp < count) {
-    return MANGO_E_STACK_OVERFLOW;
+    return MANGO_E_INVALID_OPERATION;
   }
 
   vm->sp += count;
