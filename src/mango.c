@@ -1480,9 +1480,6 @@ SLICE1: // start array length ... -> array length ...
     if (start > sp[2].u32) {
       RETURN(MANGO_E_ARGUMENT);
     }
-    if (void_is_null(sp[1].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
-    }
     sp++;
     sp[0].ref.address += start;
     sp[1].u32 -= start;
@@ -1496,9 +1493,6 @@ SLICE2: // length' start array length ... -> array length' ...
     uint32_t start = sp[1].u32;
     if (start > sp[3].u32 || length > sp[3].u32 - start) {
       RETURN(MANGO_E_ARGUMENT);
-    }
-    if (void_is_null(sp[2].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
     }
     sp += 2;
     sp[0].ref.address += start;
@@ -1620,9 +1614,6 @@ UNUSED125:
     if (index >= sp[2].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
-    if (void_is_null(sp[1].ref)) {                                             \
-      RETURN(MANGO_E_NULL_REFERENCE);                                          \
-    }                                                                          \
     const void *arr = void_as_ptr(vm, sp[1].ref);                              \
     sp += 2;                                                                   \
     sp[0].Type = ((const Cast *)arr)[index];                                   \
@@ -1651,9 +1642,6 @@ LDELEM_X64: // index array length ... -> value ...
     if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
-    if (void_is_null(sp[1].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
-    }
     void *arr = void_as_ptr(vm, sp[1].ref);
     sp += 1;
     sp[0].u32 = ((uint32_t *)arr)[2 * index + 0];
@@ -1667,9 +1655,6 @@ LDELEMA: // index array length ... -> address ...
     uint32_t index = sp[0].u32;
     if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
-    if (void_is_null(sp[1].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
     }
     uint32_t address = sp[1].ref.address;
     uint32_t size = FETCH(ip + 1, u16);
@@ -1685,9 +1670,6 @@ LDELEMA: // index array length ... -> address ...
     uint32_t index = sp[1].u32;                                                \
     if (index >= sp[3].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
-    }                                                                          \
-    if (void_is_null(sp[2].ref)) {                                             \
-      RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
     void *arr = void_as_ptr(vm, sp[2].ref);                                    \
     ((Cast *)arr)[index] = (Cast)value;                                        \
@@ -1712,9 +1694,6 @@ STELEM_X64: // value index array length ... -> ...
     uint32_t index = sp[2].u32;
     if (index >= sp[4].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
-    if (void_is_null(sp[3].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
     }
     void *arr = void_as_ptr(vm, sp[3].ref);
     ((uint32_t *)arr)[2 * index + 0] = value1;
