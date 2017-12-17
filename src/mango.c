@@ -917,15 +917,10 @@ static mango_result _mango_interpret(mango_vm *vm) {
   };
 
   mango_result result;
-  stack_frame sf;
-  stackval *rp;
-  stackval *sp;
-  const uint8_t *ip;
-
-  rp = vm->stack + vm->rp;
-  sp = vm->stack + vm->sp;
-  sf = vm->sf;
-  ip = _mango_get_module(vm, sf.module)->image + sf.ip;
+  stackval *rp = vm->stack + vm->rp;
+  stackval *sp = vm->stack + vm->sp;
+  stack_frame sf = vm->sf;
+  const uint8_t *ip = _mango_get_module(vm, sf.module)->image + sf.ip;
 
   NEXT;
 
