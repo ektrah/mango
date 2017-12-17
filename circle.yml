@@ -14,7 +14,7 @@ jobs:
             apt-get -qq install --yes --no-install-recommends clang-5.0 gcc-6 gcc-6-multilib make
       - checkout
       - run:
-          name: Build
+          name: Build (x64)
           command: |
             mkdir -p bin/x64/Release/0xf000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x64/Release/0xf000/clang-5.0/
             mkdir -p bin/x64/Release/0xf000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG" PREFIX=bin/x64/Release/0xf000/gcc-6/
@@ -48,6 +48,9 @@ jobs:
             mkdir -p bin/x64/Release/0x1000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x1000/gcc-6/
             mkdir -p bin/x64/Release/0x0000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target x86_64-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x0000/clang-5.0/
             mkdir -p bin/x64/Release/0x0000/gcc-6/ && make CC=gcc-6 CFLAGS="-m64 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x64/Release/0x0000/gcc-6/
+      - run:
+          name: Build (x86)
+          command: |
             mkdir -p bin/x86/Release/0xf000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG" PREFIX=bin/x86/Release/0xf000/clang-5.0/
             mkdir -p bin/x86/Release/0xf000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG" PREFIX=bin/x86/Release/0xf000/gcc-6/
             mkdir -p bin/x86/Release/0xe000/clang-5.0/ && make CC=clang-5.0 CFLAGS="-target i686-pc-linux-gnu -O3 -DNDEBUG -DMANGO_NO_I64" PREFIX=bin/x86/Release/0xe000/clang-5.0/
