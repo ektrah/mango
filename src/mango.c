@@ -1512,8 +1512,8 @@ UNUSED103:
     if (void_is_null(sp[0].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
-    const void *obj = void_as_ptr(vm, sp[0].ref);                              \
-    const Cast *fld = (const Cast *)((uintptr_t)obj + FETCH(ip + 1, u16));     \
+    uintptr_t obj = (uintptr_t)(void_as_ptr(vm, sp[0].ref));                   \
+    const Cast *fld = (const Cast *)(obj + FETCH(ip + 1, u16));                \
     sp[0].Type = fld[0];                                                       \
     ip += 3;                                                                   \
     NEXT;                                                                      \
@@ -1539,9 +1539,8 @@ LDFLD_X64: // address ... -> value ...
     if (void_is_null(sp[0].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
-    const void *obj = void_as_ptr(vm, sp[0].ref);
-    const uint32_t *fld =
-        (const uint32_t *)((uintptr_t)obj + FETCH(ip + 1, u16));
+    uintptr_t obj = (uintptr_t)(void_as_ptr(vm, sp[0].ref));
+    const uint32_t *fld = (const uint32_t *)(obj + FETCH(ip + 1, u16));
     sp--;
     sp[0].u32 = fld[0];
     sp[1].u32 = fld[1];
@@ -1564,8 +1563,8 @@ LDFLDA: // address ... -> address ...
     if (void_is_null(sp[1].ref)) {                                             \
       RETURN(MANGO_E_NULL_REFERENCE);                                          \
     }                                                                          \
-    void *obj = void_as_ptr(vm, sp[1].ref);                                    \
-    Cast *fld = (Cast *)((uintptr_t)obj + FETCH(ip + 1, u16));                 \
+    uintptr_t obj = (uintptr_t)(void_as_ptr(vm, sp[1].ref));                   \
+    Cast *fld = (Cast *)(obj + FETCH(ip + 1, u16));                            \
     fld[0] = (Cast)sp[0].Type;                                                 \
     sp += 2;                                                                   \
     ip += 3;                                                                   \
@@ -1586,8 +1585,8 @@ STFLD_X64: // value address -> ...
     if (void_is_null(sp[2].ref)) {
       RETURN(MANGO_E_NULL_REFERENCE);
     }
-    void *obj = void_as_ptr(vm, sp[2].ref);
-    uint32_t *fld = (uint32_t *)((uintptr_t)obj + FETCH(ip + 1, u16));
+    uintptr_t obj = (uintptr_t)(void_as_ptr(vm, sp[2].ref));
+    uint32_t *fld = (uint32_t *)(obj + FETCH(ip + 1, u16));
     fld[0] = sp[0].u32;
     fld[1] = sp[1].u32;
     sp += 3;
@@ -1614,9 +1613,9 @@ UNUSED125:
     if (index >= sp[2].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
-    const void *arr = void_as_ptr(vm, sp[1].ref);                              \
+    const Cast *arr = void_as_ptr(vm, sp[1].ref);                              \
     sp += 2;                                                                   \
-    sp[0].Type = ((const Cast *)arr)[index];                                   \
+    sp[0].Type = arr[index];                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
   } while (0)
@@ -1642,10 +1641,10 @@ LDELEM_X64: // index array length ... -> value ...
     if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
-    void *arr = void_as_ptr(vm, sp[1].ref);
+    const uint32_t *arr = void_as_ptr(vm, sp[1].ref);
     sp += 1;
-    sp[0].u32 = ((uint32_t *)arr)[2 * index + 0];
-    sp[1].u32 = ((uint32_t *)arr)[2 * index + 1];
+    sp[0].u32 = arr[2 * index + 0];
+    sp[1].u32 = arr[2 * index + 1];
     ip++;
     NEXT;
   } while (0);
@@ -1666,13 +1665,12 @@ LDELEMA: // index array length ... -> address ...
 
 #define STORE_ELEMENT(Cast)                                                    \
   do {                                                                         \
-    uint32_t value = sp[0].u32;                                                \
     uint32_t index = sp[1].u32;                                                \
     if (index >= sp[3].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
-    void *arr = void_as_ptr(vm, sp[2].ref);                                    \
-    ((Cast *)arr)[index] = (Cast)value;                                        \
+    Cast *arr = void_as_ptr(vm, sp[2].ref);                                    \
+    arr[index] = (Cast)sp[0].u32;                                              \
     sp += 4;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
@@ -1689,15 +1687,13 @@ STELEM_X32: // value index array length ... -> ...
 
 STELEM_X64: // value index array length ... -> ...
   do {
-    uint32_t value1 = sp[0].u32;
-    uint32_t value2 = sp[1].u32;
     uint32_t index = sp[2].u32;
     if (index >= sp[4].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
-    void *arr = void_as_ptr(vm, sp[3].ref);
-    ((uint32_t *)arr)[2 * index + 0] = value1;
-    ((uint32_t *)arr)[2 * index + 1] = value2;
+    uint32_t *arr = void_as_ptr(vm, sp[3].ref);
+    arr[2 * index + 0] = sp[0].u32;
+    arr[2 * index + 1] = sp[1].u32;
     sp += 5;
     ip++;
     NEXT;
