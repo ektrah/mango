@@ -1,7 +1,16 @@
 version: 2
 
-jobs:
+workflows:
+  version: 2
   build:
+    jobs:
+      - debian-stretch
+      - macos-xcode-9.2:
+          requires:
+            - debian-stretch
+
+jobs:
+  debian-stretch:
     docker:
       - image: buildpack-deps:stretch-scm
     steps:
@@ -85,4 +94,16 @@ jobs:
             mkdir -p bin/x86/Release/0x0000/gcc-6/ && make CC=gcc-6 CFLAGS="-m32 -O3 -DNDEBUG -DMANGO_NO_I64 -DMANGO_NO_F32 -DMANGO_NO_F64 -DMANGO_NO_REFS" PREFIX=bin/x86/Release/0x0000/gcc-6/
       - store_artifacts:
           path: bin/x64/Release/0xf000/clang-5.0/
-          destination: /
+          destination: /linux-x64/
+  macos-xcode-9.2:
+    macos:
+      xcode: "9.2.0"
+    steps:
+      - checkout
+      - run:
+          name: Build (x64)
+          command: |
+            mkdir -p bin/x64/Release/0xf000/clang/ && make CC=clang CFLAGS="-target x86_64-apple-darwin -O3 -DNDEBUG" PREFIX=bin/x64/Release/0xf000/clang/
+      - store_artifacts:
+          path: bin/x64/Release/0xf000/clang/
+          destination: /osx-x64/
