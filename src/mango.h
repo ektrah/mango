@@ -76,10 +76,10 @@ typedef enum mango_result {
 } mango_result;
 
 typedef enum mango_feature_flags {
-  MANGO_FEATURE_I64 = 0x1000,
-  MANGO_FEATURE_F32 = 0x2000,
-  MANGO_FEATURE_F64 = 0x4000,
-  MANGO_FEATURE_REFS = 0x8000,
+  MANGO_FEATURE_I64 = 0x10,
+  MANGO_FEATURE_F32 = 0x20,
+  MANGO_FEATURE_F64 = 0x40,
+  MANGO_FEATURE_REFS = 0x80,
 } mango_feature_flags;
 
 typedef enum mango_alloc_flags {
