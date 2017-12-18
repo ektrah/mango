@@ -57,7 +57,7 @@ typedef struct mango_module_def {
 } mango_module_def;
 
 typedef struct mango_app_info {
-  uint16_t features;
+  uint8_t features;
   uint8_t module_count;
   uint8_t entry_point[4];
 } mango_app_info;
