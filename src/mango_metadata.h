@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-#define MANGO_IMAGE_MAGIC UINT16_C(0x00FF)
+#define MANGO_IMAGE_MAGIC UINT8_C(0xFF)
 
 #pragma pack(push, 1)
 
@@ -49,7 +49,7 @@ typedef enum mango_module_attributes {
 } mango_module_attributes;
 
 typedef struct mango_module_def {
-  uint16_t magic;
+  uint8_t magic;
   uint8_t attributes;
   uint8_t import_count;
   uint8_t initializer[4];
