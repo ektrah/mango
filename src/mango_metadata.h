@@ -69,9 +69,9 @@ typedef enum mango_func_attributes {
 
 typedef struct mango_func_def {
   uint8_t attributes;
-  uint8_t max_stack;
   uint8_t arg_count;
   uint8_t loc_count;
+  uint8_t max_stack;
   uint8_t code[];
 } mango_func_def;
 
