@@ -72,7 +72,7 @@ typedef enum mango_result {
   MANGO_E_NULL_REFERENCE = 88,
   MANGO_E_BREAKPOINT = 110,
   MANGO_E_TIMEOUT = 111,
-  MANGO_E_SYSCALL = 112,
+  MANGO_E_SYSTEM_CALL = 112,
 } mango_result;
 
 typedef enum mango_feature_flags {

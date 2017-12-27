@@ -35,47 +35,25 @@
 extern "C" {
 #endif
 
-#define MANGO_IMAGE_MAGIC UINT8_C(0xFF)
-
-#pragma pack(push, 1)
-
 typedef struct mango_module_name {
   uint8_t bytes[12];
 } mango_module_name;
 
-typedef enum mango_module_attributes {
-  MANGO_MD_NONE = 0x0,
-  MANGO_MD_EXECUTABLE = 0x2,
-} mango_module_attributes;
-
 typedef struct mango_module_def {
-  uint8_t magic;
-  uint8_t attributes;
+  uint8_t version;
+  uint8_t features;
+  uint8_t module_count;
   uint8_t import_count;
-  uint8_t initializer[4];
+  uint8_t entry_point[4];
   mango_module_name imports[];
 } mango_module_def;
 
-typedef struct mango_app_info {
-  uint8_t features;
-  uint8_t module_count;
-  uint8_t entry_point[4];
-} mango_app_info;
-
-typedef enum mango_func_attributes {
-  MANGO_FD_NONE = 0x0,
-  MANGO_FD_INIT_LOCALS = 0x1,
-} mango_function_attributes;
-
 typedef struct mango_func_def {
-  uint8_t attributes;
   uint8_t arg_count;
   uint8_t loc_count;
   uint8_t max_stack;
   uint8_t code[];
 } mango_func_def;
-
-#pragma pack(pop)
 
 #ifdef __cplusplus
 }

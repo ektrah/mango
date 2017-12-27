@@ -91,10 +91,6 @@
 #error Unsupported byte order
 #endif
 
-#if MANGO_IMAGE_MAGIC != UINT16_C(0x00FF)
-#error Unsupported image format
-#endif
-
 ////////////////////////////////////////////////////////////////////////////////
 
 #pragma GCC diagnostic push
@@ -164,12 +160,13 @@ typedef struct mango_vm {
   uint32_t heap_size;
   uint32_t heap_used;
 
-  uint8_t flags;
-  uint8_t init_head;
-
+  mango_module_name startup_module_name;
+  mango_module_ref modules;
   uint8_t modules_created;
   uint8_t modules_imported;
-  mango_module_ref modules;
+
+  uint8_t init_head;
+  uint8_t init_flags;
 
   uint16_t stack_size;
   uint16_t rp;
@@ -177,10 +174,9 @@ typedef struct mango_vm {
   uint16_t sp_expected;
   stack_frame sf;
 
-  uint32_t _reserved[2];
-
-  mango_module_name app_name;
   void_ref base;
+
+  uint32_t _reserved[2];
 
   union {
     void *context;
@@ -203,12 +199,12 @@ typedef struct mango_module {
 
   uint8_t init_next;
   uint8_t init_prev;
-  uint8_t flags;
+  uint8_t init_flags;
 
   uint8_t import_count;
   uint8_t_ref imports;
 
-  void_ref static_data;
+  uint32_t _reserved[1];
 
   union {
     void *context;
@@ -311,6 +307,7 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
   vm->heap_used = (uint32_t)(sizeof(mango_vm) + stack_size);
   vm->stack_size = (uint16_t)(stack_size / sizeof(stackval));
   vm->sp_expected = vm->sp = vm->stack_size;
+  vm->sf = (stack_frame){0, 0, (uint16_t)(sizeof(mango_module_def) - 1)};
   vm->base = void_as_ref(vm, vm);
   vm->context = context;
   return vm;
@@ -449,7 +446,7 @@ _mango_get_module_imports(const mango_vm *vm, const mango_module *module) {
 static inline const mango_module_name *
 _mango_get_module_name(const mango_vm *vm, const mango_module *module) {
   if (module->name_module == INVALID_MODULE) {
-    return &vm->app_name;
+    return &vm->startup_module_name;
   } else {
     const uint8_t *image = _mango_get_module(vm, module->name_module)->image;
     return ((const mango_module_def *)image)->imports + module->name_index;
@@ -498,7 +495,7 @@ static mango_result _mango_initialize_module(mango_vm *vm, uint8_t index,
     module->imports = uint8_t_null();
   }
 
-  module->static_data = void_null();
+  module->_reserved[0] = 0;
 
   return MANGO_E_SUCCESS;
 }
@@ -509,32 +506,17 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
                                                  size_t size, void *context) {
   const mango_module_def *m = (const mango_module_def *)image;
 
-  if ((m->attributes & MANGO_MD_EXECUTABLE) == 0) {
-    return MANGO_E_BAD_IMAGE_FORMAT;
-  }
-
-  const mango_app_info *app =
-      (const mango_app_info *)(image + (size - sizeof(mango_app_info)));
-
-  if ((app->features & mango_features()) != app->features) {
-    return MANGO_E_NOT_SUPPORTED;
-  }
-  if (app->entry_point[3] != HALT) {
-    return MANGO_E_BAD_IMAGE_FORMAT;
-  }
-
   mango_module *modules = mango_heap_alloc(
-      vm, app->module_count, sizeof(mango_module), __alignof(mango_module), 0);
+      vm, m->module_count, sizeof(mango_module), __alignof(mango_module), 0);
 
   if (!modules) {
     return MANGO_E_OUT_OF_MEMORY;
   }
 
+  memcpy(&vm->startup_module_name, name, sizeof(mango_module_name));
+  vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
-  vm->modules = mango_module_as_ref(vm, modules);
-  vm->sf = (stack_frame){0, 0, (uint16_t)(&app->entry_point[3] - image)};
-  memcpy(&vm->app_name, name, sizeof(mango_module_name));
 
   mango_module *module = &modules[0];
   module->image = image;
@@ -543,7 +525,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   module->name_index = INVALID_MODULE;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
-  module->flags = 0;
+  module->init_flags = 0;
   module->context = context;
 
   return _mango_initialize_module(vm, 0, module);
@@ -567,7 +549,7 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
   module->image_size = (uint16_t)size;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
-  module->flags = 0;
+  module->init_flags = 0;
   module->context = context;
 
   return _mango_initialize_module(vm, index, module);
@@ -582,8 +564,16 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
     return MANGO_E_ARGUMENT;
   }
-  if (((const mango_module_def *)image)->magic != MANGO_IMAGE_MAGIC) {
+
+  const mango_module_def *m = (const mango_module_def *)image;
+
+  if (m->version != MANGO_VERSION_MAJOR ||
+      m->entry_point[sizeof(m->entry_point) - 1] != HALT ||
+      m->module_count == 0 || m->import_count > m->module_count) {
     return MANGO_E_BAD_IMAGE_FORMAT;
+  }
+  if ((m->features & mango_features()) != m->features) {
+    return MANGO_E_NOT_SUPPORTED;
   }
 
   if (vm->modules_imported == 0) {
@@ -633,6 +623,10 @@ mango_result mango_run(mango_vm *vm) {
     return vm->result = MANGO_E_STACK_IMBALANCE;
   }
 
+  if (vm->result == MANGO_E_SYSTEM_CALL) {
+    vm->sf.ip += 4;
+  }
+
   mango_result result = _mango_interpret(vm);
   if (result != MANGO_E_SUCCESS) {
     return vm->result = result;
@@ -644,8 +638,8 @@ mango_result mango_run(mango_vm *vm) {
   while (head != INVALID_MODULE) {
     mango_module *module = &modules[head];
 
-    if ((module->flags & VISITED) == 0) {
-      module->flags |= VISITED;
+    if ((module->init_flags & VISITED) == 0) {
+      module->init_flags |= VISITED;
 
       const uint8_t *imports = _mango_get_module_imports(vm, module);
 
@@ -653,7 +647,7 @@ mango_result mango_run(mango_vm *vm) {
         uint8_t p = imports[i];
         mango_module *import = &modules[p];
 
-        if ((import->flags & VISITED) == 0) {
+        if ((import->init_flags & VISITED) == 0) {
           if (head != p) {
             if (import->init_prev != INVALID_MODULE) {
               modules[import->init_prev].init_next = import->init_next;
@@ -672,7 +666,7 @@ mango_result mango_run(mango_vm *vm) {
       }
     } else {
       vm->sf = (stack_frame){0, head,
-                             (uint16_t)offsetof(mango_module_def, initializer)};
+                             (uint16_t)offsetof(mango_module_def, entry_point)};
 
       head = module->init_next;
       vm->init_head = head;
@@ -686,20 +680,6 @@ mango_result mango_run(mango_vm *vm) {
       if (result != MANGO_E_SUCCESS) {
         return vm->result = result;
       }
-    }
-  }
-
-  if ((vm->flags & VISITED) == 0) {
-    vm->flags |= VISITED;
-
-    vm->sf = (stack_frame){0, 0,
-                           (uint16_t)(modules[0].image_size -
-                                      (sizeof(mango_app_info) -
-                                       offsetof(mango_app_info, entry_point)))};
-
-    result = _mango_interpret(vm);
-    if (result != MANGO_E_SUCCESS) {
-      return vm->result = result;
     }
   }
 
@@ -1125,7 +1105,7 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     sp -= f->loc_count;
     ip = f->code;
 
-    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+    if (f->loc_count != 0) {
       for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
         sp[i].u32 = 0;
       }
@@ -1158,7 +1138,7 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
     sp -= f->loc_count;
     ip = f->code;
 
-    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+    if (f->loc_count != 0) {
       for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
         sp[i].u32 = 0;
       }
@@ -1195,7 +1175,7 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     sp -= f->loc_count;
     ip = f->code;
 
-    if ((f->attributes & MANGO_FD_INIT_LOCALS) != 0) {
+    if (f->loc_count != 0) {
       for (uint_fast8_t i = 0, n = f->loc_count; i < n; i++) {
         sp[i].u32 = 0;
       }
@@ -1209,11 +1189,10 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     int8_t adjustment = FETCH(ip + 1, i8);
     uint16_t syscall = FETCH(ip + 2, u16);
 
-    ip += 4;
     vm->sp_expected = (uint16_t)((sp - vm->stack) + adjustment);
     vm->syscall = syscall;
 
-    YIELD(MANGO_E_SYSCALL);
+    YIELD(MANGO_E_SYSTEM_CALL);
   } while (0);
 
 UNUSED31:
