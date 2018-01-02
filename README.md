@@ -1,7 +1,7 @@
 # Mango Virtual Machine
 
 [![CircleCI](https://circleci.com/gh/ektrah/mango.svg?style=shield)](https://circleci.com/gh/ektrah/mango)
-[![Maintenance](https://img.shields.io/maintenance/yes/2017.svg)](https://github.com/ektrah/mango)
+[![Maintenance](https://img.shields.io/maintenance/yes/2018.svg)](https://github.com/ektrah/mango)
 [![MIT License](https://img.shields.io/github/license/ektrah/mango.svg?maxAge=2592000)](LICENSE)
 
 Mango is a tiny, yet powerful virtual machine that runs type-safe mobile code in very little memory (<1 KiB RAM).
