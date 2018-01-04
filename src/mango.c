@@ -715,6 +715,11 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
   result = (Result);                                                           \
   goto done
 
+#define THROW_IF(Result, Condition)                                            \
+  result = (Result);                                                           \
+  if (Condition)                                                               \
+  goto done
+
 #define BINARY1(Type, Operator)                                                \
   do {                                                                         \
     sp[1].Type = sp[1].Type Operator sp[0].Type;                               \
@@ -725,12 +730,8 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 #define BINARY1I(Operator)                                                     \
   do {                                                                         \
-    if (sp[0].i32 == 0) {                                                      \
-      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
-    }                                                                          \
-    if (sp[0].i32 == -1 && sp[1].i32 == INT32_MIN) {                           \
-      RETURN(MANGO_E_ARITHMETIC);                                              \
-    }                                                                          \
+    THROW_IF(MANGO_E_DIVIDE_BY_ZERO, sp[0].i32 == 0);                          \
+    THROW_IF(MANGO_E_ARITHMETIC, sp[0].i32 == -1 && sp[1].i32 == INT32_MIN);   \
     sp[1].i32 = sp[1].i32 Operator sp[0].i32;                                  \
     sp++;                                                                      \
     ip++;                                                                      \
@@ -739,9 +740,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 
 #define BINARY1U(Operator)                                                     \
   do {                                                                         \
-    if (sp[0].u32 == 0) {                                                      \
-      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
-    }                                                                          \
+    THROW_IF(MANGO_E_DIVIDE_BY_ZERO, sp[0].u32 == 0);                          \
     sp[1].u32 = sp[1].u32 Operator sp[0].u32;                                  \
     sp++;                                                                      \
     ip++;                                                                      \
@@ -760,12 +759,8 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #define BINARY2I(Operator)                                                     \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    if (sp2[0].i64 == 0) {                                                     \
-      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
-    }                                                                          \
-    if (sp2[0].i64 == -1 && sp2[1].i64 == INT64_MIN) {                         \
-      RETURN(MANGO_E_ARITHMETIC);                                              \
-    }                                                                          \
+    THROW_IF(MANGO_E_DIVIDE_BY_ZERO, sp2[0].i64 == 0);                         \
+    THROW_IF(MANGO_E_ARITHMETIC, sp2[0].i64 == -1 && sp2[1].i64 == INT64_MIN); \
     sp2[1].i64 = sp2[1].i64 Operator sp2[0].i64;                               \
     sp += 2;                                                                   \
     ip++;                                                                      \
@@ -775,9 +770,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
 #define BINARY2U(Operator)                                                     \
   do {                                                                         \
     stackval2 *sp2 = (stackval2 *)sp;                                          \
-    if (sp2[0].u64 == 0) {                                                     \
-      RETURN(MANGO_E_DIVIDE_BY_ZERO);                                          \
-    }                                                                          \
+    THROW_IF(MANGO_E_DIVIDE_BY_ZERO, sp2[0].u64 == 0);                         \
     sp2[1].u64 = sp2[1].u64 Operator sp2[0].u64;                               \
     sp += 2;                                                                   \
     ip++;                                                                      \
@@ -907,11 +900,9 @@ static mango_result _mango_interpret(mango_vm *vm) {
 #pragma region basic
 
 HALT: // ... -> ...
-  if (rp != vm->stack || sp != vm->stack + vm->stack_size) {
-    RETURN(MANGO_E_STACK_IMBALANCE);
-  } else {
-    RETURN(MANGO_E_SUCCESS);
-  }
+  THROW_IF(MANGO_E_STACK_IMBALANCE,
+           rp != vm->stack || sp != vm->stack + vm->stack_size);
+  RETURN(MANGO_E_SUCCESS);
 
 NOP: // ... -> ...
   ++ip;
@@ -1089,10 +1080,7 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
     const mango_module *callee = modules + module;
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
-    if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      RETURN(MANGO_E_STACK_OVERFLOW);
-    }
-
+    THROW_IF(MANGO_E_STACK_OVERFLOW, sp - rp < 1 + f->loc_count + f->max_stack);
     sp++;
     ip++;
 
@@ -1123,10 +1111,7 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
     const mango_module *callee = modules + sf.module;
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
-    if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      RETURN(MANGO_E_STACK_OVERFLOW);
-    }
-
+    THROW_IF(MANGO_E_STACK_OVERFLOW, sp - rp < 1 + f->loc_count + f->max_stack);
     ip += 3;
 
     if (!(sf.pop == 0 && *ip == RET)) {
@@ -1160,10 +1145,7 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
     const mango_module *callee = modules + module;
     const mango_func_def *f = (const mango_func_def *)(callee->image + offset);
 
-    if (sp - rp < 1 + f->loc_count + f->max_stack) {
-      RETURN(MANGO_E_STACK_OVERFLOW);
-    }
-
+    THROW_IF(MANGO_E_STACK_OVERFLOW, sp - rp < 1 + f->loc_count + f->max_stack);
     ip += 4;
 
     if (!(sf.pop == 0 && *ip == RET)) {
@@ -1421,9 +1403,7 @@ NEWOBJ: // ... -> address ...
     uint32_t size = FETCH(ip + 1, u16);
     void *object = mango_heap_alloc(vm, 1, size, __alignof(stackval),
                                     MANGO_ALLOC_ZERO_MEMORY);
-    if (!object) {
-      RETURN(MANGO_E_OUT_OF_MEMORY);
-    }
+    THROW_IF(MANGO_E_OUT_OF_MEMORY, !object);
     sp--;
     sp[0].ref = void_as_ref(vm, object);
     ip += 3;
@@ -1433,15 +1413,11 @@ NEWOBJ: // ... -> address ...
 NEWARR: // length ... -> array length ...
   do {
     uint32_t length = sp[0].u32;
-    if ((int32_t)length < 0) {
-      RETURN(MANGO_E_ARGUMENT);
-    }
+    THROW_IF(MANGO_E_ARGUMENT, (int32_t)length < 0);
     uint32_t size = FETCH(ip + 1, u16);
     void *array = mango_heap_alloc(vm, length, size, __alignof(stackval),
                                    MANGO_ALLOC_ZERO_MEMORY);
-    if (!array) {
-      RETURN(MANGO_E_OUT_OF_MEMORY);
-    }
+    THROW_IF(MANGO_E_OUT_OF_MEMORY, !array);
     sp--;
     sp[0].ref = void_as_ref(vm, array);
     ip += 3;
@@ -1451,9 +1427,7 @@ NEWARR: // length ... -> array length ...
 SLICE1: // start array length ... -> array length ...
   do {
     uint32_t start = sp[0].u32;
-    if (start > sp[2].u32) {
-      RETURN(MANGO_E_ARGUMENT);
-    }
+    THROW_IF(MANGO_E_ARGUMENT, start > sp[2].u32);
     sp++;
     sp[0].ref.address += start;
     sp[1].u32 -= start;
@@ -1465,9 +1439,7 @@ SLICE2: // length' start array length ... -> array length' ...
   do {
     uint32_t length = sp[0].u32;
     uint32_t start = sp[1].u32;
-    if (start > sp[3].u32 || length > sp[3].u32 - start) {
-      RETURN(MANGO_E_ARGUMENT);
-    }
+    THROW_IF(MANGO_E_ARGUMENT, start > sp[3].u32 || length > sp[3].u32 - start);
     sp += 2;
     sp[0].ref.address += start;
     sp[1].u32 = length;
@@ -1483,9 +1455,7 @@ UNUSED103:
 
 #define LOAD_FIELD(Cast, Type)                                                 \
   do {                                                                         \
-    if (void_is_null(sp[0].ref)) {                                             \
-      RETURN(MANGO_E_NULL_REFERENCE);                                          \
-    }                                                                          \
+    THROW_IF(MANGO_E_NULL_REFERENCE, void_is_null(sp[0].ref));                 \
     uintptr_t object = (uintptr_t)(void_as_ptr(vm, sp[0].ref));                \
     const Cast *field = (const Cast *)(object + FETCH(ip + 1, u16));           \
     sp[0].Type = field[0];                                                     \
@@ -1510,9 +1480,7 @@ LDFLD_X32: // address ... -> value ...
 
 LDFLD_X64: // address ... -> value ...
   do {
-    if (void_is_null(sp[0].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
-    }
+    THROW_IF(MANGO_E_NULL_REFERENCE, void_is_null(sp[0].ref));
     uintptr_t object = (uintptr_t)(void_as_ptr(vm, sp[0].ref));
     const uint32_t *field = (const uint32_t *)(object + FETCH(ip + 1, u16));
     sp--;
@@ -1524,9 +1492,7 @@ LDFLD_X64: // address ... -> value ...
 
 LDFLDA: // address ... -> address ...
   do {
-    if (void_is_null(sp[0].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
-    }
+    THROW_IF(MANGO_E_NULL_REFERENCE, void_is_null(sp[0].ref));
     sp[0].ref.address += FETCH(ip + 1, u16);
     ip += 3;
     NEXT;
@@ -1534,9 +1500,7 @@ LDFLDA: // address ... -> address ...
 
 #define STORE_FIELD(Cast, Type)                                                \
   do {                                                                         \
-    if (void_is_null(sp[1].ref)) {                                             \
-      RETURN(MANGO_E_NULL_REFERENCE);                                          \
-    }                                                                          \
+    THROW_IF(MANGO_E_NULL_REFERENCE, void_is_null(sp[1].ref));                 \
     uintptr_t object = (uintptr_t)(void_as_ptr(vm, sp[1].ref));                \
     Cast *field = (Cast *)(object + FETCH(ip + 1, u16));                       \
     field[0] = (Cast)sp[0].Type;                                               \
@@ -1556,9 +1520,7 @@ STFLD_X32: // value address ... -> ...
 
 STFLD_X64: // value address -> ...
   do {
-    if (void_is_null(sp[2].ref)) {
-      RETURN(MANGO_E_NULL_REFERENCE);
-    }
+    THROW_IF(MANGO_E_NULL_REFERENCE, void_is_null(sp[2].ref));
     uintptr_t object = (uintptr_t)(void_as_ptr(vm, sp[2].ref));
     uint32_t *field = (uint32_t *)(object + FETCH(ip + 1, u16));
     field[0] = sp[0].u32;
@@ -1584,9 +1546,7 @@ UNUSED125:
 #define LOAD_ELEMENT(Cast, Type)                                               \
   do {                                                                         \
     uint32_t index = sp[0].u32;                                                \
-    if (index >= sp[2].u32) {                                                  \
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
-    }                                                                          \
+    THROW_IF(MANGO_E_INDEX_OUT_OF_RANGE, index >= sp[2].u32);                  \
     const Cast *array = (const Cast *)void_as_ptr(vm, sp[1].ref);              \
     sp += 2;                                                                   \
     sp[0].Type = array[index];                                                 \
@@ -1612,9 +1572,7 @@ LDELEM_X32: // index array length ... -> value ...
 LDELEM_X64: // index array length ... -> value ...
   do {
     uint32_t index = sp[0].u32;
-    if (index >= sp[2].u32) {
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
+    THROW_IF(MANGO_E_INDEX_OUT_OF_RANGE, index >= sp[2].u32);
     const uint32_t *array = (const uint32_t *)void_as_ptr(vm, sp[1].ref);
     sp += 1;
     sp[0].u32 = array[2 * index + 0];
@@ -1626,9 +1584,7 @@ LDELEM_X64: // index array length ... -> value ...
 LDELEMA: // index array length ... -> address ...
   do {
     uint32_t index = sp[0].u32;
-    if (index >= sp[2].u32) {
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
+    THROW_IF(MANGO_E_INDEX_OUT_OF_RANGE, index >= sp[2].u32);
     uint32_t address = sp[1].ref.address;
     uint32_t size = FETCH(ip + 1, u16);
     sp += 2;
@@ -1640,9 +1596,7 @@ LDELEMA: // index array length ... -> address ...
 #define STORE_ELEMENT(Cast)                                                    \
   do {                                                                         \
     uint32_t index = sp[1].u32;                                                \
-    if (index >= sp[3].u32) {                                                  \
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
-    }                                                                          \
+    THROW_IF(MANGO_E_INDEX_OUT_OF_RANGE, index >= sp[3].u32);                  \
     Cast *array = (Cast *)void_as_ptr(vm, sp[2].ref);                          \
     array[index] = (Cast)sp[0].u32;                                            \
     sp += 4;                                                                   \
@@ -1662,9 +1616,7 @@ STELEM_X32: // value index array length ... -> ...
 STELEM_X64: // value index array length ... -> ...
   do {
     uint32_t index = sp[2].u32;
-    if (index >= sp[4].u32) {
-      RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
-    }
+    THROW_IF(MANGO_E_INDEX_OUT_OF_RANGE, index >= sp[4].u32);
     uint32_t *array = (uint32_t *)void_as_ptr(vm, sp[3].ref);
     array[2 * index + 0] = sp[0].u32;
     array[2 * index + 1] = sp[1].u32;
