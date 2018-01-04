@@ -300,7 +300,7 @@ mango_vm *mango_initialize(void *address, size_t heap_size, size_t stack_size,
   }
 #endif
 
-  mango_vm *vm = address;
+  mango_vm *vm = (mango_vm *)address;
   memset(vm, 0, sizeof(mango_vm));
   vm->version = MANGO_VERSION_MAJOR;
   vm->heap_size = (uint32_t)heap_size;
@@ -477,8 +477,8 @@ static mango_result _mango_initialize_module(mango_vm *vm, uint8_t index,
   const mango_module_def *m = (const mango_module_def *)(module->image);
 
   if (m->import_count != 0) {
-    uint8_t *imports = mango_heap_alloc(vm, m->import_count, sizeof(uint8_t),
-                                        __alignof(uint8_t), 0);
+    uint8_t *imports = (uint8_t *)mango_heap_alloc(
+        vm, m->import_count, sizeof(uint8_t), __alignof(uint8_t), 0);
 
     if (!imports) {
       return MANGO_E_OUT_OF_MEMORY;
@@ -506,7 +506,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
                                                  size_t size, void *context) {
   const mango_module_def *m = (const mango_module_def *)image;
 
-  mango_module *modules = mango_heap_alloc(
+  mango_module *modules = (mango_module *)mango_heap_alloc(
       vm, m->module_count, sizeof(mango_module), __alignof(mango_module), 0);
 
   if (!modules) {
@@ -1101,7 +1101,7 @@ CALLI: // ftn argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf = (stack_frame){f->arg_count + f->loc_count, module, 0};
+    sf = (stack_frame){(uint8_t)(f->arg_count + f->loc_count), module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1134,7 +1134,7 @@ CALL_S: // argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf = (stack_frame){f->arg_count + f->loc_count, sf.module, 0};
+    sf = (stack_frame){(uint8_t)(f->arg_count + f->loc_count), sf.module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1171,7 +1171,7 @@ CALL: // argumentN ... argument1 argument0 ... -> result ...
       rp++;
     }
 
-    sf = (stack_frame){f->arg_count + f->loc_count, module, 0};
+    sf = (stack_frame){(uint8_t)(f->arg_count + f->loc_count), module, 0};
     sp -= f->loc_count;
     ip = f->code;
 
@@ -1587,7 +1587,7 @@ UNUSED125:
     if (index >= sp[2].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
-    const Cast *array = void_as_ptr(vm, sp[1].ref);                            \
+    const Cast *array = (const Cast *)void_as_ptr(vm, sp[1].ref);              \
     sp += 2;                                                                   \
     sp[0].Type = array[index];                                                 \
     ip++;                                                                      \
@@ -1615,7 +1615,7 @@ LDELEM_X64: // index array length ... -> value ...
     if (index >= sp[2].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
-    const uint32_t *array = void_as_ptr(vm, sp[1].ref);
+    const uint32_t *array = (const uint32_t *)void_as_ptr(vm, sp[1].ref);
     sp += 1;
     sp[0].u32 = array[2 * index + 0];
     sp[1].u32 = array[2 * index + 1];
@@ -1643,7 +1643,7 @@ LDELEMA: // index array length ... -> address ...
     if (index >= sp[3].u32) {                                                  \
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);                                      \
     }                                                                          \
-    Cast *array = void_as_ptr(vm, sp[2].ref);                                  \
+    Cast *array = (Cast *)void_as_ptr(vm, sp[2].ref);                          \
     array[index] = (Cast)sp[0].u32;                                            \
     sp += 4;                                                                   \
     ip++;                                                                      \
@@ -1665,7 +1665,7 @@ STELEM_X64: // value index array length ... -> ...
     if (index >= sp[4].u32) {
       RETURN(MANGO_E_INDEX_OUT_OF_RANGE);
     }
-    uint32_t *array = void_as_ptr(vm, sp[3].ref);
+    uint32_t *array = (uint32_t *)void_as_ptr(vm, sp[3].ref);
     array[2 * index + 0] = sp[0].u32;
     array[2 * index + 1] = sp[1].u32;
     sp += 5;
