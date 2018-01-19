@@ -623,10 +623,6 @@ mango_result mango_run(mango_vm *vm) {
     return vm->result = MANGO_E_STACK_IMBALANCE;
   }
 
-  if (vm->result == MANGO_E_SYSTEM_CALL) {
-    vm->sf.ip += 4;
-  }
-
   mango_result result = _mango_interpret(vm);
   if (result != MANGO_E_SUCCESS) {
     return vm->result = result;
@@ -1171,6 +1167,7 @@ SYSCALL: // argumentN ... argument1 argument0 ... -> result ...
     int8_t adjustment = FETCH(ip + 1, i8);
     uint16_t syscall = FETCH(ip + 2, u16);
 
+    ip += 4;
     vm->sp_expected = (uint16_t)((sp - vm->stack) + adjustment);
     vm->syscall = syscall;
 
