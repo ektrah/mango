@@ -1,6 +1,6 @@
 CFLAGS ?= -O3
 
-ifeq "$(findstring clang,$(notdir $(CC)))" "clang"
+ifeq "$(findstring clang,$(shell $(CC) --version))" "clang"
 	_CFLAGS := $(CFLAGS) -Werror -Weverything
 else
 	_CFLAGS := $(CFLAGS) -Werror -Wall -Wextra
