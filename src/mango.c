@@ -897,8 +897,8 @@ static mango_result _mango_interpret(mango_vm *vm) {
 #pragma region basic
 
 HALT: // ... -> ...
-  RETURN_IF(MANGO_E_STACK_IMBALANCE,
-            rp != vm->stack || sp != vm->stack + vm->stack_size);
+  RETURN_IF(MANGO_E_APPLICATION, rp != vm->stack);
+  RETURN_IF(MANGO_E_STACK_IMBALANCE, sp != vm->stack + vm->stack_size);
   RETURN(MANGO_E_SUCCESS);
 
 NOP: // ... -> ...
