@@ -1,4 +1,8 @@
+*.dll
+*.dylib
+*.o
+*.so
 *~
 .vs
 bin
-libmango.*
+obj
