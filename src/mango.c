@@ -35,64 +35,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#if UINTPTR_MAX == UINT32_MAX
-
-#define MANGO_DECLARE_REF_TYPE(Type)                                           \
-                                                                               \
-  typedef struct Type##_ref {                                                  \
-    uintptr_t address;                                                         \
-  } Type##_ref;
-
-#define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
-                                                                               \
-  static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
-                                          Type##_ref ref) {                    \
-    return (Const Type *)ref.address;                                          \
-  }                                                                            \
-                                                                               \
-  static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
-                                         Const Type *ptr) {                    \
-    return (Type##_ref){(uintptr_t)ptr};                                       \
-  }                                                                            \
-                                                                               \
-  static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
-                                                                               \
-  static inline int Type##_is_null(Type##_ref ref) { return !ref.address; }
-
-#elif UINTPTR_MAX == UINT64_MAX
-
-#define MANGO_DECLARE_REF_TYPE(Type)                                           \
-                                                                               \
-  typedef struct Type##_ref {                                                  \
-    uint32_t address;                                                          \
-  } Type##_ref;
-
-#define MANGO_DEFINE_REF_TYPE(Type, Const)                                     \
-                                                                               \
-  static inline Const Type *Type##_as_ptr(const mango_vm *vm,                  \
-                                          Type##_ref ref) {                    \
-    return (Const Type *)((uintptr_t)vm + ref.address);                        \
-  }                                                                            \
-                                                                               \
-  static inline Type##_ref Type##_as_ref(const mango_vm *vm,                   \
-                                         Const Type *ptr) {                    \
-    return (Type##_ref){(uint32_t)((uintptr_t)ptr - (uintptr_t)vm)};           \
-  }                                                                            \
-                                                                               \
-  static inline Type##_ref Type##_null(void) { return (Type##_ref){0}; }       \
-                                                                               \
-  static inline int Type##_is_null(Type##_ref ref) { return !ref.address; }
-
-#else
-#error Unsupported bitness
-#endif
-
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-#error Unsupported byte order
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
