@@ -15,7 +15,7 @@ Mango is a tiny, yet powerful virtual machine that runs type-safe mobile code in
   * Arithmetic, bitwise, conversion, comparison, branches, function calls, ...
 * An expressive type system
   * i8, i16, i32, i64, u8, u16, u32, u64, f32, f64
-  * Algebraic data types (structs and tagged unions)
+  * Structs and discriminated unions
   * Arrays and slices
   * References
 * A module system
