@@ -664,7 +664,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define BINARY1I(Operator)                                                     \
   do {                                                                         \
@@ -674,7 +674,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define BINARY1U(Operator)                                                     \
   do {                                                                         \
@@ -683,7 +683,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define BINARY2(Type, Operator)                                                \
   do {                                                                         \
@@ -692,7 +692,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define BINARY2I(Operator)                                                     \
   do {                                                                         \
@@ -704,7 +704,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define BINARY2U(Operator)                                                     \
   do {                                                                         \
@@ -714,14 +714,14 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp += 2;                                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define UNARY1(Type, Operator)                                                 \
   do {                                                                         \
     sp[0].Type = Operator(sp[0].Type);                                         \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define UNARY2(Type, Operator)                                                 \
   do {                                                                         \
@@ -729,7 +729,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].Type = Operator(sp2[0].Type);                                       \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define SHIFT1(Type, Operator)                                                 \
   do {                                                                         \
@@ -737,7 +737,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define SHIFT2(Type, Operator)                                                 \
   do {                                                                         \
@@ -746,14 +746,14 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define CONVERT1(Cast, Destination, Source)                                    \
   do {                                                                         \
     sp[0].Destination = (Cast)sp[0].Source;                                    \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define CONVERT21(Cast, Destination, Source)                                   \
   do {                                                                         \
@@ -763,7 +763,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].Destination = tmp;                                                  \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define CONVERT12(Cast, Destination, Source)                                   \
   do {                                                                         \
@@ -773,7 +773,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].Destination = tmp;                                                   \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define CONVERT2(Cast, Destination, Source)                                    \
   do {                                                                         \
@@ -781,7 +781,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp2[0].Destination = (Cast)sp2[0].Source;                                  \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define COMPARE1(Type, Operator)                                               \
   do {                                                                         \
@@ -789,7 +789,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define COMPARE1F(Type, Operator)                                              \
   do {                                                                         \
@@ -797,7 +797,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp++;                                                                      \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define COMPARE2(Type, Operator)                                               \
   do {                                                                         \
@@ -807,7 +807,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #define COMPARE2F(Type, Operator)                                              \
   do {                                                                         \
@@ -817,7 +817,7 @@ int mango_syscall(const mango_vm *vm) { return vm ? vm->syscall : 0; }
     sp[0].i32 = tmp;                                                           \
     ip++;                                                                      \
     NEXT;                                                                      \
-  } while (0);
+  } while (0)
 
 #pragma endregion
 
