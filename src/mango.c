@@ -165,16 +165,23 @@ MANGO_DEFINE_REF_TYPE(mango_module, )
 
 #pragma pack(push, 1)
 
-typedef union packed {
+typedef struct packed_i8 {
   int8_t i8;
+} packed_i8;
+typedef struct packed_u8 {
   uint8_t u8;
+} packed_u8;
+typedef struct packed_i16 {
   int16_t i16;
+} packed_i16;
+typedef struct packed_u16 {
   uint16_t u16;
-  int32_t i32;
+} packed_u16;
+typedef struct packed_u32 {
   uint32_t u32;
-} packed;
+} packed_u32;
 
-#define FETCH(Address, Type) (((const packed *)(Address))->Type)
+#define FETCH(Address, Type) (((const packed_##Type *)(Address))->Type)
 
 #pragma pack(pop)
 
@@ -191,8 +198,16 @@ _Static_assert(sizeof(mango_vm) == 64, "Incorrect layout");
 _Static_assert(__alignof(mango_vm) == 4, "Incorrect layout");
 _Static_assert(sizeof(mango_module) == 32, "Incorrect layout");
 _Static_assert(__alignof(mango_module) == 4, "Incorrect layout");
-_Static_assert(sizeof(packed) == 4, "Incorrect layout");
-_Static_assert(__alignof(packed) == 1, "Incorrect layout");
+_Static_assert(sizeof(packed_i8) == 1, "Incorrect layout");
+_Static_assert(__alignof(packed_i8) == 1, "Incorrect layout");
+_Static_assert(sizeof(packed_u8) == 1, "Incorrect layout");
+_Static_assert(__alignof(packed_u8) == 1, "Incorrect layout");
+_Static_assert(sizeof(packed_i16) == 2, "Incorrect layout");
+_Static_assert(__alignof(packed_i16) == 1, "Incorrect layout");
+_Static_assert(sizeof(packed_u16) == 2, "Incorrect layout");
+_Static_assert(__alignof(packed_u16) == 1, "Incorrect layout");
+_Static_assert(sizeof(packed_u32) == 4, "Incorrect layout");
+_Static_assert(__alignof(packed_u32) == 1, "Incorrect layout");
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
