@@ -266,7 +266,7 @@ mango_result mango_error(mango_vm *vm, mango_result error) {
     return MANGO_E_INVALID_OPERATION;
   }
 
-  vm->result = error;
+  vm->result = (uint8_t)error;
   return MANGO_E_SUCCESS;
 }
 
@@ -567,7 +567,7 @@ mango_result mango_run(mango_vm *vm) {
 
   mango_result result = _mango_interpret(vm);
   if (result != MANGO_E_SUCCESS) {
-    return vm->result = result;
+    return vm->result = (uint8_t)result;
   }
 
   mango_module *modules = _mango_get_modules(vm);
@@ -616,7 +616,7 @@ mango_result mango_run(mango_vm *vm) {
 
       result = _mango_interpret(vm);
       if (result != MANGO_E_SUCCESS) {
-        return vm->result = result;
+        return vm->result = (uint8_t)result;
       }
     }
   }
