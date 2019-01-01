@@ -6,7 +6,7 @@
  *
  * Mango Virtual Machine 1.0-dev
  *
- * Copyright (c) 2018 Klaus Hartke
+ * Copyright (c) 2019 Klaus Hartke
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
