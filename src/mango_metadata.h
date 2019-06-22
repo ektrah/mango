@@ -35,9 +35,9 @@
 extern "C" {
 #endif
 
-typedef struct mango_module_name {
+typedef struct mango_fingerprint {
   uint8_t bytes[12];
-} mango_module_name;
+} mango_fingerprint;
 
 typedef struct mango_module_def {
   uint8_t version;
@@ -45,7 +45,7 @@ typedef struct mango_module_def {
   uint8_t module_count;
   uint8_t import_count;
   uint8_t entry_point[4];
-  mango_module_name imports[];
+  mango_fingerprint imports[];
 } mango_module_def;
 
 typedef struct mango_func_def {

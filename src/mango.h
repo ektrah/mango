@@ -121,7 +121,8 @@ MANGO_API size_t mango_stack_size(const mango_vm *vm);
 
 MANGO_API size_t mango_stack_available(const mango_vm *vm);
 
-MANGO_API mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
+MANGO_API mango_result mango_module_import(mango_vm *vm,
+                                           const uint8_t *fingerprint,
                                            const uint8_t *image, size_t size,
                                            void *context);
 

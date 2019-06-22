@@ -102,7 +102,7 @@ typedef struct mango_vm {
   uint32_t heap_size;
   uint32_t heap_used;
 
-  mango_module_name startup_module_name;
+  mango_fingerprint startup_fingerprint;
   mango_module_ref modules;
   uint8_t modules_created;
   uint8_t modules_imported;
@@ -136,8 +136,8 @@ typedef struct mango_module {
 
   uint16_t image_size;
 
-  uint8_t name_module;
-  uint8_t name_index;
+  uint8_t fingerprint_module;
+  uint8_t fingerprint_index;
 
   uint8_t init_next;
   uint8_t init_prev;
@@ -400,32 +400,33 @@ _mango_get_module_imports(const mango_vm *vm, const mango_module *module) {
   return uint8_t_as_ptr(vm, module->imports);
 }
 
-static inline const mango_module_name *
-_mango_get_module_name(const mango_vm *vm, const mango_module *module) {
-  if (module->name_module == INVALID_MODULE) {
-    return &vm->startup_module_name;
+static inline const mango_fingerprint *
+_mango_get_module_fingerprint(const mango_vm *vm, const mango_module *module) {
+  if (module->fingerprint_module == INVALID_MODULE) {
+    return &vm->startup_fingerprint;
   } else {
-    const uint8_t *image = _mango_get_module(vm, module->name_module)->image;
-    return ((const mango_module_def *)image)->imports + module->name_index;
+    mango_module *module_f = _mango_get_module(vm, module->fingerprint_module);
+    const mango_module_def *m = (const mango_module_def *)module_f->image;
+    return &m->imports[module->fingerprint_index];
   }
 }
 
 static uint8_t _mango_get_or_create_module(mango_vm *vm,
-                                           const mango_module_name *name,
-                                           uint8_t name_module,
-                                           uint8_t name_index) {
+                                           const mango_fingerprint *fingerprint,
+                                           uint8_t fingerprint_module,
+                                           uint8_t fingerprint_index) {
   mango_module *modules = _mango_get_modules(vm);
 
   for (uint_fast8_t i = 0; i < vm->modules_created; i++) {
-    const mango_module_name *n = _mango_get_module_name(vm, &modules[i]);
-    if (memcmp(name, n, sizeof(mango_module_name)) == 0) {
+    const mango_fingerprint *f = _mango_get_module_fingerprint(vm, &modules[i]);
+    if (memcmp(fingerprint, f, sizeof(mango_fingerprint)) == 0) {
       return i;
     }
   }
 
   uint8_t index = vm->modules_created++;
-  modules[index].name_module = name_module;
-  modules[index].name_index = name_index;
+  modules[index].fingerprint_module = fingerprint_module;
+  modules[index].fingerprint_index = fingerprint_index;
   return index;
 }
 
@@ -458,7 +459,7 @@ static mango_result _mango_initialize_module(mango_vm *vm, uint8_t index,
 }
 
 static mango_result _mango_import_startup_module(mango_vm *vm,
-                                                 const uint8_t *name,
+                                                 const uint8_t *fingerprint,
                                                  const uint8_t *image,
                                                  size_t size, void *context) {
   const mango_module_def *m = (const mango_module_def *)image;
@@ -470,7 +471,7 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
     return MANGO_E_OUT_OF_MEMORY;
   }
 
-  memcpy(&vm->startup_module_name, name, sizeof(mango_module_name));
+  memcpy(&vm->startup_fingerprint, fingerprint, sizeof(mango_fingerprint));
   vm->modules = mango_module_as_ref(vm, modules);
   vm->modules_created = 1;
   vm->modules_imported = 1;
@@ -478,8 +479,8 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
   mango_module *module = &modules[0];
   module->image = image;
   module->image_size = (uint16_t)size;
-  module->name_module = INVALID_MODULE;
-  module->name_index = INVALID_MODULE;
+  module->fingerprint_module = INVALID_MODULE;
+  module->fingerprint_index = INVALID_MODULE;
   module->init_next = INVALID_MODULE;
   module->init_prev = INVALID_MODULE;
   module->init_flags = 0;
@@ -489,14 +490,14 @@ static mango_result _mango_import_startup_module(mango_vm *vm,
 }
 
 static mango_result _mango_import_missing_module(mango_vm *vm,
-                                                 const uint8_t *name,
+                                                 const uint8_t *fingerprint,
                                                  const uint8_t *image,
                                                  size_t size, void *context) {
   uint8_t index = vm->modules_imported;
   mango_module *module = _mango_get_module(vm, index);
-  const mango_module_name *n = _mango_get_module_name(vm, module);
+  const mango_fingerprint *f = _mango_get_module_fingerprint(vm, module);
 
-  if (memcmp(name, n, sizeof(mango_module_name)) != 0) {
+  if (memcmp(fingerprint, f, sizeof(mango_fingerprint)) != 0) {
     return MANGO_E_INVALID_OPERATION;
   }
 
@@ -512,10 +513,10 @@ static mango_result _mango_import_missing_module(mango_vm *vm,
   return _mango_initialize_module(vm, index, module);
 }
 
-mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
+mango_result mango_module_import(mango_vm *vm, const uint8_t *fingerprint,
                                  const uint8_t *image, size_t size,
                                  void *context) {
-  if (!vm || !name || !image) {
+  if (!vm || !fingerprint || !image) {
     return MANGO_E_ARGUMENT_NULL;
   }
   if (size < sizeof(mango_module_def) || size > UINT16_MAX) {
@@ -534,9 +535,9 @@ mango_result mango_module_import(mango_vm *vm, const uint8_t *name,
   }
 
   if (vm->modules_imported == 0) {
-    return _mango_import_startup_module(vm, name, image, size, context);
+    return _mango_import_startup_module(vm, fingerprint, image, size, context);
   } else if (vm->modules_imported < vm->modules_created) {
-    return _mango_import_missing_module(vm, name, image, size, context);
+    return _mango_import_missing_module(vm, fingerprint, image, size, context);
   } else {
     return MANGO_E_INVALID_OPERATION;
   }
@@ -548,7 +549,7 @@ const uint8_t *mango_module_missing(const mango_vm *vm) {
   }
 
   mango_module *module = _mango_get_module(vm, vm->modules_imported);
-  return (const uint8_t *)_mango_get_module_name(vm, module);
+  return (const uint8_t *)_mango_get_module_fingerprint(vm, module);
 }
 
 void *mango_module_context(const mango_vm *vm) {
